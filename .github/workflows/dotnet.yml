@@ -1,8 +1,9 @@
-name: Build
+name: Build & Release
 
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
 
@@ -29,3 +30,42 @@ jobs:
       with:
         name: DesktopClock
         path: DesktopClock/bin/Release/net9.0-windows/
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET 9.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore & Build
+      run: dotnet publish DesktopClock/DesktopClock.csproj --configuration Release --output publish
+
+    - name: Package
+      shell: pwsh
+      run: |
+        $ver = "${{ github.ref_name }}".TrimStart('v')
+        $zip = "DesktopClock-$ver.zip"
+        Compress-Archive -Path publish/* -DestinationPath $zip
+        echo "ZIP=$zip" >> $env:GITHUB_ENV
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: DesktopClock ${{ github.ref_name }}
+        body: |
+          ## DesktopClock ${{ github.ref_name }}
+
+          ### 下载
+          - [DesktopClock-${{ github.ref_name }}.zip](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/DesktopClock-${{ github.ref_name }}.zip)
+
+          ### 更新内容
+          <!-- 在此编写更新日志 -->
+        files: ${{ env.ZIP }}
+        generate_release_notes: true
