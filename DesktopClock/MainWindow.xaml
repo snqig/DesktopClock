@@ -1,0 +1,166 @@
+<Window x:Class="DesktopClock.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DesktopClock"
+        Height="120" Width="500"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize">
+    <Border x:Name="MainBorder" CornerRadius="10" Background="#88000000"
+            BorderBrush="Transparent" BorderThickness="0">
+        <Grid x:Name="MainContainer">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Date row -->
+            <TextBlock x:Name="DateText"
+                       Grid.Row="0"
+                       FontFamily="Consolas"
+                       FontSize="16"
+                       Foreground="#00FF00"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       Text="0000-00-00"/>
+
+            <!-- Digital Panel -->
+            <Grid x:Name="DigitalPanel" Grid.Row="1" Margin="10">
+                <TextBlock x:Name="ClockText"
+                           FontFamily="Consolas"
+                           FontSize="72"
+                           Foreground="#00FF00"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Text="00:00:00"/>
+            </Grid>
+
+            <!-- Minimal Panel -->
+            <Grid x:Name="MinimalPanel" Grid.Row="1" Visibility="Collapsed">
+                <TextBlock x:Name="MinimalTimeText"
+                           FontFamily="Consolas"
+                           FontSize="54"
+                           Foreground="#00d4ff"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Text="00:00:00"/>
+            </Grid>
+
+            <!-- Word Panel -->
+            <Grid x:Name="WordPanel" Grid.Row="1" Visibility="Collapsed" Margin="15">
+                <TextBlock x:Name="WordTimeText"
+                           FontFamily="Microsoft YaHei, PingFang SC, sans-serif"
+                           FontSize="28"
+                           Foreground="#00d4ff"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Text="十二点整"/>
+            </Grid>
+
+            <!-- Binary Panel -->
+            <Grid x:Name="BinaryPanel" Grid.Row="1" Visibility="Collapsed"/>
+
+            <!-- Progress Panel -->
+            <Grid x:Name="ProgressPanel" Grid.Row="1" Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock x:Name="ProgressHLabel" Text="H" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
+                        <Grid Width="64" Height="64" Margin="4,2">
+                            <Ellipse Width="56" Height="56" Stroke="#333" StrokeThickness="6"/>
+                            <Ellipse x:Name="HourArc" Width="56" Height="56" Stroke="#00d4ff" StrokeThickness="6"
+                                     StrokeDashArray="0 200" RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform Angle="-90"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Margin="12,0,0,0">
+                        <TextBlock x:Name="ProgressMLabel" Text="M" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
+                        <Grid Width="64" Height="64" Margin="4,2">
+                            <Ellipse Width="56" Height="56" Stroke="#333" StrokeThickness="6"/>
+                            <Ellipse x:Name="MinuteArc" Width="56" Height="56" Stroke="#00d4ff" StrokeThickness="6"
+                                     StrokeDashArray="0 200" RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform Angle="-90"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Margin="12,0,0,0">
+                        <TextBlock x:Name="ProgressSLabel" Text="S" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
+                        <Grid Width="64" Height="64" Margin="4,2">
+                            <Ellipse Width="56" Height="56" Stroke="#333" StrokeThickness="6"/>
+                            <Ellipse x:Name="SecondArc" Width="56" Height="56" Stroke="#00d4ff" StrokeThickness="6"
+                                     StrokeDashArray="0 200" RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform Angle="-90"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+
+            <!-- Flip Panel -->
+            <Grid x:Name="FlipPanel" Grid.Row="1" Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border x:Name="FlipBorderH1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+                        <Grid>
+                            <TextBlock x:Name="FlipH1" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                            <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+                        </Grid>
+                    </Border>
+                    <Border x:Name="FlipBorderH2" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+                        <Grid>
+                            <TextBlock x:Name="FlipH2" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                            <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock x:Name="FlipColon1" Text=":" FontSize="36" FontWeight="Bold" Foreground="#00d4ff" VerticalAlignment="Center" Margin="2,0"/>
+                    <Border x:Name="FlipBorderM1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+                        <Grid>
+                            <TextBlock x:Name="FlipM1" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                            <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+                        </Grid>
+                    </Border>
+                    <Border x:Name="FlipBorderM2" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+                        <Grid>
+                            <TextBlock x:Name="FlipM2" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                            <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock x:Name="FlipColon2" Text=":" FontSize="36" FontWeight="Bold" Foreground="#00d4ff" VerticalAlignment="Center" Margin="2,0"/>
+                    <Border x:Name="FlipBorderS1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+                        <Grid>
+                            <TextBlock x:Name="FlipS1" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                            <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+                        </Grid>
+                    </Border>
+                    <Border x:Name="FlipBorderS2" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+                        <Grid>
+                            <TextBlock x:Name="FlipS2" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                            <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- World Clock row -->
+            <TextBlock x:Name="WorldClockText"
+                       Grid.Row="2"
+                       FontFamily="Consolas"
+                       FontSize="16"
+                       Foreground="#00d4ff"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Bottom"
+                       Text=""
+                       Visibility="Collapsed"/>
+        </Grid>
+    </Border>
+</Window>

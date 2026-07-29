@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.db
+*.log
+settings.json
+DesktopClock/settings.json
