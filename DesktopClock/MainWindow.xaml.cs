@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     private bool _binaryBuilt;
     private TextBlock? _binaryColon1, _binaryColon2;
     private int[] _flipOldDigits = { -1, -1, -1, -1, -1, -1 };
+    private readonly HashSet<string> _firedReminders = new();
 
 
     [DllImport("user32.dll")]
@@ -198,6 +199,8 @@ public partial class MainWindow : Window
 
         UpdateWorldClock();
         UpdateChime();
+        UpdateLunar();
+        CheckReminders();
     }
 
     private string GetTimeFormat()
@@ -482,6 +485,85 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UpdateLunar()
+    {
+        if (!_settings.LunarEnabled)
+        {
+            LunarText.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var result = LunarCalendar.GetLunarInfo(DateTime.Now);
+        if (result.IsValid)
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            parts.Add(result.FullString);
+            if (!string.IsNullOrEmpty(result.SolarTerm) && _settings.ShowSolarTerm)
+                parts.Add(result.SolarTerm);
+            if (!string.IsNullOrEmpty(result.Holiday))
+                parts.Add(result.Holiday);
+            if (_settings.ShowZodiac)
+                parts.Add(result.Zodiac + "年");
+            LunarText.Text = string.Join(" | ", parts);
+            LunarText.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void CheckReminders()
+    {
+        if (!_settings.ReminderEnabled) return;
+
+        var now = DateTime.Now;
+        List<ReminderItem> reminders;
+        try
+        {
+            reminders = System.Text.Json.JsonSerializer.Deserialize<List<ReminderItem>>(_settings.RemindersJson) ?? new();
+        }
+        catch
+        {
+            return;
+        }
+
+        foreach (var r in reminders)
+        {
+            if (!r.IsEnabled) continue;
+
+            bool shouldFire = false;
+
+            if (r.DateTime.HasValue && !r.IsRecurring)
+            {
+                var dt = r.DateTime.Value;
+                if (now.Year == dt.Year && now.Month == dt.Month && now.Day == dt.Day &&
+                    now.Hour == dt.Hour && now.Minute == dt.Minute && now.Second == 0)
+                {
+                    shouldFire = true;
+                }
+            }
+            else if (r.IsRecurring && r.DayOfWeek.HasValue)
+            {
+                if (now.DayOfWeek == r.DayOfWeek.Value &&
+                    now.Hour == r.TimeOfDay.Hours &&
+                    now.Minute == r.TimeOfDay.Minutes &&
+                    now.Second == 0)
+                {
+                    shouldFire = true;
+                }
+            }
+
+            if (shouldFire)
+            {
+                string key = r.Id + "_" + now.ToString("yyyyMMddHHmm");
+                if (_firedReminders.Add(key))
+                {
+                    string msg = r.Title;
+                    if (!string.IsNullOrEmpty(r.Description))
+                        msg += "\n" + r.Description;
+                    MessageBox.Show(msg, "提醒", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+    }
+
     protected override void OnLocationChanged(EventArgs e)
     {
         base.OnLocationChanged(e);
@@ -555,18 +637,25 @@ public partial class MainWindow : Window
 
         if (_settings.DatePosition == "bottom")
         {
-            Grid.SetRow(WorldClockText, 0);
-            Grid.SetRow(DateText, 2);
+            Grid.SetRow(LunarText, 0);
+            Grid.SetRow(DateText, 3);
+            Grid.SetRow(WorldClockText, 2);
         }
         else
         {
             Grid.SetRow(DateText, 0);
-            Grid.SetRow(WorldClockText, 2);
+            Grid.SetRow(LunarText, 1);
+            Grid.SetRow(WorldClockText, 3);
         }
 
         SwitchMode(_settings.DisplayMode);
 
         ApplyBackground();
+
+        try { LunarText.FontFamily = new FontFamily("Microsoft YaHei, PingFang SC, SimSun"); } catch { }
+        LunarText.FontSize = _settings.LunarFontSize;
+        try { LunarText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.LunarColor)); } catch { }
+        LunarText.Visibility = _settings.LunarEnabled ? Visibility.Visible : Visibility.Collapsed;
 
         try { MainBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.BorderColor)); } catch { }
         MainBorder.BorderThickness = new Thickness(_settings.BorderThickness);
@@ -645,6 +734,7 @@ public partial class MainWindow : Window
             case "minimal":
                 MinimalPanel.Visibility = Visibility.Visible;
                 DateText.Visibility = Visibility.Collapsed;
+                LunarText.Visibility = Visibility.Collapsed;
                 break;
             case "word":
                 WordPanel.Visibility = Visibility.Visible;

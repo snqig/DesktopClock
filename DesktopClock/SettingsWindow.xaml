@@ -412,6 +412,71 @@
                         <TextBlock Text="快捷键隐藏" Style="{StaticResource FieldLabel}" />
                         <TextBox x:Name="HotkeyBox" Text="Ctrl+H" />
                     </Grid>
+
+                    <!-- Lunar Calendar Section -->
+                    <TextBlock Text="农历" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+
+                    <CheckBox x:Name="LunarCheck" Content="显示农历信息" Margin="0,0,0,10"
+                              Checked="LunarCheck_Changed" Unchecked="LunarCheck_Changed" />
+
+                    <Border x:Name="LunarSettingsPanel" Margin="20,0,0,14">
+                        <StackPanel>
+                            <CheckBox x:Name="SolarTermCheck" Content="显示节气" Margin="0,0,0,8"
+                                      Checked="SolarTermCheck_Changed" Unchecked="SolarTermCheck_Changed" />
+                            <CheckBox x:Name="ZodiacCheck" Content="显示生肖" Margin="0,0,0,10"
+                                      Checked="ZodiacCheck_Changed" Unchecked="ZodiacCheck_Changed" />
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="44" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                <Slider x:Name="LunarFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="40"
+                                        Value="14" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        ValueChanged="LunarFontSizeSlider_ValueChanged"
+                                        Foreground="#007AFF" />
+                                <TextBlock x:Name="LunarFontSizeLabel" Grid.Column="2" Text="14"
+                                           Style="{StaticResource ValueLabel}" />
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                <Border x:Name="LunarColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                        Background="#aaaaaa" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                        MouseLeftButtonDown="LunarColorPreview_MouseDown" />
+                                <TextBox x:Name="LunarColorBox" Grid.Column="2" Text="#aaaaaa" Width="120" Margin="10,0,0,0"
+                                         TextChanged="LunarColorBox_TextChanged" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Reminder Section -->
+                    <TextBlock Text="提醒" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+
+                    <CheckBox x:Name="ReminderCheck" Content="启用定时提醒" Margin="0,0,0,10"
+                              Checked="ReminderCheck_Changed" Unchecked="ReminderCheck_Changed" />
+
+                    <Border x:Name="ReminderSettingsPanel" Margin="20,0,0,14">
+                        <StackPanel>
+                            <ListBox x:Name="ReminderListBox" Height="120" Margin="0,0,0,8"
+                                     DisplayMemberPath="Title" SelectionMode="Single" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="添加" Style="{StaticResource SecondaryButton}" Width="60"
+                                        Click="AddReminder_Click" Margin="0,0,6,0" />
+                                <Button Content="编辑" Style="{StaticResource SecondaryButton}" Width="60"
+                                        Click="EditReminder_Click" Margin="0,0,6,0" />
+                                <Button Content="删除" Style="{StaticResource SecondaryButton}" Width="60"
+                                        Click="DeleteReminder_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
         </ScrollViewer>

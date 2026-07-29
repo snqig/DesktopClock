@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -108,6 +110,21 @@ public partial class SettingsWindow : Window
                 LanguageCombo.SelectedItem = item;
 
         TimeZoneRow.Visibility = Settings.WorldClockEnabled ? Visibility.Visible : Visibility.Collapsed;
+
+        // Lunar calendar
+        LunarCheck.IsChecked = Settings.LunarEnabled;
+        SolarTermCheck.IsChecked = Settings.ShowSolarTerm;
+        ZodiacCheck.IsChecked = Settings.ShowZodiac;
+        LunarFontSizeSlider.Value = Settings.LunarFontSize;
+        LunarFontSizeLabel.Text = Settings.LunarFontSize.ToString("F0");
+        LunarColorBox.Text = Settings.LunarColor;
+        UpdateLunarColorPreview();
+        LunarSettingsPanel.Visibility = Settings.LunarEnabled ? Visibility.Visible : Visibility.Collapsed;
+
+        // Reminders
+        ReminderCheck.IsChecked = Settings.ReminderEnabled;
+        ReminderSettingsPanel.Visibility = Settings.ReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
+        LoadReminderList();
 
         _loaded = true;
     }
@@ -397,6 +414,143 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void LunarCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.LunarEnabled = LunarCheck.IsChecked == true;
+        LunarSettingsPanel.Visibility = Settings.LunarEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void SolarTermCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.ShowSolarTerm = SolarTermCheck.IsChecked == true;
+    }
+
+    private void ZodiacCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.ShowZodiac = ZodiacCheck.IsChecked == true;
+    }
+
+    private void LunarFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded) return;
+        Settings.LunarFontSize = e.NewValue;
+        LunarFontSizeLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void LunarColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.LunarColor = LunarColorBox.Text;
+        UpdateLunarColorPreview();
+    }
+
+    private void UpdateLunarColorPreview()
+    {
+        try
+        {
+            var color = (Color)ColorConverter.ConvertFromString(LunarColorBox.Text);
+            LunarColorPreview.Background = new SolidColorBrush(color);
+        }
+        catch
+        {
+            LunarColorPreview.Background = new SolidColorBrush(Colors.Gray);
+        }
+    }
+
+    private void LunarColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        using var dialog = new System.Windows.Forms.ColorDialog
+        {
+            FullOpen = true,
+            Color = System.Drawing.Color.FromArgb(
+                ((SolidColorBrush)LunarColorPreview.Background).Color.R,
+                ((SolidColorBrush)LunarColorPreview.Background).Color.G,
+                ((SolidColorBrush)LunarColorPreview.Background).Color.B)
+        };
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
+            LunarColorBox.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+        }
+    }
+
+    private void ReminderCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.ReminderEnabled = ReminderCheck.IsChecked == true;
+        ReminderSettingsPanel.Visibility = Settings.ReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private List<ReminderItem> GetReminders()
+    {
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<ReminderItem>>(Settings.RemindersJson) ?? new();
+        }
+        catch
+        {
+            return new();
+        }
+    }
+
+    private void SaveReminders(List<ReminderItem> list)
+    {
+        Settings.RemindersJson = System.Text.Json.JsonSerializer.Serialize(list);
+    }
+
+    private void LoadReminderList()
+    {
+        var list = GetReminders();
+        ReminderListBox.Items.Clear();
+        foreach (var r in list)
+            ReminderListBox.Items.Add(r);
+    }
+
+    private void AddReminder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new ReminderDialog();
+        if (dialog.ShowDialog() == true)
+        {
+            var list = GetReminders();
+            list.Add(dialog.Reminder);
+            SaveReminders(list);
+            LoadReminderList();
+        }
+    }
+
+    private void EditReminder_Click(object sender, RoutedEventArgs e)
+    {
+        if (ReminderListBox.SelectedItem is not ReminderItem item) return;
+        var dialog = new ReminderDialog(item);
+        if (dialog.ShowDialog() == true)
+        {
+            var list = GetReminders();
+            int idx = list.FindIndex(r => r.Id == item.Id);
+            if (idx >= 0)
+            {
+                list[idx] = dialog.Reminder;
+                SaveReminders(list);
+                LoadReminderList();
+            }
+        }
+    }
+
+    private void DeleteReminder_Click(object sender, RoutedEventArgs e)
+    {
+        if (ReminderListBox.SelectedItem is not ReminderItem item) return;
+        var result = MessageBox.Show("确定删除此提醒？", "删除确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
+        {
+            var list = GetReminders();
+            list.RemoveAll(r => r.Id == item.Id);
+            SaveReminders(list);
+            LoadReminderList();
+        }
+    }
+
     private void OkButton_Click(object sender, RoutedEventArgs e)
     {
         Settings.Use24Hour = (HourFormatCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "true";
@@ -431,6 +585,13 @@ public partial class SettingsWindow : Window
 
         Settings.AutoStart = AutoStartCheck.IsChecked == true;
         Settings.Language = (LanguageCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "zh";
+
+        Settings.LunarEnabled = LunarCheck.IsChecked == true;
+        Settings.ShowSolarTerm = SolarTermCheck.IsChecked == true;
+        Settings.ShowZodiac = ZodiacCheck.IsChecked == true;
+        Settings.LunarFontSize = LunarFontSizeSlider.Value;
+        Settings.LunarColor = LunarColorBox.Text;
+        Settings.ReminderEnabled = ReminderCheck.IsChecked == true;
 
         Settings.Save();
         DialogResult = true;

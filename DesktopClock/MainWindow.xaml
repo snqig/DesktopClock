@@ -13,6 +13,7 @@
         <Grid x:Name="MainContainer">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -27,8 +28,19 @@
                        VerticalAlignment="Top"
                        Text="0000-00-00"/>
 
+            <!-- Lunar row -->
+            <TextBlock x:Name="LunarText"
+                       Grid.Row="1"
+                       FontFamily="Microsoft YaHei, PingFang SC, SimSun"
+                       FontSize="14"
+                       Foreground="#aaaaaa"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       Text=""
+                       Visibility="Collapsed"/>
+
             <!-- Digital Panel -->
-            <Grid x:Name="DigitalPanel" Grid.Row="1" Margin="10">
+            <Grid x:Name="DigitalPanel" Grid.Row="2" Margin="10">
                 <TextBlock x:Name="ClockText"
                            FontFamily="Consolas"
                            FontSize="72"
@@ -39,7 +51,7 @@
             </Grid>
 
             <!-- Minimal Panel -->
-            <Grid x:Name="MinimalPanel" Grid.Row="1" Visibility="Collapsed">
+            <Grid x:Name="MinimalPanel" Grid.Row="2" Visibility="Collapsed">
                 <TextBlock x:Name="MinimalTimeText"
                            FontFamily="Consolas"
                            FontSize="54"
@@ -50,7 +62,7 @@
             </Grid>
 
             <!-- Word Panel -->
-            <Grid x:Name="WordPanel" Grid.Row="1" Visibility="Collapsed" Margin="15">
+            <Grid x:Name="WordPanel" Grid.Row="2" Visibility="Collapsed" Margin="15">
                 <TextBlock x:Name="WordTimeText"
                            FontFamily="Microsoft YaHei, PingFang SC, sans-serif"
                            FontSize="28"
@@ -63,10 +75,10 @@
             </Grid>
 
             <!-- Binary Panel -->
-            <Grid x:Name="BinaryPanel" Grid.Row="1" Visibility="Collapsed"/>
+            <Grid x:Name="BinaryPanel" Grid.Row="2" Visibility="Collapsed"/>
 
             <!-- Progress Panel -->
-            <Grid x:Name="ProgressPanel" Grid.Row="1" Visibility="Collapsed">
+            <Grid x:Name="ProgressPanel" Grid.Row="2" Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <StackPanel>
                         <TextBlock x:Name="ProgressHLabel" Text="H" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
@@ -108,7 +120,7 @@
             </Grid>
 
             <!-- Flip Panel -->
-            <Grid x:Name="FlipPanel" Grid.Row="1" Visibility="Collapsed">
+            <Grid x:Name="FlipPanel" Grid.Row="2" Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Border x:Name="FlipBorderH1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
                         <Grid>
@@ -153,7 +165,7 @@
 
             <!-- World Clock row -->
             <TextBlock x:Name="WorldClockText"
-                       Grid.Row="2"
+                       Grid.Row="3"
                        FontFamily="Consolas"
                        FontSize="16"
                        Foreground="#00d4ff"

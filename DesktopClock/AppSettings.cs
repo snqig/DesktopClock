@@ -25,7 +25,14 @@ public class AppSettings
     public double GradientAngle { get; set; } = 45;
     public string BorderColor { get; set; } = "#00d4ff";
     public double BorderThickness { get; set; } = 1;
+    public bool LunarEnabled { get; set; } = false;
+    public bool ShowSolarTerm { get; set; } = true;
+    public bool ShowZodiac { get; set; } = true;
+    public double LunarFontSize { get; set; } = 14;
+    public string LunarColor { get; set; } = "#aaaaaa";
     public bool ChimeEnabled { get; set; } = false;
+    public bool ReminderEnabled { get; set; } = false;
+    public string RemindersJson { get; set; } = "[]";
     public bool WorldClockEnabled { get; set; } = false;
     public string WorldClockTimeZone { get; set; } = "China Standard Time";
     public string HotkeyHide { get; set; } = "Ctrl+H";
