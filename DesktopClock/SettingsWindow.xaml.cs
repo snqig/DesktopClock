@@ -53,7 +53,7 @@ public partial class SettingsWindow : Window
         PopulateTimeZones();
 
         foreach (var item in HourFormatCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.Use24Hour.ToString())
+            if (item is ComboBoxItem ci && string.Equals(ci.Tag?.ToString(), Settings.Use24Hour.ToString(), StringComparison.OrdinalIgnoreCase))
                 HourFormatCombo.SelectedItem = item;
         ShowSecondsCheck.IsChecked = Settings.ShowSeconds;
         foreach (var item in DisplayModeCombo.Items)
@@ -592,6 +592,11 @@ public partial class SettingsWindow : Window
         Settings.LunarFontSize = LunarFontSizeSlider.Value;
         Settings.LunarColor = LunarColorBox.Text;
         Settings.ReminderEnabled = ReminderCheck.IsChecked == true;
+
+        var finalList = new System.Collections.Generic.List<ReminderItem>();
+        foreach (ReminderItem item in ReminderListBox.Items)
+            finalList.Add(item);
+        Settings.RemindersJson = System.Text.Json.JsonSerializer.Serialize(finalList);
 
         Settings.Save();
         DialogResult = true;

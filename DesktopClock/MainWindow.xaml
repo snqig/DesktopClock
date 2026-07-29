@@ -77,47 +77,8 @@
             <!-- Binary Panel -->
             <Grid x:Name="BinaryPanel" Grid.Row="2" Visibility="Collapsed"/>
 
-            <!-- Progress Panel -->
-            <Grid x:Name="ProgressPanel" Grid.Row="2" Visibility="Collapsed">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <StackPanel>
-                        <TextBlock x:Name="ProgressHLabel" Text="H" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
-                        <Grid Width="64" Height="64" Margin="4,2">
-                            <Ellipse Width="56" Height="56" Stroke="#333" StrokeThickness="6"/>
-                            <Ellipse x:Name="HourArc" Width="56" Height="56" Stroke="#00d4ff" StrokeThickness="6"
-                                     StrokeDashArray="0 200" RenderTransformOrigin="0.5,0.5">
-                                <Ellipse.RenderTransform>
-                                    <RotateTransform Angle="-90"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                        </Grid>
-                    </StackPanel>
-                    <StackPanel Margin="12,0,0,0">
-                        <TextBlock x:Name="ProgressMLabel" Text="M" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
-                        <Grid Width="64" Height="64" Margin="4,2">
-                            <Ellipse Width="56" Height="56" Stroke="#333" StrokeThickness="6"/>
-                            <Ellipse x:Name="MinuteArc" Width="56" Height="56" Stroke="#00d4ff" StrokeThickness="6"
-                                     StrokeDashArray="0 200" RenderTransformOrigin="0.5,0.5">
-                                <Ellipse.RenderTransform>
-                                    <RotateTransform Angle="-90"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                        </Grid>
-                    </StackPanel>
-                    <StackPanel Margin="12,0,0,0">
-                        <TextBlock x:Name="ProgressSLabel" Text="S" HorizontalAlignment="Center" FontSize="12" Foreground="#00d4ff"/>
-                        <Grid Width="64" Height="64" Margin="4,2">
-                            <Ellipse Width="56" Height="56" Stroke="#333" StrokeThickness="6"/>
-                            <Ellipse x:Name="SecondArc" Width="56" Height="56" Stroke="#00d4ff" StrokeThickness="6"
-                                     StrokeDashArray="0 200" RenderTransformOrigin="0.5,0.5">
-                                <Ellipse.RenderTransform>
-                                    <RotateTransform Angle="-90"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                        </Grid>
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
+            <!-- Progress Panel → 拟物模拟钟 -->
+            <Grid x:Name="ProgressPanel" Grid.Row="2" Visibility="Collapsed"/>
 
             <!-- Flip Panel -->
             <Grid x:Name="FlipPanel" Grid.Row="2" Visibility="Collapsed">

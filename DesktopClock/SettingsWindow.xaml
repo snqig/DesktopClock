@@ -1,7 +1,7 @@
 <Window x:Class="DesktopClock.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="时钟设置" Height="580" Width="480"
+        Title="时钟设置" Height="640" Width="480"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         ResizeMode="NoResize" Background="#F5F5F7" Foreground="#1D1D1F"
         FontFamily="PingFang SC, Microsoft YaHei, sans-serif">
