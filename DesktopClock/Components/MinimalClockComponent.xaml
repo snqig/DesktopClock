@@ -1,0 +1,11 @@
+<UserControl x:Class="DesktopClock.Components.MinimalClockComponent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <TextBlock x:Name="MinimalTimeText"
+               FontFamily="Consolas"
+               FontSize="54"
+               Foreground="#00d4ff"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Text="00:00:00"/>
+</UserControl>

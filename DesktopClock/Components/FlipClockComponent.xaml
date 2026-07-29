@@ -1,0 +1,44 @@
+<UserControl x:Class="DesktopClock.Components.FlipClockComponent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Border x:Name="FlipBorderH1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+            <Grid>
+                <TextBlock x:Name="FlipH1" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+        <Border x:Name="FlipBorderH2" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+            <Grid>
+                <TextBlock x:Name="FlipH2" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+        <TextBlock x:Name="FlipColon1" Text=":" FontSize="36" FontWeight="Bold" Foreground="#00d4ff" VerticalAlignment="Center" Margin="2,0"/>
+        <Border x:Name="FlipBorderM1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+            <Grid>
+                <TextBlock x:Name="FlipM1" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+        <Border x:Name="FlipBorderM2" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+            <Grid>
+                <TextBlock x:Name="FlipM2" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+        <TextBlock x:Name="FlipColon2" Text=":" FontSize="36" FontWeight="Bold" Foreground="#00d4ff" VerticalAlignment="Center" Margin="2,0"/>
+        <Border x:Name="FlipBorderS1" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+            <Grid>
+                <TextBlock x:Name="FlipS1" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+        <Border x:Name="FlipBorderS2" Width="36" Height="56" CornerRadius="4" Background="#1a1a2e" BorderBrush="#333" BorderThickness="1" Margin="2">
+            <Grid>
+                <TextBlock x:Name="FlipS2" Text="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="36" FontWeight="Bold" Foreground="#00d4ff"/>
+                <Line X1="0" X2="36" Y1="28" Y2="28" Stroke="#333" StrokeThickness="1"/>
+            </Grid>
+        </Border>
+    </StackPanel>
+</UserControl>
