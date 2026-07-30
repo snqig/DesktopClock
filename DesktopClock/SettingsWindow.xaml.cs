@@ -910,7 +910,13 @@ public partial class SettingsWindow : Window
         Settings.HotkeyHide = HotkeyBox.Text;
 
         Settings.AutoStart = AutoStartCheck.IsChecked == true;
+        // 同步注册表写入,使开关即时生效(下次开机自启/取消)
+        try { App.SetAutoStart(Settings.AutoStart); }
+        catch { /* 注册表写入失败不阻塞设置保存 */ }
         Settings.Language = (LanguageCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "zh";
+        // 即时应用语言切换(zh / en / ja),所有 DynamicResource 绑定自动刷新
+        try { I18n.Apply(Settings.Language); }
+        catch { /* 语言切换失败不阻塞设置保存 */ }
 
         Settings.LunarEnabled = LunarCheck.IsChecked == true;
         Settings.ShowSolarTerm = SolarTermCheck.IsChecked == true;

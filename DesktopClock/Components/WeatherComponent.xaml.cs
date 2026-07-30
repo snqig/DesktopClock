@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using DesktopClock.Models;
+using DesktopClock.Services;
 
 namespace DesktopClock.Components;
 
@@ -20,8 +22,25 @@ public class WeatherComponent : IClockComponent
     private readonly TextBlock _mainText;
     private readonly TextBlock _detailText;
     private string? _cached;
+    private string? _cachedDetail;
     private DateTime _lastFetch = DateTime.MinValue;
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    /// <summary>
+    /// 离线缓存文件路径,位于 %LOCALAPPDATA%\DesktopClock\cache\weather.json。
+    /// 缓存结构:{ "main":"...", "detail":"...", "ts":"ISO8601" }
+    /// </summary>
+    private static string CachePath
+    {
+        get
+        {
+            var dir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "DesktopClock", "cache");
+            Directory.CreateDirectory(dir);
+            return Path.Combine(dir, "weather.json");
+        }
+    }
 
     public WeatherComponent()
     {
@@ -53,6 +72,14 @@ public class WeatherComponent : IClockComponent
 
     public void Update(DateTime now)
     {
+        // 首次更新:优先从离线缓存恢复,避免启动时显示"加载中"
+        if (_cached == null)
+        {
+            LoadCache();
+            if (_cached != null)
+                DispatcherUpdate(_cached + " (缓存)", _cachedDetail ?? "");
+        }
+
         if ((now - _lastFetch).TotalMinutes >= 30)
         {
             _lastFetch = now;
@@ -114,14 +141,66 @@ public class WeatherComponent : IClockComponent
             }
 
             _cached = $"{desc} {temp:F0}°C";
+            _cachedDetail = detail;
+            SaveCache(_cached, _cachedDetail);
             DispatcherUpdate(_cached, detail);
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Warning($"[Weather] fetch failed: {ex.Message}");
             if (_cached != null)
-                DispatcherUpdate(_cached + " (缓存)", "");
+                DispatcherUpdate(_cached + " (缓存)", _cachedDetail ?? "");
             else
                 DispatcherUpdate("天气获取失败", "");
+        }
+    }
+
+    /// <summary>
+    /// 将天气主文本与详情写入离线缓存文件,带时间戳。
+    /// </summary>
+    private void SaveCache(string main, string? detail)
+    {
+        try
+        {
+            var payload = new
+            {
+                main,
+                detail = detail ?? "",
+                ts = DateTime.Now.ToString("O")
+            };
+            File.WriteAllText(CachePath, JsonSerializer.Serialize(payload));
+        }
+        catch (Exception ex)
+        {
+            Logger.Warning($"[Weather] save cache failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 从离线缓存文件恢复天气文本。缓存超过 24 小时视为过期不加载。
+    /// </summary>
+    private void LoadCache()
+    {
+        try
+        {
+            if (!File.Exists(CachePath)) return;
+            var json = File.ReadAllText(CachePath);
+            using var doc = JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("main", out var m)) return;
+            _cached = m.GetString();
+            if (doc.RootElement.TryGetProperty("detail", out var d))
+                _cachedDetail = d.GetString();
+            // 缓存超过 24 小时视为过期,不阻塞但记录日志
+            if (doc.RootElement.TryGetProperty("ts", out var t) &&
+                DateTime.TryParse(t.GetString(), out var ts) &&
+                (DateTime.Now - ts).TotalHours > 24)
+            {
+                Logger.Information("[Weather] cache expired (>24h), will refresh");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warning($"[Weather] load cache failed: {ex.Message}");
         }
     }
 

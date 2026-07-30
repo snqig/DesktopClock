@@ -1,0 +1,61 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- 日本語 (ja) -->
+
+    <!-- トレイメニュー -->
+    <sys:String x:Key="Tray_Settings">設定...</sys:String>
+    <sys:String x:Key="Tray_EditLayout">レイアウト編集モード</sys:String>
+    <sys:String x:Key="Tray_SwitchSkin">スキン切替</sys:String>
+    <sys:String x:Key="Tray_Show">表示</sys:String>
+    <sys:String x:Key="Tray_Hide">非表示</sys:String>
+    <sys:String x:Key="Tray_Exit">終了</sys:String>
+
+    <!-- 設定ウィンドウ -->
+    <sys:String x:Key="Settings_Title">DesktopClock 設定</sys:String>
+    <sys:String x:Key="Settings_Tab_Display">表示</sys:String>
+    <sys:String x:Key="Settings_Tab_Layout">レイアウト</sys:String>
+    <sys:String x:Key="Settings_Tab_Background">背景</sys:String>
+    <sys:String x:Key="Settings_Tab_Reminder">リマインダー</sys:String>
+    <sys:String x:Key="Settings_Tab_System">システム</sys:String>
+    <sys:String x:Key="Settings_Tab_About">バージョン情報</sys:String>
+
+    <!-- 表示モード -->
+    <sys:String x:Key="Mode_digital">デジタル</sys:String>
+    <sys:String x:Key="Mode_flip">フリップ</sys:String>
+    <sys:String x:Key="Mode_word">ワード</sys:String>
+    <sys:String x:Key="Mode_binary">バイナリ</sys:String>
+    <sys:String x:Key="Mode_minimal">ミニマル</sys:String>
+    <sys:String x:Key="Mode_progress">アナログ</sys:String>
+    <sys:String x:Key="Mode_analog_premium">プレミアムアナログ</sys:String>
+    <sys:String x:Key="Mode_mechanical">機械式</sys:String>
+    <sys:String x:Key="Mode_analog_skin">カスタム文字盤</sys:String>
+    <sys:String x:Key="Mode_ribbon">リボン</sys:String>
+    <sys:String x:Key="Mode_dual_analog">デュアルタイムゾーン</sys:String>
+
+    <!-- 共通 -->
+    <sys:String x:Key="Common_OK">OK</sys:String>
+    <sys:String x:Key="Common_Cancel">キャンセル</sys:String>
+    <sys:String x:Key="Common_Apply">適用</sys:String>
+    <sys:String x:Key="Common_Save">保存</sys:String>
+    <sys:String x:Key="Common_Add">追加</sys:String>
+    <sys:String x:Key="Common_Edit">編集</sys:String>
+    <sys:String x:Key="Common_Delete">削除</sys:String>
+
+    <!-- コンポーネント -->
+    <sys:String x:Key="Comp_weather">天気</sys:String>
+    <sys:String x:Key="Comp_date">日付</sys:String>
+    <sys:String x:Key="Comp_lunar">旧暦</sys:String>
+    <sys:String x:Key="Comp_world_clock">世界時計</sys:String>
+    <sys:String x:Key="Comp_sys_mon">システムモニター</sys:String>
+    <sys:String x:Key="Comp_countdown">カウントダウン</sys:String>
+    <sys:String x:Key="Comp_scrolling_todo">Todo</sys:String>
+    <sys:String x:Key="Comp_media_info">メディア情報</sys:String>
+
+    <!-- 天気 -->
+    <sys:String x:Key="Weather_Loading">天気を読み込み中...</sys:String>
+    <sys:String x:Key="Weather_Failed">天気の取得に失敗</sys:String>
+    <sys:String x:Key="Weather_Cached">(キャッシュ)</sys:String>
+    <sys:String x:Key="Weather_Sunrise">日の出</sys:String>
+    <sys:String x:Key="Weather_Sunset">日の入り</sys:String>
+</ResourceDictionary>

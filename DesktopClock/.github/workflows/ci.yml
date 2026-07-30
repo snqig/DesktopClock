@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Test (if test project exists, non-blocking)
+        if: hashFiles('tests/DesktopClock.Tests/DesktopClock.Tests.csproj') != ''
+        continue-on-error: true
+        run: dotnet test tests/DesktopClock.Tests/DesktopClock.Tests.csproj -c Release

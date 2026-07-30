@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 桌面时钟 ${{ github.ref_name }}
+          body: |
+            ## 下载
+
+            - **DesktopClock.exe** — 单文件可执行程序(见下方 Assets)
+
+            ## 系统要求
+
+            - 适用系统:Windows 10/11 x64
+            - 依赖:.NET 9 运行时(需已安装 .NET Desktop Runtime 9.x,框架依赖部署,非自包含)
+
+            ## 更新内容
+
+            版本 ${{ steps.version.outputs.version }} 发布。
+
+            如需查看完整提交历史,请参见 [Commits](https://github.com/${{ github.repository }}/commits/${{ github.ref_name }})。
+
+            ---
+
+            > 本发布说明由 GitHub Actions 自动生成,如有问题请提交 [Issue](https://github.com/${{ github.repository }}/issues)。
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            bin/Release/net9.0-windows10.0.19041.0/win-x64/publish/DesktopClock.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
