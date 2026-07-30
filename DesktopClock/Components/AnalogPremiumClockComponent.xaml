@@ -1,0 +1,150 @@
+<UserControl x:Class="DesktopClock.Components.AnalogPremiumClockComponent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="360" Height="360">
+    <Canvas x:Name="RootCanvas" Width="360" Height="360">
+        <!-- 旋转彩色光环(模拟 conic-gradient) -->
+        <Ellipse x:Name="HaloRing" Width="372" Height="372" Canvas.Left="-6" Canvas.Top="-6" Opacity="0.18">
+            <Ellipse.Fill>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#f0c27f" Offset="0.0"/>
+                    <GradientStop Color="#fc5c7d" Offset="0.25"/>
+                    <GradientStop Color="#6a82fb" Offset="0.5"/>
+                    <GradientStop Color="#43e97b" Offset="0.75"/>
+                    <GradientStop Color="#f0c27f" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Ellipse.Fill>
+            <Ellipse.Effect>
+                <BlurEffect Radius="8"/>
+            </Ellipse.Effect>
+            <Ellipse.RenderTransform>
+                <RotateTransform x:Name="HaloRotate" CenterX="186" CenterY="186" Angle="0"/>
+            </Ellipse.RenderTransform>
+        </Ellipse>
+
+        <!-- 玻璃圆盘主体 -->
+        <Ellipse Width="360" Height="360" Canvas.Left="0" Canvas.Top="0">
+            <Ellipse.Fill>
+                <SolidColorBrush Color="#1A1628" Opacity="0.45"/>
+            </Ellipse.Fill>
+            <Ellipse.Stroke>
+                <SolidColorBrush Color="#12FFFFFF"/>
+            </Ellipse.Stroke>
+            <Ellipse.StrokeThickness>1</Ellipse.StrokeThickness>
+            <Ellipse.Effect>
+                <DropShadowEffect BlurRadius="60" ShadowDepth="25" Color="Black" Opacity="0.45"/>
+            </Ellipse.Effect>
+        </Ellipse>
+
+        <!-- 装饰轨道点(旋转) -->
+        <Canvas x:Name="Orbit" Width="360" Height="360" Canvas.Left="0" Canvas.Top="0">
+            <Canvas.RenderTransform>
+                <RotateTransform x:Name="OrbitRotate" CenterX="180" CenterY="180" Angle="0"/>
+            </Canvas.RenderTransform>
+        </Canvas>
+
+        <!-- 12 个数字(代码生成) -->
+        <Canvas x:Name="Numbers" Width="360" Height="360" Canvas.Left="0" Canvas.Top="0"/>
+
+        <!-- 指针:时针(金粉渐变) -->
+        <Rectangle x:Name="HourHand" Width="6" Height="90" Canvas.Left="177" Canvas.Top="90" RadiusX="3" RadiusY="3">
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                    <GradientStop Color="#e8b86d" Offset="0.0"/>
+                    <GradientStop Color="#fc5c7d" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+            <Rectangle.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="0" Color="#fc5c7d" Opacity="0.25"/>
+            </Rectangle.Effect>
+            <Rectangle.RenderTransform>
+                <RotateTransform x:Name="HourRotate" CenterX="3" CenterY="90" Angle="0"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+
+        <!-- 指针:分针(蓝紫渐变) -->
+        <Rectangle x:Name="MinuteHand" Width="3.5" Height="126" Canvas.Left="178.25" Canvas.Top="54" RadiusX="1.75" RadiusY="1.75">
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                    <GradientStop Color="#5a72e8" Offset="0.0"/>
+                    <GradientStop Color="#a8b4ff" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+            <Rectangle.Effect>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="0" Color="#6a82fb" Opacity="0.2"/>
+            </Rectangle.Effect>
+            <Rectangle.RenderTransform>
+                <RotateTransform x:Name="MinuteRotate" CenterX="1.75" CenterY="126" Angle="0"/>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+
+        <!-- 指针:秒针组(主体 + 配重尾 + 尖端圆点) -->
+        <Grid x:Name="SecondHandGroup" Width="5" Height="191" Canvas.Left="177.5" Canvas.Top="34">
+            <!-- 秒针主体 -->
+            <Rectangle Width="1.5" Height="146" HorizontalAlignment="Center" VerticalAlignment="Top" RadiusX="1" RadiusY="1">
+                <Rectangle.Fill>
+                    <SolidColorBrush Color="#fc5c7d"/>
+                </Rectangle.Fill>
+                <Rectangle.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="0" Color="#fc5c7d" Opacity="0.35"/>
+                </Rectangle.Effect>
+            </Rectangle>
+            <!-- 秒针配重尾 -->
+            <Rectangle Width="5" Height="45" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,146,0,0" RadiusX="2.5" RadiusY="2.5" Opacity="0.55">
+                <Rectangle.Fill>
+                    <SolidColorBrush Color="#fc5c7d"/>
+                </Rectangle.Fill>
+            </Rectangle>
+            <!-- 秒针尖端圆点 -->
+            <Ellipse Width="5" Height="5" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-3,0,0">
+                <Ellipse.Fill>
+                    <SolidColorBrush Color="#fc5c7d"/>
+                </Ellipse.Fill>
+                <Ellipse.Effect>
+                    <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#fc5c7d" Opacity="0.6"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Grid.RenderTransform>
+                <RotateTransform x:Name="SecondRotate" CenterX="2.5" CenterY="146" Angle="0"/>
+            </Grid.RenderTransform>
+        </Grid>
+
+        <!-- 中心轴 -->
+        <Grid Width="13" Height="13" Canvas.Left="173.5" Canvas.Top="173.5">
+            <Ellipse>
+                <Ellipse.Fill>
+                    <RadialGradientBrush GradientOrigin="0.35,0.35" RadiusX="0.7" RadiusY="0.7">
+                        <GradientStop Color="#ffe0a0" Offset="0.0"/>
+                        <GradientStop Color="#fc5c7d" Offset="0.7"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.Stroke>
+                    <SolidColorBrush Color="#B00F121E"/>
+                </Ellipse.Stroke>
+                <Ellipse.StrokeThickness>2</Ellipse.StrokeThickness>
+                <Ellipse.Effect>
+                    <DropShadowEffect BlurRadius="22" ShadowDepth="0" Color="#fc5c7d" Opacity="0.3"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Ellipse Width="4" Height="4" Fill="#73000000"/>
+        </Grid>
+
+        <!-- 数字时间显示(胶囊):位于中心轴下方、数字 6 上方 -->
+        <Border x:Name="DigitalBorder" Canvas.Left="110" Canvas.Top="230" Width="140" CornerRadius="20" Padding="0,4">
+            <Border.Background>
+                <SolidColorBrush Color="Black" Opacity="0.32"/>
+            </Border.Background>
+            <Border.BorderBrush>
+                <SolidColorBrush Color="#0DFFFFFF"/>
+            </Border.BorderBrush>
+            <Border.BorderThickness>1</Border.BorderThickness>
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="TimeText" Text="00:00:00" FontSize="19" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Typography.NumeralAlignment="Tabular"
+                           Foreground="#BFFFD796"/>
+                <TextBlock x:Name="DateText" Text="----年--月--日" FontSize="10"
+                           HorizontalAlignment="Center" Margin="0,2,0,0" Foreground="#38FFFFFF"/>
+            </StackPanel>
+        </Border>
+    </Canvas>
+</UserControl>

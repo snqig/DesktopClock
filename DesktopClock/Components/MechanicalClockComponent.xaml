@@ -1,0 +1,217 @@
+<UserControl x:Class="DesktopClock.Components.MechanicalClockComponent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="400" Height="400">
+    <Canvas x:Name="RootCanvas" Width="400" Height="400">
+        <!-- 外圈齿轮(带齿,旋转) -->
+        <Canvas x:Name="GearOuter" Width="400" Height="400" Canvas.Left="0" Canvas.Top="0">
+            <Canvas.RenderTransform>
+                <RotateTransform x:Name="GearOuterRotate" CenterX="200" CenterY="200" Angle="0"/>
+            </Canvas.RenderTransform>
+        </Canvas>
+
+        <!-- 主表盘(径向渐变金属色) -->
+        <Ellipse Width="344" Height="344" Canvas.Left="28" Canvas.Top="28">
+            <Ellipse.Fill>
+                <RadialGradientBrush GradientOrigin="0.4,0.35" RadiusX="0.7" RadiusY="0.7">
+                    <GradientStop Color="#c4b59a" Offset="0.0"/>
+                    <GradientStop Color="#8a7a5a" Offset="1.0"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+            <Ellipse.Stroke>
+                <SolidColorBrush Color="#6a5a4a"/>
+            </Ellipse.Stroke>
+            <Ellipse.StrokeThickness>4</Ellipse.StrokeThickness>
+            <Ellipse.Effect>
+                <DropShadowEffect BlurRadius="50" ShadowDepth="10" Color="Black" Opacity="0.7"/>
+            </Ellipse.Effect>
+        </Ellipse>
+
+        <!-- 金属拉丝纹理(重复线性渐变) -->
+        <Ellipse Width="344" Height="344" Canvas.Left="28" Canvas.Top="28" Opacity="0.5">
+            <Ellipse.Fill>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0" SpreadMethod="Repeat" MappingMode="Absolute">
+                    <GradientStop Color="Transparent" Offset="0.0"/>
+                    <GradientStop Color="Transparent" Offset="0.5"/>
+                    <GradientStop Color="#08000000" Offset="0.5"/>
+                    <GradientStop Color="#08000000" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <!-- 内圈装饰环 1 -->
+        <Ellipse Width="316" Height="316" Canvas.Left="42" Canvas.Top="42"
+                 Stroke="#33000000" StrokeThickness="2"/>
+
+        <!-- 内圈装饰环 2 -->
+        <Ellipse Width="268" Height="268" Canvas.Left="66" Canvas.Top="66"
+                 Stroke="#26FFD78C" StrokeThickness="1"/>
+
+        <!-- 铆钉(代码生成) -->
+        <Canvas x:Name="Rivets" Width="400" Height="400" Canvas.Left="0" Canvas.Top="0"/>
+
+        <!-- 刻度(代码生成) -->
+        <Canvas x:Name="Ticks" Width="400" Height="400" Canvas.Left="0" Canvas.Top="0"/>
+
+        <!-- 小齿轮 1(右上,6s 正向) -->
+        <Canvas x:Name="SmallGear1" Width="36" Height="36" Canvas.Left="324" Canvas.Top="48">
+            <Canvas.RenderTransform>
+                <RotateTransform x:Name="SmallGear1Rotate" CenterX="18" CenterY="18" Angle="0"/>
+            </Canvas.RenderTransform>
+        </Canvas>
+
+        <!-- 小齿轮 2(左下,10s 反向) -->
+        <Canvas x:Name="SmallGear2" Width="30" Height="30" Canvas.Left="32" Canvas.Top="316">
+            <Canvas.RenderTransform>
+                <RotateTransform x:Name="SmallGear2Rotate" CenterX="15" CenterY="15" Angle="0"/>
+            </Canvas.RenderTransform>
+        </Canvas>
+
+        <!-- 小齿轮 3(右下,7s 正向) -->
+        <Canvas x:Name="SmallGear3" Width="28" Height="28" Canvas.Left="332" Canvas.Top="320">
+            <Canvas.RenderTransform>
+                <RotateTransform x:Name="SmallGear3Rotate" CenterX="14" CenterY="14" Angle="0"/>
+            </Canvas.RenderTransform>
+        </Canvas>
+
+        <!-- 指针:时针(深棕渐变 + 顶端圆点) -->
+        <Grid x:Name="HourHandGroup" Width="16" Height="112" Canvas.Left="192" Canvas.Top="88">
+            <Rectangle Width="6" Height="104" HorizontalAlignment="Center" VerticalAlignment="Bottom" RadiusX="3" RadiusY="3">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                        <GradientStop Color="#3a2a1a" Offset="0.0"/>
+                        <GradientStop Color="#6a5a4a" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+                <Rectangle.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="Black" Opacity="0.3"/>
+                </Rectangle.Effect>
+            </Rectangle>
+            <Ellipse Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-2,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush GradientOrigin="0.35,0.35" RadiusX="0.7" RadiusY="0.7">
+                        <GradientStop Color="#8a7a5a" Offset="0.0"/>
+                        <GradientStop Color="#3a2a1a" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.Effect>
+                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="Black" Opacity="0.5"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Grid.RenderTransform>
+                <RotateTransform x:Name="HourRotate" CenterX="8" CenterY="104" Angle="0"/>
+            </Grid.RenderTransform>
+        </Grid>
+
+        <!-- 指针:分针(深色渐变 + 顶端圆点) -->
+        <Grid x:Name="MinuteHandGroup" Width="12" Height="160" Canvas.Left="194" Canvas.Top="40">
+            <Rectangle Width="4" Height="152" HorizontalAlignment="Center" VerticalAlignment="Bottom" RadiusX="3" RadiusY="3">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                        <GradientStop Color="#2a2a2a" Offset="0.0"/>
+                        <GradientStop Color="#5a4a3a" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+                <Rectangle.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="Black" Opacity="0.3"/>
+                </Rectangle.Effect>
+            </Rectangle>
+            <Ellipse Width="10" Height="10" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-2,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush GradientOrigin="0.35,0.35" RadiusX="0.7" RadiusY="0.7">
+                        <GradientStop Color="#6a5a4a" Offset="0.0"/>
+                        <GradientStop Color="#2a2a2a" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.Effect>
+                    <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="Black" Opacity="0.5"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Grid.RenderTransform>
+                <RotateTransform x:Name="MinuteRotate" CenterX="6" CenterY="152" Angle="0"/>
+            </Grid.RenderTransform>
+        </Grid>
+
+        <!-- 指针:秒针(红色 + 配重尾 + 尖端圆点) -->
+        <Grid x:Name="SecondHandGroup" Width="8" Height="192" Canvas.Left="196" Canvas.Top="8">
+            <!-- 秒针主体 -->
+            <Rectangle Width="2" Height="176" HorizontalAlignment="Center" VerticalAlignment="Top" RadiusX="1" RadiusY="1">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
+                        <GradientStop Color="#8a1a1a" Offset="0.0"/>
+                        <GradientStop Color="#cc3333" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+                <Rectangle.Effect>
+                    <DropShadowEffect BlurRadius="15" ShadowDepth="0" Color="#cc3333" Opacity="0.3"/>
+                </Rectangle.Effect>
+            </Rectangle>
+            <!-- 秒针配重尾 -->
+            <Rectangle Width="6" Height="16" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,176,0,0" RadiusX="2" RadiusY="2" Opacity="0.4">
+                <Rectangle.Fill>
+                    <SolidColorBrush Color="#cc3333"/>
+                </Rectangle.Fill>
+            </Rectangle>
+            <!-- 秒针尖端圆点 -->
+            <Ellipse Width="6" Height="6" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-4,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush GradientOrigin="0.5,0.5" RadiusX="0.6" RadiusY="0.6">
+                        <GradientStop Color="#cc3333" Offset="0.0"/>
+                        <GradientStop Color="#8a1a1a" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="0" Color="#cc3333" Opacity="0.4"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Grid.RenderTransform>
+                <RotateTransform x:Name="SecondRotate" CenterX="4" CenterY="176" Angle="0"/>
+            </Grid.RenderTransform>
+        </Grid>
+
+        <!-- 中心大铆钉 -->
+        <Grid Width="22" Height="22" Canvas.Left="189" Canvas.Top="189">
+            <Ellipse Fill="#3a2a1a" Stroke="#3a2a1a" StrokeThickness="2">
+                <Ellipse.Effect>
+                    <DropShadowEffect BlurRadius="30" ShadowDepth="0" Color="Black" Opacity="0.3"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Ellipse>
+                <Ellipse.Fill>
+                    <RadialGradientBrush GradientOrigin="0.35,0.35" RadiusX="0.7" RadiusY="0.7">
+                        <GradientStop Color="#c4b59a" Offset="0.0"/>
+                        <GradientStop Color="#5a4a3a" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="8" Height="8">
+                <Ellipse.Fill>
+                    <RadialGradientBrush GradientOrigin="0.5,0.5" RadiusX="0.6" RadiusY="0.6">
+                        <GradientStop Color="#6a5a4a" Offset="0.0"/>
+                        <GradientStop Color="#2a2a2a" Offset="1.0"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Grid>
+
+        <!-- 数字时间显示(位于中心与 6 点钟之间,65% 位置) -->
+        <Border x:Name="DigitalBorder" Canvas.Left="120" Canvas.Top="240" Width="160" CornerRadius="12" Padding="0,2">
+            <Border.Background>
+                <SolidColorBrush Color="Black" Opacity="0.5"/>
+            </Border.Background>
+            <Border.BorderBrush>
+                <SolidColorBrush Color="#14FFD78C"/>
+            </Border.BorderBrush>
+            <Border.BorderThickness>1</Border.BorderThickness>
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="TimeText" Text="00:00:00" FontSize="18" FontWeight="SemiBold"
+                           FontFamily="Courier New, monospace"
+                           HorizontalAlignment="Center" Typography.NumeralAlignment="Tabular"
+                           Foreground="#CCC8B496"/>
+                <TextBlock x:Name="DateText" Text="----年--月--日" FontSize="8"
+                           FontFamily="Courier New, monospace"
+                           HorizontalAlignment="Center" Margin="0,1,0,0" Foreground="#40C8B496"/>
+            </StackPanel>
+        </Border>
+    </Canvas>
+</UserControl>

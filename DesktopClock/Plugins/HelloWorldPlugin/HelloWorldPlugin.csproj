@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <LangVersion>latest</LangVersion>
+    <Authors>DesktopClock</Authors>
+    <Description>Hello World Plugin Example - demonstrates DesktopClock plugin system</Description>
+    <PackageId>HelloWorldPlugin</PackageId>
+    <Version>1.0.0</Version>
+    <Title>Hello World Plugin</Title>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Windows.Extensions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

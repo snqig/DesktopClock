@@ -1,27 +1,32 @@
 using System;
 using System.Windows.Controls;
+using DesktopClock.Services;
 
 namespace DesktopClock.Components;
 
 public partial class WordClockComponent : UserControl, IClockComponent
 {
-    private readonly AppSettings _settings;
-
     public string Id => "word_clock";
     public string DisplayName => "文字时钟";
     public System.Windows.FrameworkElement View => this;
     public Models.ComponentConfig Config { get; set; } = new();
 
-    public WordClockComponent(AppSettings settings)
+    public WordClockComponent()
     {
         InitializeComponent();
-        _settings = settings;
+        ApplyConfig();
+        SettingsProvider.Instance.SettingsChanged += OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged()
+    {
         ApplyConfig();
     }
 
     public void Update(DateTime now)
     {
-        int h = _settings.Use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
+        var settings = SettingsProvider.Instance.Settings;
+        int h = settings.Use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
         WordTimeText.Text = TimeToChinese(h, now.Minute, now.Second);
     }
 
@@ -38,16 +43,18 @@ public partial class WordClockComponent : UserControl, IClockComponent
 
     private string TimeToChinese(int h, int m, int s)
     {
+        var settings = SettingsProvider.Instance.Settings;
         string hStr = h == 0 ? "零时" : NumberToChinese(h) + "点";
         if (m == 0 && s == 0) return hStr + "整";
         string result = hStr + NumberToChinese(m) + "分";
-        if (_settings.ShowSeconds) result += NumberToChinese(s) + "秒";
+        if (settings.ShowSeconds) result += NumberToChinese(s) + "秒";
         return result;
     }
 
     public void ApplyConfig()
     {
+        var settings = SettingsProvider.Instance.Settings;
         try { WordTimeText.Foreground = new System.Windows.Media.SolidColorBrush(
-            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.FontColor)); } catch { }
+            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.FontColor)); } catch { }
     }
 }

@@ -142,9 +142,10 @@
                         <ComboBox x:Name="DisplayModeCombo" Grid.Column="1">
                             <ComboBoxItem Content="数字" Tag="digital" />
                             <ComboBoxItem Content="翻转" Tag="flip" />
-                            <ComboBoxItem Content="文字" Tag="word" />
                             <ComboBoxItem Content="二进制" Tag="binary" />
-                            <ComboBoxItem Content="进度" Tag="progress" />
+                            <ComboBoxItem Content="模拟时钟" Tag="progress" />
+                            <ComboBoxItem Content="超精美模拟时钟" Tag="analog_premium" />
+                            <ComboBoxItem Content="机械时钟" Tag="mechanical" />
                             <ComboBoxItem Content="极简" Tag="minimal" />
                         </ComboBox>
                     </Grid>
@@ -403,6 +404,39 @@
                     <CheckBox x:Name="SnapToEdgeCheck" Content="窗口贴边" Margin="0,0,0,14" />
 
                     <CheckBox x:Name="LockPositionCheck" Content="锁定位置" Margin="0,0,0,14" />
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="布局模式" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="LayoutModeCombo" Grid.Column="1">
+                            <ComboBoxItem Content="自动排列" Tag="stack" />
+                            <ComboBoxItem Content="自由拖拽" Tag="free" />
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- Plugin Management -->
+                    <TextBlock Text="插件" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+
+                    <ListBox x:Name="PluginListBox" Height="100" Margin="0,0,0,8" SelectionMode="Single">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
+                                <TextBlock Text="{Binding Version}" FontSize="11" Foreground="#86868B" />
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" />
+                        </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
                     <Grid>
                         <Grid.ColumnDefinitions>

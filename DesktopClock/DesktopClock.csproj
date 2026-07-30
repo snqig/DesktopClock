@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -8,12 +9,48 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>clock.ico</ApplicationIcon>
+    <AssemblyTitle>DesktopClock</AssemblyTitle>
+    <Version>1.0.0</Version>
+    <Authors>DesktopClock</Authors>
+    <Description>Desktop Clock Application with rich display modes and plugin system</Description>
+    <Product>DesktopClock</Product>
   </PropertyGroup>
 
-  <!-- 禁用 WinForms 全局隐式 using，避免与 WPF 的 Application/Color/FontFamily 等类型冲突 -->
+  <PropertyGroup Condition="'$(Configuration)'=='Debug' AND '$(TargetFramework)'=='net9.0-windows'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release' AND '$(TargetFramework)'=='net9.0-windows'">
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Disable WinForms global implicit using, avoid conflict with WPF Application/Color/FontFamily etc types -->
   <ItemGroup>
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <!-- Package references for external dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)'=='net9.0-windows'">
+    <PackageReference Include="FontAwesome.WPF" Version="4.7.0" />
+    <PackageReference Include="System.Windows.Extensions" Version="9.0.0" />
+  </ItemGroup>
+
+  <!-- The .NET SDK automatically includes:
+       - All .cs files as Compile items
+       - All .xaml files (except App.xaml) as Page items
+       - App.xaml as ApplicationDefinition
+       No manual Compile/Page entries needed. -->
+  <ItemGroup>
+    <None Include="clock.ico" />
+  </ItemGroup>
+
+  <!-- Exclude build output and plugin sub-projects from compilation -->
+  <ItemGroup>
+    <Compile Remove="obj\**" />
+    <Compile Remove="bin\**" />
+    <Compile Remove="Plugins\**" />
   </ItemGroup>
 
 </Project>

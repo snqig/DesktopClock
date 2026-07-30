@@ -1,36 +1,42 @@
 using System;
 using System.Windows.Controls;
+using DesktopClock.Services;
 
 namespace DesktopClock.Components;
 
 public partial class MinimalClockComponent : UserControl, IClockComponent
 {
-    private readonly AppSettings _settings;
-
     public string Id => "minimal_clock";
     public string DisplayName => "极简时钟";
     public System.Windows.FrameworkElement View => this;
     public Models.ComponentConfig Config { get; set; } = new();
 
-    public MinimalClockComponent(AppSettings settings)
+    public MinimalClockComponent()
     {
         InitializeComponent();
-        _settings = settings;
+        ApplyConfig();
+        SettingsProvider.Instance.SettingsChanged += OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged()
+    {
         ApplyConfig();
     }
 
     public void Update(DateTime now)
     {
-        var format = _settings.Use24Hour ? "HH" : "hh";
+        var settings = SettingsProvider.Instance.Settings;
+        var format = settings.Use24Hour ? "HH" : "hh";
         format += ":mm";
-        if (_settings.ShowSeconds) format += ":ss";
+        if (settings.ShowSeconds) format += ":ss";
         MinimalTimeText.Text = now.ToString(format);
     }
 
     public void ApplyConfig()
     {
-        MinimalTimeText.FontSize = Math.Min(_settings.FontSize, 72);
+        var settings = SettingsProvider.Instance.Settings;
+        MinimalTimeText.FontSize = Math.Min(settings.FontSize, 72);
         try { MinimalTimeText.Foreground = new System.Windows.Media.SolidColorBrush(
-            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.FontColor)); } catch { }
+            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.FontColor)); } catch { }
     }
 }

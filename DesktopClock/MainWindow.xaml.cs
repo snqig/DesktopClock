@@ -8,6 +8,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopClock.Components;
+using DesktopClock.Services;
 
 namespace DesktopClock;
 
@@ -20,6 +21,8 @@ public partial class MainWindow : Window
     private IntPtr _windowHandle;
     private bool _isShuttingDown;
     private readonly ComponentRegistry _registry = new();
+    private readonly LayoutEngine _layoutEngine = new();
+    private readonly PluginManager _pluginManager;
     private readonly HashSet<string> _firedReminders = new();
 
     private const int HOTKEY_ID = 9000;
@@ -46,6 +49,9 @@ public partial class MainWindow : Window
 
         _settings = AppSettings.Load();
         RegisterComponents();
+        _pluginManager = new PluginManager(
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"), _registry);
+        _pluginManager.LoadAll(_settings.Plugins);
         ApplySettings();
         LoadPosition();
 
@@ -59,42 +65,52 @@ public partial class MainWindow : Window
             if (!_settings.LockPosition) this.DragMove();
         };
 
+        this.MouseMove += (s, e) =>
+        {
+            _layoutEngine.HandleMouseMove(e.GetPosition(this));
+        };
+
+        this.MouseLeftButtonUp += (s, e) =>
+        {
+            _layoutEngine.HandleMouseUp(e.GetPosition(this), _settings.Layout);
+        };
+
+        this.KeyDown += (s, e) =>
+        {
+            _layoutEngine.HandleKeyDown(e.Key, _settings.Layout);
+        };
+
+        _layoutEngine.LayoutChanged += () =>
+        {
+            if (_layoutEngine.IsFreeMode)
+            {
+                // 先把当前画布上的坐标同步到 Layout.Positions,再持久化
+                _layoutEngine.SaveFreePositions(MainContainer, _settings.Layout);
+                _settings.Save();
+            }
+        };
+
         CreateTrayIcon();
     }
 
     private void RegisterComponents()
     {
-        _registry.Register(new DateComponent(_settings));
-        _registry.Register(new LunarComponent(_settings));
-        _registry.Register(new DigitalClockComponent(_settings));
-        _registry.Register(new FlipClockComponent(_settings));
-        _registry.Register(new WordClockComponent(_settings));
-        _registry.Register(new BinaryClockComponent(_settings));
-        _registry.Register(new MinimalClockComponent(_settings));
-        _registry.Register(new AnalogClockComponent(_settings));
-        _registry.Register(new WorldClockComponent(_settings));
+        _registry.Register(new DateComponent());
+        _registry.Register(new LunarComponent());
+        _registry.Register(new DigitalClockComponent());
+        _registry.Register(new FlipClockComponent());
+        _registry.Register(new WordClockComponent());
+        _registry.Register(new BinaryClockComponent());
+        _registry.Register(new MinimalClockComponent());
+        _registry.Register(new AnalogClockComponent());
+        _registry.Register(new AnalogPremiumClockComponent());
+        _registry.Register(new MechanicalClockComponent());
+        _registry.Register(new WorldClockComponent());
     }
 
     private void RebuildLayout()
     {
-        MainContainer.Children.Clear();
-        int row = 0;
-
-        // Date at top
-        if (_settings.ShowDate && _settings.DatePosition != "bottom")
-        {
-            var comp = _registry.Get("date");
-            if (comp != null) { Grid.SetRow(comp.View, 0); MainContainer.Children.Add(comp.View); row = 1; }
-        }
-
-        // Lunar
-        if (_settings.LunarEnabled)
-        {
-            var comp = _registry.Get("lunar");
-            if (comp != null) { Grid.SetRow(comp.View, row); MainContainer.Children.Add(comp.View); row++; }
-        }
-
-        // Active clock panel in center (row 2 if date is top, row 1 if no date)
+        // Sync LayoutConfig from settings
         var clockId = _settings.DisplayMode switch
         {
             "flip" => "flip_clock",
@@ -102,33 +118,29 @@ public partial class MainWindow : Window
             "binary" => "binary_clock",
             "minimal" => "minimal_clock",
             "progress" => "analog_clock",
+            "analog_premium" => "analog_premium_clock",
+            "mechanical" => "mechanical_clock",
             _ => "digital_clock"
         };
-        var clock = _registry.Get(clockId);
-        if (clock != null) { Grid.SetRow(clock.View, 2); MainContainer.Children.Add(clock.View); }
 
-        // World clock
-        if (_settings.WorldClockEnabled)
+        var active = new List<string>();
+        if (_settings.ShowDate) active.Add("date");
+        if (_settings.LunarEnabled) active.Add("lunar");
+        active.Add(clockId);
+        if (_settings.WorldClockEnabled) active.Add("world_clock");
+
+        // Add external plugin components
+        foreach (var kvp in _registry.GetAllExternal())
         {
-            var comp = _registry.Get("world_clock");
-            if (comp != null) { Grid.SetRow(comp.View, 3); MainContainer.Children.Add(comp.View); }
+            if (!active.Contains(kvp.Key))
+                active.Add(kvp.Key);
         }
 
-        // Date at bottom
-        if (_settings.ShowDate && _settings.DatePosition == "bottom")
-        {
-            var comp = _registry.Get("date");
-            if (comp != null) { Grid.SetRow(comp.View, 3); MainContainer.Children.Add(comp.View); }
-        }
+        _settings.Layout.ActiveComponents = active;
+        // 所有模式（包括 progress）都使用 Stack 布局,不再强制使用 Free 布局
+        // 如需拖拽定位,用户可在设置中手动切换到 Free 模式
 
-        // Minimal mode hides date and lunar
-        if (_settings.DisplayMode == "minimal")
-        {
-            var date = _registry.Get("date");
-            if (date?.View != null) date.View.Visibility = Visibility.Collapsed;
-            var lunar = _registry.Get("lunar");
-            if (lunar?.View != null) lunar.View.Visibility = Visibility.Collapsed;
-        }
+        _layoutEngine.BuildLayout(MainContainer, _registry, _settings.Layout);
     }
 
     private void CreateTrayIcon()
@@ -248,6 +260,9 @@ public partial class MainWindow : Window
     {
         if (!_settings.ReminderEnabled) return;
         var now = DateTime.Now;
+        // 清理非当前分钟的已触发记录,防止集合无限增长;同分钟内仍能去重
+        var currentMinute = now.ToString("yyyyMMddHHmm");
+        _firedReminders.RemoveWhere(k => !k.EndsWith(currentMinute));
         List<ReminderItem> reminders;
         try { reminders = System.Text.Json.JsonSerializer.Deserialize<List<ReminderItem>>(_settings.RemindersJson) ?? new(); }
         catch { return; }
@@ -324,7 +339,7 @@ public partial class MainWindow : Window
 
     private void OpenSettings()
     {
-        var win = new SettingsWindow(_settings) { Owner = this };
+        var win = new SettingsWindow(_settings, _pluginManager) { Owner = this };
         if (win.ShowDialog() == true)
         {
             _settings = win.Settings;
@@ -334,6 +349,9 @@ public partial class MainWindow : Window
 
     private void ApplySettings()
     {
+        // Update central settings provider so all components see the new settings
+        SettingsProvider.Instance.UpdateSettings(_settings);
+        
         RebuildLayout();
         _registry.ApplyAllConfig();
 
@@ -358,8 +376,16 @@ public partial class MainWindow : Window
                 this.Height = 140 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
                 break;
             case "progress":
-                this.Width = 320;
-                this.Height = 320 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Width = 340;
+                this.Height = 340 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                break;
+            case "analog_premium":
+                this.Width = 380;
+                this.Height = 380 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                break;
+            case "mechanical":
+                this.Width = 420;
+                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
                 break;
             case "flip":
                 this.Width = 380;
@@ -392,6 +418,13 @@ public partial class MainWindow : Window
 
     private void ApplyBackground()
     {
+        // 模拟时钟模式:玻璃圆盘之外完全透明,只显示组件本身的圆盘
+        if (_settings.DisplayMode == "progress" || _settings.DisplayMode == "analog_premium" || _settings.DisplayMode == "mechanical")
+        {
+            MainBorder.Background = Brushes.Transparent;
+            return;
+        }
+
         if (_settings.BackgroundType == "gradient")
         {
             try
@@ -418,6 +451,8 @@ public partial class MainWindow : Window
     private void ApplyThemePreset()
     {
         var currentTheme = _settings.ThemePreset;
+        if (currentTheme == "default") return;
+
         string fontColor, borderColor;
         switch (currentTheme)
         {
@@ -427,13 +462,15 @@ public partial class MainWindow : Window
             case "blue": fontColor = "#4488ff"; borderColor = "#4488ff"; break;
             default: return;
         }
-        if (currentTheme != "default")
-        {
-            _settings.FontColor = fontColor;
-            _settings.BorderColor = borderColor;
-            try { MainBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(borderColor)); } catch { }
-            _registry.ApplyAllConfig();
-        }
+
+        _settings.FontColor = fontColor;
+        _settings.BorderColor = borderColor;
+        try { MainBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(borderColor)); } catch { }
+        _registry.ApplyAllConfig();
+
+        // 预设色已应用,重置为 default,避免后续 ApplySettings 再次覆盖用户手动修改的颜色。
+        // 这样用户在设置里选完主题预设后,再改颜色就能生效(与右键"选择颜色"行为一致)。
+        _settings.ThemePreset = "default";
     }
 
     private void SetClickThrough(bool enable)
@@ -488,6 +525,8 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        // 无论是隐藏到托盘还是真正退出,都先保存自由布局位置
+        _layoutEngine.SaveFreePositions(MainContainer, _settings.Layout);
         if (!_isShuttingDown) { e.Cancel = true; this.Visibility = Visibility.Hidden; return; }
         if (_hotkeyRegistered) { UnregisterHotKey(_windowHandle, HOTKEY_ID); _hotkeyRegistered = false; }
         _trayIcon?.Dispose();

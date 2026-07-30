@@ -2,12 +2,14 @@ using System;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using DesktopClock.Services;
 
 namespace DesktopClock.Components;
 
 public partial class BinaryClockComponent : UserControl, IClockComponent
 {
-    private readonly AppSettings _settings;
+    // 改用单例 SettingsProvider,与主窗口设置实时同步(原 SettingsService 是启动快照,设置改动后不更新)
+    private AppSettings Settings => SettingsProvider.Instance.Settings;
     private Ellipse[,]? _dots;
     private bool _built;
     private TextBlock? _colon1, _colon2;
@@ -17,10 +19,9 @@ public partial class BinaryClockComponent : UserControl, IClockComponent
     public System.Windows.FrameworkElement View => this;
     public Models.ComponentConfig Config { get; set; } = new();
 
-    public BinaryClockComponent(AppSettings settings)
+    public BinaryClockComponent()
     {
         InitializeComponent();
-        _settings = settings;
     }
 
     public void Update(DateTime now)
@@ -28,11 +29,12 @@ public partial class BinaryClockComponent : UserControl, IClockComponent
         BuildPanel();
         if (_dots == null) return;
 
-        int h = _settings.Use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
+        var settings = Settings;
+        int h = settings.Use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
         int[] digits = { h / 10, h % 10, now.Minute / 10, now.Minute % 10, now.Second / 10, now.Second % 10 };
 
         Brush lit;
-        try { lit = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_settings.FontColor)); }
+        try { lit = new SolidColorBrush((Color)ColorConverter.ConvertFromString(settings.FontColor)); }
         catch { lit = new SolidColorBrush(Color.FromRgb(0x00, 0xd4, 0xff)); }
         var unlit = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
 

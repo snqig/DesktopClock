@@ -51,36 +51,65 @@ public class AppSettings
     public Models.GlobalConfig Global { get; set; } = new();
     public Models.LayoutConfig Layout { get; set; } = new();
     public Dictionary<string, Models.ComponentConfig> Components { get; set; } = new();
+    public Dictionary<string, bool> Plugins { get; set; } = new();
 
-    private static readonly string FilePath = Path.Combine(
+    // 旧路径:程序目录(仅用于一次性迁移到新路径)
+    private static readonly string LegacyFilePath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "settings.json");
+
+    // 新路径:用户 LocalAppData,避免装在 Program Files 时无写权限
+    private static string GetFilePath()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DesktopClock");
+        return Path.Combine(dir, "settings.json");
+    }
 
     public void Save()
     {
         PopulateStructuredFromFlat();
+        var path = GetFilePath();
+        var dir = Path.GetDirectoryName(path);
+        if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
         var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(FilePath, json);
+        File.WriteAllText(path, json);
     }
 
     public static AppSettings Load()
     {
+        var path = GetFilePath();
+        string? json = null;
+        bool migratedFromLegacy = false;
         try
         {
-            if (File.Exists(FilePath))
+            if (File.Exists(path))
             {
-                var json = File.ReadAllText(FilePath);
+                json = File.ReadAllText(path);
+            }
+            else if (File.Exists(LegacyFilePath))
+            {
+                // 首次运行:从旧路径迁移
+                json = File.ReadAllText(LegacyFilePath);
+                migratedFromLegacy = true;
+            }
+
+            if (json != null)
+            {
                 using var doc = JsonDocument.Parse(json);
 
                 if (doc.RootElement.TryGetProperty("Version", out var ver) && ver.GetInt32() >= 2)
                 {
                     var v2 = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
                     v2.MigrateFlatFromStructured();
+                    if (migratedFromLegacy) v2.Save();
                     return v2;
                 }
 
                 var v1 = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
                 v1.Version = 2;
                 v1.MigrateToStructured();
+                if (migratedFromLegacy) v1.Save();
                 return v1;
             }
         }
@@ -106,10 +135,27 @@ public class AppSettings
             WindowHeight = 120
         };
 
+        // DisplayMode 是显示模式名,需映射为真实组件 id
+        var clockId = DisplayMode switch
+        {
+            "flip" => "flip_clock",
+            "word" => "word_clock",
+            "binary" => "binary_clock",
+            "minimal" => "minimal_clock",
+            "progress" => "analog_clock",
+            _ => "digital_clock"
+        };
+
+        var activeComponents = new List<string>();
+        if (ShowDate) activeComponents.Add("date");
+        if (LunarEnabled) activeComponents.Add("lunar");
+        activeComponents.Add(clockId);
+        if (WorldClockEnabled) activeComponents.Add("world_clock");
+
         Layout = new Models.LayoutConfig
         {
-            ActiveComponents = new List<string> { DisplayMode },
-            ZOrder = new List<string> { "date", "lunar", "digital_clock", "world_clock" }
+            ActiveComponents = activeComponents,
+            ZOrder = new List<string> { "date", "lunar", clockId, "world_clock" }
         };
 
         Components = new Dictionary<string, Models.ComponentConfig>

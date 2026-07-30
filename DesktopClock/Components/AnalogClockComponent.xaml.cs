@@ -1,90 +1,146 @@
 using System;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using DesktopClock.Services;
 
 namespace DesktopClock.Components;
 
 public partial class AnalogClockComponent : UserControl, IClockComponent
 {
-    private readonly AppSettings _settings;
-    private Rectangle? _hourHand, _minuteHand, _secondHand;
-    private bool _built;
-
     public string Id => "analog_clock";
     public string DisplayName => "模拟时钟";
     public System.Windows.FrameworkElement View => this;
     public Models.ComponentConfig Config { get; set; } = new();
 
-    public AnalogClockComponent(AppSettings settings)
+    private bool _built;
+    private bool _use24Hour = true;
+    private bool _showSeconds = true;
+
+    public AnalogClockComponent()
     {
         InitializeComponent();
-        _settings = settings;
+        // 不依赖 Loaded,Update 首次调用时构建(此时元素已在可视树中)
     }
 
     public void Update(DateTime now)
     {
-        BuildClock();
-        double h = now.Hour % 12, m = now.Minute, s = now.Second;
-        if (_hourHand != null) _hourHand.RenderTransform = new RotateTransform((h + m / 60.0 + s / 3600.0) * 30);
-        if (_minuteHand != null) _minuteHand.RenderTransform = new RotateTransform((m + s / 60.0) * 6);
-        if (_secondHand != null) _secondHand.RenderTransform = new RotateTransform(s * 6);
-    }
-
-    private void BuildClock()
-    {
-        if (_built) return;
+        if (!_built) BuildAndAnimate();
         _built = true;
 
-        var canvas = new Canvas { Width = 280, Height = 280, HorizontalAlignment = System.Windows.HorizontalAlignment.Center, VerticalAlignment = System.Windows.VerticalAlignment.Center };
-        double cx = 140, cy = 140;
-        var faceBrush = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x35));
-        var innerBrush = new SolidColorBrush(Color.FromRgb(0x1e, 0x1e, 0x2e));
-        var markerBrush = new SolidColorBrush(Color.FromRgb(0x6a, 0x7a, 0x8a));
-        var textBrush = new SolidColorBrush(Color.FromRgb(0x8a, 0x9a, 0xaa));
-
-        var outer = new Ellipse { Width = 280, Height = 280, Fill = faceBrush };
-        outer.Effect = new DropShadowEffect { BlurRadius = 20, ShadowDepth = 6, Color = Colors.Black, Opacity = 0.5 };
-        Canvas.SetLeft(outer, 0); Canvas.SetTop(outer, 0); canvas.Children.Add(outer);
-
-        var inner = new Ellipse { Width = 258, Height = 258, Fill = innerBrush, Stroke = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x45)), StrokeThickness = 1 };
-        Canvas.SetLeft(inner, 11); Canvas.SetTop(inner, 11); canvas.Children.Add(inner);
-
-        for (int i = 1; i <= 12; i++)
+        int hour = _use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
+        HmText.Text = $"{hour:D2}:{now.Minute:D2}";
+        if (_showSeconds)
         {
-            double a = i * 30 * Math.PI / 180;
-            double mr = 118, nr = 92;
-            bool major = i % 3 == 0;
-            var dot = new Ellipse { Width = major ? 8 : 5, Height = major ? 8 : 5, Fill = markerBrush };
-            Canvas.SetLeft(dot, cx + mr * Math.Sin(a) - dot.Width / 2);
-            Canvas.SetTop(dot, cy - mr * Math.Cos(a) - dot.Height / 2);
-            canvas.Children.Add(dot);
-
-            var tb = new TextBlock { Text = i.ToString(), FontSize = 16, FontWeight = major ? System.Windows.FontWeights.Bold : System.Windows.FontWeights.Normal, Foreground = textBrush };
-            tb.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
-            Canvas.SetLeft(tb, cx + nr * Math.Sin(a) - tb.DesiredSize.Width / 2);
-            Canvas.SetTop(tb, cy - nr * Math.Cos(a) - tb.DesiredSize.Height / 2);
-            canvas.Children.Add(tb);
+            SecText.Text = now.Second.ToString("D2");
+            SecText.Visibility = System.Windows.Visibility.Visible;
         }
-
-        _hourHand = new Rectangle { Width = 6, Height = 50, Fill = new SolidColorBrush(Color.FromRgb(0x4a, 0x5a, 0x6a)), RadiusX = 3, RadiusY = 3, RenderTransformOrigin = new System.Windows.Point(0.5, 1) };
-        Canvas.SetLeft(_hourHand, cx - 3); Canvas.SetTop(_hourHand, cy - 50); canvas.Children.Add(_hourHand);
-
-        _minuteHand = new Rectangle { Width = 4, Height = 75, Fill = new SolidColorBrush(Color.FromRgb(0x7a, 0x8a, 0x9a)), RadiusX = 2, RadiusY = 2, RenderTransformOrigin = new System.Windows.Point(0.5, 1) };
-        Canvas.SetLeft(_minuteHand, cx - 2); Canvas.SetTop(_minuteHand, cy - 75); canvas.Children.Add(_minuteHand);
-
-        _secondHand = new Rectangle { Width = 2, Height = 90, Fill = new SolidColorBrush(Color.FromRgb(0xe6, 0x5e, 0x5e)), RadiusX = 1, RadiusY = 1, RenderTransformOrigin = new System.Windows.Point(0.5, 1) };
-        Canvas.SetLeft(_secondHand, cx - 1); Canvas.SetTop(_secondHand, cy - 90); canvas.Children.Add(_secondHand);
-
-        var pin = new Ellipse { Width = 18, Height = 18, Fill = faceBrush };
-        pin.Effect = new DropShadowEffect { BlurRadius = 4, ShadowDepth = 2, Color = Colors.Black, Opacity = 0.4 };
-        Canvas.SetLeft(pin, cx - 9); Canvas.SetTop(pin, cy - 9); canvas.Children.Add(pin);
-        var pinInner = new Ellipse { Width = 6, Height = 6, Fill = new SolidColorBrush(Color.FromRgb(0x4a, 0x5a, 0x6a)) };
-        Canvas.SetLeft(pinInner, cx - 3); Canvas.SetTop(pinInner, cy - 3); canvas.Children.Add(pinInner);
-
-        AnalogContainer.Children.Add(canvas);
+        else
+        {
+            SecText.Visibility = System.Windows.Visibility.Collapsed;
+        }
+        DateText.Text = $"{now.Year}年{now.Month:D2}月{now.Day:D2}日";
     }
 
-    public void ApplyConfig() { }
+    public void ApplyConfig()
+    {
+        var s = SettingsProvider.Instance.Settings;
+        _use24Hour = s.Use24Hour;
+        _showSeconds = s.ShowSeconds;
+    }
+
+    private void BuildAndAnimate()
+    {
+        ApplyConfig();
+
+        // 轨道 1:12 个点,半径 144,均匀分布
+        // 对应 HTML 中 12 个 .dot 位置(按 12 个钟点位置)
+        var orbit1Positions = new (double angleDeg, double size, double opacity)[]
+        {
+            (0,   8, 0.5),
+            (30,  8, 0.5),
+            (60,  8, 0.5),
+            (90,  8, 0.5),
+            (120, 8, 0.5),
+            (150, 8, 0.5),
+            (180, 8, 0.5),
+            (210, 8, 0.5),
+            (240, 8, 0.5),
+            (270, 8, 0.5),
+            (300, 5, 0.3),
+            (330, 5, 0.3),
+        };
+        double r1 = 144;
+        double cx1 = 160, cy1 = 160;
+        foreach (var (angle, size, opacity) in orbit1Positions)
+        {
+            double rad = (angle - 90) * Math.PI / 180.0;
+            double x = cx1 + r1 * Math.Cos(rad) - size / 2;
+            double y = cy1 + r1 * Math.Sin(rad) - size / 2;
+            var dot = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Opacity = opacity,
+                Fill = new RadialGradientBrush(
+                    Color.FromRgb(0xfc, 0x5c, 0x7d),
+                    Color.FromRgb(0x6a, 0x82, 0xfb)),
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    BlurRadius = 15, ShadowDepth = 0,
+                    Color = Color.FromRgb(0x6a, 0x82, 0xfb), Opacity = 0.4
+                }
+            };
+            Canvas.SetLeft(dot, x);
+            Canvas.SetTop(dot, y);
+            Orbit1.Children.Add(dot);
+        }
+
+        // 轨道 2:4 个点,半径 108,反向旋转
+        double r2 = 108;
+        double cx2 = 112, cy2 = 112;
+        for (int i = 0; i < 4; i++)
+        {
+            double angle = i * 90;
+            double rad = (angle - 90) * Math.PI / 180.0;
+            double x = cx2 + r2 * Math.Cos(rad) - 2;
+            double y = cy2 + r2 * Math.Sin(rad) - 2;
+            var dot = new Ellipse
+            {
+                Width = 4,
+                Height = 4,
+                Opacity = 0.3,
+                Fill = new SolidColorBrush(Color.FromRgb(0xf0, 0xc2, 0x7f)),
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    BlurRadius = 10, ShadowDepth = 0,
+                    Color = Color.FromRgb(0xf0, 0xc2, 0x7f), Opacity = 0.3
+                }
+            };
+            Canvas.SetLeft(dot, x);
+            Canvas.SetTop(dot, y);
+            Orbit2.Children.Add(dot);
+        }
+
+        // 动画:外圈光晕 10s 一周
+        var haloAnim = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(10))
+        { RepeatBehavior = RepeatBehavior.Forever };
+        HaloRotate.BeginAnimation(RotateTransform.AngleProperty, haloAnim);
+
+        // 轨道 1:20s 一周(正向)
+        var orbit1Anim = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(20))
+        { RepeatBehavior = RepeatBehavior.Forever };
+        Orbit1Rotate.BeginAnimation(RotateTransform.AngleProperty, orbit1Anim);
+
+        // 轨道 2:30s 一周(反向)
+        var orbit2Anim = new DoubleAnimation(0, -360, TimeSpan.FromSeconds(30))
+        { RepeatBehavior = RepeatBehavior.Forever };
+        Orbit2Rotate.BeginAnimation(RotateTransform.AngleProperty, orbit2Anim);
+
+        // 脉冲发光:主圆盘 DropShadow 的 BlurRadius/Opacity 在 4s 内往返
+        var blurAnim = new DoubleAnimation(60, 80, TimeSpan.FromSeconds(2))
+        { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever };
+        DiscGlow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.BlurRadiusProperty, blurAnim);
+    }
 }

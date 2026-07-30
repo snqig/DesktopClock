@@ -2,12 +2,12 @@ using System;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using DesktopClock.Services;
 
 namespace DesktopClock.Components;
 
 public partial class FlipClockComponent : UserControl, IClockComponent
 {
-    private readonly AppSettings _settings;
     private int[] _oldDigits = { -1, -1, -1, -1, -1, -1 };
 
     public string Id => "flip_clock";
@@ -15,16 +15,22 @@ public partial class FlipClockComponent : UserControl, IClockComponent
     public System.Windows.FrameworkElement View => this;
     public Models.ComponentConfig Config { get; set; } = new();
 
-    public FlipClockComponent(AppSettings settings)
+    public FlipClockComponent()
     {
         InitializeComponent();
-        _settings = settings;
+        ApplyConfig();
+        SettingsProvider.Instance.SettingsChanged += OnSettingsChanged;
+    }
+
+    private void OnSettingsChanged()
+    {
         ApplyConfig();
     }
 
     public void Update(DateTime now)
     {
-        int h = _settings.Use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
+        var settings = SettingsProvider.Instance.Settings;
+        int h = settings.Use24Hour ? now.Hour : (now.Hour % 12 == 0 ? 12 : now.Hour % 12);
         int m = now.Minute;
         int s = now.Second;
 
@@ -61,9 +67,8 @@ public partial class FlipClockComponent : UserControl, IClockComponent
 
     public void ApplyConfig()
     {
-        Brush fg;
-        try { fg = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.FontColor)); }
-        catch { fg = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x00, 0xd4, 0xff)); }
+        var settings = SettingsProvider.Instance.Settings;
+        var fg = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.FontColor));
         foreach (var tb in new TextBlock[] { FlipH1, FlipH2, FlipM1, FlipM2, FlipS1, FlipS2, FlipColon1, FlipColon2 })
             tb.Foreground = fg;
     }

@@ -1,0 +1,8 @@
+{
+  "id": "hello_world",
+  "name": "Hello World Plugin",
+  "version": "1.0.0",
+  "author": "DesktopClock contributors",
+  "description": "Simple example plugin showing the plugin system works. Adds a Hello World component.",
+  "entry": "HelloWorldPlugin.dll"
+}

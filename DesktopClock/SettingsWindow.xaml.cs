@@ -1,54 +1,54 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using DesktopClock.Contracts;
+using DesktopClock.Services;
 
 namespace DesktopClock;
+
+public class PluginItem : INotifyPropertyChanged
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Version { get; set; } = "";
+    public bool InitiallyEnabled { get; set; }
+
+    private bool _enabled;
+    public bool Enabled
+    {
+        get => _enabled;
+        set { _enabled = value; OnPropertyChanged(); }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
 
 public partial class SettingsWindow : Window
 {
     public AppSettings Settings { get; private set; }
 
+    private readonly PluginManager? _pluginManager;
+    private readonly ObservableCollection<PluginItem> _plugins = new();
     private bool _loaded;
 
-    public SettingsWindow(AppSettings settings)
+    public SettingsWindow(AppSettings settings, PluginManager? pluginManager = null)
     {
         InitializeComponent();
 
-        Settings = new AppSettings
-        {
-            FontSize = settings.FontSize,
-            BackgroundOpacity = settings.BackgroundOpacity,
-            FontColor = settings.FontColor,
-            FontFamily = settings.FontFamily,
-            ShowDate = settings.ShowDate,
-            DateFontFamily = settings.DateFontFamily,
-            DateFontSize = settings.DateFontSize,
-            DateColor = settings.DateColor,
-            DatePosition = settings.DatePosition,
+        _pluginManager = pluginManager;
 
-            Use24Hour = settings.Use24Hour,
-            ShowSeconds = settings.ShowSeconds,
-            DisplayMode = settings.DisplayMode,
-            BackgroundType = settings.BackgroundType,
-            GradientStartColor = settings.GradientStartColor,
-            GradientEndColor = settings.GradientEndColor,
-            GradientAngle = settings.GradientAngle,
-            BorderColor = settings.BorderColor,
-            BorderThickness = settings.BorderThickness,
-            ChimeEnabled = settings.ChimeEnabled,
-            WorldClockEnabled = settings.WorldClockEnabled,
-            WorldClockTimeZone = settings.WorldClockTimeZone,
-            HotkeyHide = settings.HotkeyHide,
-            Language = settings.Language,
-            ThemePreset = settings.ThemePreset,
-            SnapToEdge = settings.SnapToEdge,
-            AutoStart = settings.AutoStart,
-            LockPosition = settings.LockPosition,
-            ClickThrough = settings.ClickThrough
-        };
+        // 深拷贝:保留 Layout/Components/Plugins/Global 等结构化数据,
+        // 避免编辑期间丢失自由布局位置;取消时丢弃副本即可。
+        Settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(
+            System.Text.Json.JsonSerializer.Serialize(settings)) ?? new AppSettings();
 
         PopulateTimeZones();
 
@@ -125,6 +125,31 @@ public partial class SettingsWindow : Window
         ReminderCheck.IsChecked = Settings.ReminderEnabled;
         ReminderSettingsPanel.Visibility = Settings.ReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
         LoadReminderList();
+
+        // Layout mode
+        foreach (var item in LayoutModeCombo.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.Layout.Mode)
+                LayoutModeCombo.SelectedItem = item;
+
+        // Plugins
+        PluginListBox.ItemsSource = _plugins;
+        if (_pluginManager != null)
+        {
+            foreach (var kvp in _pluginManager.LoadedPlugins)
+            {
+                var plugin = kvp.Value;
+                var enabled = !Settings.Plugins.TryGetValue(plugin.Id, out var e) || e;
+                _plugins.Add(new PluginItem
+                {
+                    Id = plugin.Id,
+                    Name = plugin.Name,
+                    Version = $"v{plugin.Version}",
+                    Enabled = enabled,
+                    InitiallyEnabled = enabled
+                });
+            }
+        }
+        PluginListBox.Visibility = _plugins.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         _loaded = true;
     }
@@ -538,6 +563,11 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void PluginCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        // Handled via data binding directly to PluginItem.Enabled
+    }
+
     private void DeleteReminder_Click(object sender, RoutedEventArgs e)
     {
         if (ReminderListBox.SelectedItem is not ReminderItem item) return;
@@ -592,6 +622,12 @@ public partial class SettingsWindow : Window
         Settings.LunarFontSize = LunarFontSizeSlider.Value;
         Settings.LunarColor = LunarColorBox.Text;
         Settings.ReminderEnabled = ReminderCheck.IsChecked == true;
+
+        Settings.Layout.Mode = (LayoutModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "stack";
+
+        // Save plugin enabled states
+        foreach (var pi in _plugins)
+            Settings.Plugins[pi.Id] = pi.Enabled;
 
         var finalList = new System.Collections.Generic.List<ReminderItem>();
         foreach (ReminderItem item in ReminderListBox.Items)
