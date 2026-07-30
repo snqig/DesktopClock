@@ -149,7 +149,7 @@ public partial class MainWindow : Window
         try
         {
             _trayIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(
-                System.Windows.Application.ResourceAssembly.Location);
+                Environment.ProcessPath ?? System.Windows.Application.ResourceAssembly.Location);
         }
         catch
         {
