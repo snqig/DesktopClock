@@ -502,11 +502,11 @@
                             <ListBox x:Name="ReminderListBox" Height="120" Margin="0,0,0,8"
                                      DisplayMemberPath="Title" SelectionMode="Single" />
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="添加" Style="{StaticResource SecondaryButton}" Width="60"
+                                <Button Content="添加" Style="{StaticResource SecondaryButton}" Width="80"
                                         Click="AddReminder_Click" Margin="0,0,6,0" />
-                                <Button Content="编辑" Style="{StaticResource SecondaryButton}" Width="60"
+                                <Button Content="编辑" Style="{StaticResource SecondaryButton}" Width="80"
                                         Click="EditReminder_Click" Margin="0,0,6,0" />
-                                <Button Content="删除" Style="{StaticResource SecondaryButton}" Width="60"
+                                <Button Content="删除" Style="{StaticResource SecondaryButton}" Width="80"
                                         Click="DeleteReminder_Click" />
                             </StackPanel>
                         </StackPanel>

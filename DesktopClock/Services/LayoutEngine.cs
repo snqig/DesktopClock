@@ -70,6 +70,16 @@ public class LayoutEngine
                 orderedIds.Add(id);
         }
 
+        // 根据 DatePosition 调整 date 组件位置(top=最前,bottom=最后)
+        if (orderedIds.Contains("date"))
+        {
+            orderedIds.Remove("date");
+            if (config.DatePosition == "bottom")
+                orderedIds.Add("date");
+            else
+                orderedIds.Insert(0, "date");
+        }
+
         foreach (var id in orderedIds)
         {
             var comp = registry.Get(id);

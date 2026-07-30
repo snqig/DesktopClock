@@ -137,6 +137,7 @@ public partial class MainWindow : Window
         }
 
         _settings.Layout.ActiveComponents = active;
+        _settings.Layout.DatePosition = _settings.DatePosition;
         // 所有模式（包括 progress）都使用 Stack 布局,不再强制使用 Free 布局
         // 如需拖拽定位,用户可在设置中手动切换到 Free 模式
 
