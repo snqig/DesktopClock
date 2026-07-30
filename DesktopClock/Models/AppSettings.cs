@@ -47,6 +47,71 @@ public class AppSettings
     public bool LockPosition { get; set; } = false;
     public bool ClickThrough { get; set; } = false;
 
+    // === 悬停透明度增强 ===
+    public bool HoverOpacityEnabled { get; set; } = false;
+    public double HoverOpacity { get; set; } = 1.0;
+
+    // === AOD 省电模式 ===
+    public bool AodEnabled { get; set; } = false;
+    public int AodIdleMinutes { get; set; } = 5;
+
+    // === 跟随系统主题 ===
+    public bool FollowSystemTheme { get; set; } = false;
+
+    // === 相册背景(所有表盘通用) ===
+    public bool SkinBackgroundEnabled { get; set; } = false;
+    public string SkinBackgroundPath { get; set; } = string.Empty;
+    public double SkinBackgroundOpacity { get; set; } = 1.0;
+    public double SkinBackgroundBlur { get; set; } = 0;
+    public string SkinBackgroundStretch { get; set; } = "UniformToFill";
+
+    // === 窗口背景效果 ===
+    public string BackdropType { get; set; } = "none"; // none / mica / acrylic / tabbed
+
+    // === 系统监控 ===
+    public bool SysMonEnabled { get; set; } = false;
+    public bool SysMonShowCpu { get; set; } = true;
+    public bool SysMonShowMemory { get; set; } = true;
+    public bool SysMonShowNetwork { get; set; } = false;
+    public bool SysMonShowBattery { get; set; } = true;
+
+    // === 天气 ===
+    public bool WeatherEnabled { get; set; } = false;
+    public string WeatherCity { get; set; } = "Beijing";
+    public double WeatherLatitude { get; set; } = 39.9042;
+    public double WeatherLongitude { get; set; } = 116.4074;
+
+    // === 倒计时 ===
+    public bool CountdownEnabled { get; set; } = false;
+    public DateTime? CountdownTarget { get; set; }
+    public string CountdownLabel { get; set; } = "倒计时";
+
+    // === 待办文字 ===
+    public bool TodoScrollEnabled { get; set; } = false;
+    public string TodoScrollText { get; set; } = "";
+    public double TodoScrollSpeed { get; set; } = 40.0; // pixels per second
+
+    // === 音乐播放信息 ===
+    public bool MediaInfoEnabled { get; set; } = false;
+    public bool MediaInfoShowArtist { get; set; } = true;
+
+    // === 定时自动切换表盘 ===
+    public bool AutoSwitchEnabled { get; set; } = false;
+    public string AutoSwitchDayMode { get; set; } = "digital";
+    public string AutoSwitchNightMode { get; set; } = "minimal";
+    public int AutoSwitchDayStartHour { get; set; } = 7;
+    public int AutoSwitchNightStartHour { get; set; } = 19;
+
+    // === 双时区表盘 ===
+    public string DualAnalogTimeZone { get; set; } = "Eastern Standard Time";
+    public string DualAnalogLabel { get; set; } = "纽约";
+
+    // === 全局滤镜 ===
+    public bool GlobalFilterEnabled { get; set; } = false;
+    public double GlobalFilterVignette { get; set; } = 0.0; // 0-1
+    public double GlobalFilterGrayscale { get; set; } = 0.0; // 0-1
+    public double GlobalFilterColorTemp { get; set; } = 0.0; // -1(cool) to 1(warm)
+
     // === New structured config ===
     public Models.GlobalConfig Global { get; set; } = new();
     public Models.LayoutConfig Layout { get; set; } = new();
@@ -57,13 +122,26 @@ public class AppSettings
     private static readonly string LegacyFilePath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
+    // 当前实例ID(0表示主实例)
+    public static int CurrentInstanceId { get; set; } = 0;
+
     // 新路径:用户 LocalAppData,避免装在 Program Files 时无写权限
     private static string GetFilePath()
     {
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "DesktopClock");
-        return Path.Combine(dir, "settings.json");
+        var fileName = CurrentInstanceId > 0 ? $"settings_instance_{CurrentInstanceId}.json" : "settings.json";
+        return Path.Combine(dir, fileName);
+    }
+
+    public static string GetPositionFilePath()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DesktopClock");
+        var fileName = CurrentInstanceId > 0 ? $"pos_instance_{CurrentInstanceId}.txt" : "pos.txt";
+        return Path.Combine(dir, fileName);
     }
 
     public void Save()
@@ -72,9 +150,18 @@ public class AppSettings
         var path = GetFilePath();
         var dir = Path.GetDirectoryName(path);
         if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(this, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+        });
         File.WriteAllText(path, json);
     }
+
+    public static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
+    };
 
     public static AppSettings Load()
     {
@@ -100,13 +187,13 @@ public class AppSettings
 
                 if (doc.RootElement.TryGetProperty("Version", out var ver) && ver.GetInt32() >= 2)
                 {
-                    var v2 = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                    var v2 = JsonSerializer.Deserialize<AppSettings>(json, JsonOpts) ?? new AppSettings();
                     v2.MigrateFlatFromStructured();
                     if (migratedFromLegacy) v2.Save();
                     return v2;
                 }
 
-                var v1 = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+                var v1 = JsonSerializer.Deserialize<AppSettings>(json, JsonOpts) ?? new AppSettings();
                 v1.Version = 2;
                 v1.MigrateToStructured();
                 if (migratedFromLegacy) v1.Save();
@@ -288,20 +375,20 @@ public class AppSettings
         }
     }
 
-    private void SetComponentSetting(string component, string key, object value)
+    public void SetComponentSetting(string component, string key, object value)
     {
         if (!Components.ContainsKey(component))
             Components[component] = new Models.ComponentConfig();
         Components[component].Settings[key] = value;
     }
 
-    private T GetComponentSetting<T>(string component, string key, T fallback)
+    public T GetComponentSetting<T>(string component, string key, T fallback)
     {
         if (Components.TryGetValue(component, out var config) && config.Settings.TryGetValue(key, out var val))
         {
             if (val is JsonElement je)
             {
-                try { return JsonSerializer.Deserialize<T>(je.GetRawText()) ?? fallback; }
+                try { return JsonSerializer.Deserialize<T>(je.GetRawText(), JsonOpts) ?? fallback; }
                 catch { return fallback; }
             }
             if (val is T t) return t;

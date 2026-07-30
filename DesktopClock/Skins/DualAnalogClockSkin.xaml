@@ -1,0 +1,80 @@
+<UserControl x:Class="DesktopClock.Skins.DualAnalogClockSkin"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Viewbox Stretch="Uniform">
+        <Grid Width="420" Height="240">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 本地时钟 -->
+            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="190" Height="190">
+                    <Image x:Name="LocalDialImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <Canvas Width="190" Height="190" Background="Transparent">
+                        <Canvas x:Name="LocalTicksCanvas" />
+                        <Line x:Name="LocalHourHand" X1="95" Y1="95" X2="95" Y2="58"
+                              Stroke="Black" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform x:Name="LocalHourRotate" CenterX="95" CenterY="95" Angle="0" />
+                            </Line.RenderTransform>
+                        </Line>
+                        <Line x:Name="LocalMinuteHand" X1="95" Y1="95" X2="95" Y2="40"
+                              Stroke="Black" StrokeThickness="3.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform x:Name="LocalMinuteRotate" CenterX="95" CenterY="95" Angle="0" />
+                            </Line.RenderTransform>
+                        </Line>
+                        <Line x:Name="LocalSecondHand" X1="95" Y1="110" X2="95" Y2="32"
+                              Stroke="Red" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform x:Name="LocalSecondRotate" CenterX="95" CenterY="95" Angle="0" />
+                            </Line.RenderTransform>
+                        </Line>
+                        <Ellipse x:Name="LocalCenterDot" Width="10" Height="10" Fill="Black"
+                                 Canvas.Left="90" Canvas.Top="90" />
+                    </Canvas>
+                </Grid>
+                <TextBlock x:Name="LocalLabel" Text="本地" HorizontalAlignment="Center"
+                           FontSize="13" Foreground="Gray" Margin="0,6,0,0" />
+            </StackPanel>
+
+            <!-- 分隔线 -->
+            <Rectangle Grid.Column="1" Width="1" Height="160" Fill="#40FFFFFF" Margin="10,0" />
+
+            <!-- 第二时区时钟 -->
+            <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="190" Height="190">
+                    <Image x:Name="RemoteDialImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <Canvas Width="190" Height="190" Background="Transparent">
+                        <Canvas x:Name="RemoteTicksCanvas" />
+                        <Line x:Name="RemoteHourHand" X1="95" Y1="95" X2="95" Y2="58"
+                              Stroke="Black" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform x:Name="RemoteHourRotate" CenterX="95" CenterY="95" Angle="0" />
+                            </Line.RenderTransform>
+                        </Line>
+                        <Line x:Name="RemoteMinuteHand" X1="95" Y1="95" X2="95" Y2="40"
+                              Stroke="Black" StrokeThickness="3.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform x:Name="RemoteMinuteRotate" CenterX="95" CenterY="95" Angle="0" />
+                            </Line.RenderTransform>
+                        </Line>
+                        <Line x:Name="RemoteSecondHand" X1="95" Y1="110" X2="95" Y2="32"
+                              Stroke="Red" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                            <Line.RenderTransform>
+                                <RotateTransform x:Name="RemoteSecondRotate" CenterX="95" CenterY="95" Angle="0" />
+                            </Line.RenderTransform>
+                        </Line>
+                        <Ellipse x:Name="RemoteCenterDot" Width="10" Height="10" Fill="Black"
+                                 Canvas.Left="90" Canvas.Top="90" />
+                    </Canvas>
+                </Grid>
+                <TextBlock x:Name="RemoteLabel" Text="纽约" HorizontalAlignment="Center"
+                           FontSize="13" Foreground="Gray" Margin="0,6,0,0" />
+            </StackPanel>
+        </Grid>
+    </Viewbox>
+</UserControl>

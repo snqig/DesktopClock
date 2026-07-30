@@ -10,13 +10,17 @@
         ResizeMode="NoResize">
     <Border x:Name="MainBorder" CornerRadius="10" Background="#88000000"
             BorderBrush="Transparent" BorderThickness="0">
-        <Grid x:Name="MainContainer">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <Grid>
+            <Grid x:Name="MainContainer">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+            </Grid>
+            <Rectangle x:Name="GrayscaleOverlay" Fill="Gray" IsHitTestVisible="False" Visibility="Collapsed"/>
+            <Rectangle x:Name="ColorTempOverlay" IsHitTestVisible="False" Visibility="Collapsed"/>
         </Grid>
     </Border>
 </Window>
