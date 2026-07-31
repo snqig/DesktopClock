@@ -19,7 +19,7 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Publish
-        run: dotnet publish -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true
+        run: dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:TrimMode=partial
 
       - name: Extract version from tag
         id: version
@@ -38,7 +38,7 @@ jobs:
             ## 系统要求
 
             - 适用系统:Windows 10/11 x64
-            - 依赖:.NET 9 运行时(需已安装 .NET Desktop Runtime 9.x,框架依赖部署,非自包含)
+            - 依赖:无需安装 .NET 运行时(自包含发布,单文件可执行)
 
             ## 更新内容
 

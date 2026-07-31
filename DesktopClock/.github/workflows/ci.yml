@@ -27,7 +27,6 @@ jobs:
       - name: Build
         run: dotnet build -c Release --no-restore
 
-      - name: Test (if test project exists, non-blocking)
+      - name: Test (if test project exists)
         if: hashFiles('tests/DesktopClock.Tests/DesktopClock.Tests.csproj') != ''
-        continue-on-error: true
         run: dotnet test tests/DesktopClock.Tests/DesktopClock.Tests.csproj -c Release
