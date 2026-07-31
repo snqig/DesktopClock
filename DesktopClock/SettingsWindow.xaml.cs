@@ -3,12 +3,15 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using DesktopClock.Contracts;
 using DesktopClock.Services;
+using DesktopClock.Models;
+using DesktopClock.Components;
 
 namespace DesktopClock;
 
@@ -290,6 +293,12 @@ public partial class SettingsWindow : Window
 
         LoadCountdownSettings();
 
+        // === P0-P4 组件设置加载 ===
+        LoadHealthReminderSettings();
+        LoadPomodoroSettings();
+        LoadDailyQuoteSettings();
+        LoadHabitTrackerSettings();
+
         _loaded = true;
     }
 
@@ -362,6 +371,11 @@ public partial class SettingsWindow : Window
         CountdownShadowSizeLabel.Text = Settings.CountdownShadowSize.ToString("F0");
         CountdownShadowColorBox.Text = Settings.CountdownShadowColor;
         UpdateCountdownShadowColorPreview();
+
+        // P0:多任务倒计时
+        CountdownTasksEnabledCheck.IsChecked = Settings.CountdownTasks.Count > 0;
+        CountdownRotationSecBox.Text = Settings.CountdownTaskRotationSeconds.ToString();
+        RenderCountdownTasksUI();
     }
 
     private void UpdateCountdownFontColorPreview()
@@ -1169,6 +1183,43 @@ public partial class SettingsWindow : Window
         Settings.DualAnalogTimeZone = (DualAnalogTimeZoneCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Eastern Standard Time";
         Settings.DualAnalogLabel = DualAnalogLabelBox.Text;
 
+        // === P1-P4 组件设置写回 ===
+        // P1:健康提醒
+        Settings.HealthReminderEnabled = HealthReminderCheck.IsChecked == true;
+        if (int.TryParse(HealthWorkStartBox.Text, out var hws)) Settings.HealthReminderWorkStartHour = Math.Clamp(hws, 0, 23);
+        if (int.TryParse(HealthWorkEndBox.Text, out var hwe)) Settings.HealthReminderWorkEndHour = Math.Clamp(hwe, 0, 24);
+        Settings.HealthReminderFontFamily = (HealthReminderFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+        Settings.HealthReminderFontSize = HealthReminderFontSizeSlider.Value;
+        Settings.HealthReminderFontColor = HealthReminderColorBox.Text;
+        SaveHealthRemindersFromUI();
+
+        // P2:番茄钟
+        Settings.PomodoroEnabled = PomodoroCheck.IsChecked == true;
+        Settings.PomodoroFocusMinutes = (int)PomodoroFocusSlider.Value;
+        Settings.PomodoroShortBreakMinutes = (int)PomodoroShortSlider.Value;
+        Settings.PomodoroLongBreakMinutes = (int)PomodoroLongSlider.Value;
+        Settings.PomodoroLongBreakInterval = (int)PomodoroIntervalSlider.Value;
+        Settings.PomodoroAutoStart = PomodoroAutoStartCheck.IsChecked == true;
+        Settings.PomodoroFontFamily = (PomodoroFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+        Settings.PomodoroFontSize = PomodoroFontSizeSlider.Value;
+        Settings.PomodoroFontColor = PomodoroColorBox.Text;
+
+        // P3:每日一言
+        Settings.DailyQuoteEnabled = DailyQuoteCheck.IsChecked == true;
+        Settings.DailyQuoteApiEnabled = DailyQuoteApiCheck.IsChecked == true;
+        Settings.DailyQuoteApiUrl = DailyQuoteApiBox.Text;
+        Settings.DailyQuoteSpeed = DailyQuoteSpeedSlider.Value;
+        Settings.DailyQuoteFontFamily = (DailyQuoteFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei";
+        Settings.DailyQuoteFontSize = DailyQuoteFontSizeSlider.Value;
+        Settings.DailyQuoteFontColor = DailyQuoteColorBox.Text;
+
+        // P4:习惯打卡
+        Settings.HabitTrackerEnabled = HabitTrackerCheck.IsChecked == true;
+        Settings.HabitTrackerFontFamily = (HabitTrackerFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+        Settings.HabitTrackerFontSize = HabitTrackerFontSizeSlider.Value;
+        Settings.HabitTrackerFontColor = HabitTrackerColorBox.Text;
+        SaveHabitsFromUI();
+
         // Analog skin colors
         Settings.SetComponentSetting("analog_clock_skin", "hourColor", AnalogHourColorBox.Text);
         Settings.SetComponentSetting("analog_clock_skin", "minuteColor", AnalogMinuteColorBox.Text);
@@ -1226,6 +1277,11 @@ public partial class SettingsWindow : Window
         Settings.CountdownShadowEnabled = CountdownShadowEnabledCheck.IsChecked == true;
         Settings.CountdownShadowSize = CountdownShadowSizeSlider.Value;
         Settings.CountdownShadowColor = CountdownShadowColorBox.Text;
+
+        // P0:多任务倒计时任务列表 + 轮播配置
+        if (int.TryParse(CountdownRotationSecBox.Text, out var rsec))
+            Settings.CountdownTaskRotationSeconds = Math.Clamp(rsec, 1, 120);
+        SaveCountdownTasksFromUI();
     }
 
     #region New Event Handlers
@@ -1743,4 +1799,569 @@ public partial class SettingsWindow : Window
         DialogResult = false;
         Close();
     }
+
+    #region P0-P4 组件设置辅助方法
+
+    // ========================================================================================
+    // P0: 多任务倒计时 CountdownTask
+    // ========================================================================================
+
+    // UI 模型:一行对应一个 CountdownTask
+    private class CountdownTaskRowItem
+    {
+        public CheckBox EnabledCheck = null!;
+        public TextBox TitleBox = null!;
+        public DatePicker DatePicker = null!;
+        public TextBox HourBox = null!;
+        public TextBox MinuteBox = null!;
+        public TextBox SecondBox = null!;
+        public ComboBox DisplayModeCombo = null!;
+        public CheckBox ShowTitleCheck = null!;
+        public Button DeleteButton = null!;
+        public Grid Row = null!;
+        public CountdownTask Model = null!;
+    }
+    private readonly List<CountdownTaskRowItem> _countdownTaskRows = new();
+
+    private void RenderCountdownTasksUI()
+    {
+        _countdownTaskRows.Clear();
+        CountdownTasksListBox.ItemsSource = null;
+        var list = new List<Grid>();
+        foreach (var task in Settings.CountdownTasks)
+        {
+            var row = BuildCountdownTaskRow(task);
+            list.Add(row.Row);
+        }
+        CountdownTasksListBox.ItemsSource = list;
+    }
+
+    private CountdownTaskRowItem BuildCountdownTaskRow(CountdownTask model)
+    {
+        var item = new CountdownTaskRowItem { Model = model };
+        var grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var enabled = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+        enabled.IsChecked = model.Enabled;
+        enabled.Click += (_, _) => { if (_loaded) SaveCountdownTasksFromUI(); };
+        Grid.SetColumn(enabled, 0);
+        grid.Children.Add(enabled);
+        item.EnabledCheck = enabled;
+
+        var title = new TextBox { Text = model.Title, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) };
+        Grid.SetColumn(title, 1);
+        grid.Children.Add(title);
+        item.TitleBox = title;
+
+        var targetLocal = model.TargetTimeLocal;
+        var dateRow = new StackPanel { Orientation = Orientation.Horizontal };
+        var dp = new DatePicker { SelectedDate = targetLocal.Date, SelectedDateFormat = DatePickerFormat.Short, VerticalAlignment = VerticalAlignment.Center };
+        var hour = new TextBox { Width = 36, Text = targetLocal.Hour.ToString(), Margin = new Thickness(4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var colon1 = new TextBlock { Text = ":", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) };
+        var min = new TextBox { Width = 36, Text = targetLocal.Minute.ToString(), VerticalAlignment = VerticalAlignment.Center, HorizontalContentAlignment = HorizontalAlignment.Center };
+        dateRow.Children.Add(dp);
+        dateRow.Children.Add(hour);
+        dateRow.Children.Add(colon1);
+        dateRow.Children.Add(min);
+        Grid.SetColumn(dateRow, 2);
+        grid.Children.Add(dateRow);
+        item.DatePicker = dp;
+        item.HourBox = hour;
+        item.MinuteBox = min;
+        item.SecondBox = new TextBox { Text = targetLocal.Second.ToString() };
+
+        var dispMode = new ComboBox { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) };
+        dispMode.Items.Add(new ComboBoxItem { Content = "D天HH:MM:SS", Tag = "days" });
+        dispMode.Items.Add(new ComboBoxItem { Content = "HH:MM:SS", Tag = "time" });
+        foreach (var it in dispMode.Items)
+            if (it is ComboBoxItem ci && ci.Tag?.ToString() == (string.IsNullOrEmpty(model.DisplayMode) ? "days" : model.DisplayMode))
+                dispMode.SelectedItem = it;
+        if (dispMode.SelectedIndex < 0) dispMode.SelectedIndex = 0;
+        Grid.SetColumn(dispMode, 3);
+        grid.Children.Add(dispMode);
+        item.DisplayModeCombo = dispMode;
+
+        var showTitle = new CheckBox { Content = "标题", VerticalAlignment = VerticalAlignment.Center };
+        showTitle.IsChecked = true;
+        Grid.SetColumn(showTitle, 4);
+        grid.Children.Add(showTitle);
+        item.ShowTitleCheck = showTitle;
+
+        var del = new Button { Content = "×", Width = 22, Height = 22, Style = (Style)FindResource("SecondaryButton"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
+        del.Click += (_, _) =>
+        {
+            CountdownTasksListBox.ItemsSource = null;
+            _countdownTaskRows.Remove(item);
+            var l = _countdownTaskRows.Select(x => x.Row).ToList();
+            CountdownTasksListBox.ItemsSource = l;
+        };
+        Grid.SetColumn(del, 5);
+        grid.Children.Add(del);
+        item.DeleteButton = del;
+
+        item.Row = grid;
+        _countdownTaskRows.Add(item);
+        return item;
+    }
+
+    private void CountdownTaskAddButton_Click(object sender, RoutedEventArgs e)
+    {
+        var target = DateTime.Now.AddDays(1);
+        var newTask = new CountdownTask
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Title = "新倒计时",
+            TargetTimeUtc = target.ToUniversalTime(),
+            Enabled = true,
+            DisplayMode = "days"
+        };
+        CountdownTasksListBox.ItemsSource = null;
+        var row = BuildCountdownTaskRow(newTask);
+        var list = _countdownTaskRows.Select(x => x.Row).ToList();
+        CountdownTasksListBox.ItemsSource = list;
+    }
+
+    private void SaveCountdownTasksFromUI()
+    {
+        var newList = new List<CountdownTask>();
+        foreach (var row in _countdownTaskRows)
+        {
+            var m = new CountdownTask
+            {
+                Id = row.Model.Id,
+                Title = row.TitleBox.Text,
+                Enabled = row.EnabledCheck.IsChecked == true,
+                DisplayMode = (row.DisplayModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "days"
+            };
+            var date = row.DatePicker.SelectedDate ?? DateTime.Now.AddDays(1);
+            int h = int.TryParse(row.HourBox.Text, out var v1) ? Math.Clamp(v1, 0, 23) : 0;
+            int mi = int.TryParse(row.MinuteBox.Text, out var v2) ? Math.Clamp(v2, 0, 59) : 0;
+            m.TargetTimeUtc = new DateTime(date.Year, date.Month, date.Day, h, mi, 0).ToUniversalTime();
+            newList.Add(m);
+        }
+        Settings.CountdownTasks = newList;
+    }
+
+    // ========================================================================================
+    // P1: 健康提醒 HealthReminder
+    // ========================================================================================
+
+    private class HealthReminderRowItem
+    {
+        public CheckBox EnabledCheck = null!;
+        public TextBox NameBox = null!;
+        public TextBox IntervalBox = null!;
+        public Button DeleteButton = null!;
+        public IntervalReminderItem Model = null!;
+        public Grid Row = null!;
+    }
+    private readonly List<HealthReminderRowItem> _healthReminderRows = new();
+
+    private void LoadHealthReminderSettings()
+    {
+        HealthReminderCheck.IsChecked = Settings.HealthReminderEnabled;
+        HealthReminderPanel.Visibility = Settings.HealthReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
+        HealthWorkStartBox.Text = Settings.HealthReminderWorkStartHour.ToString();
+        HealthWorkEndBox.Text = Settings.HealthReminderWorkEndHour.ToString();
+        PopulateFontCombo(HealthReminderFontCombo, Settings.HealthReminderFontFamily);
+        HealthReminderFontSizeSlider.Value = Settings.HealthReminderFontSize;
+        HealthReminderFontSizeLabel.Text = Settings.HealthReminderFontSize.ToString("F0");
+        HealthReminderColorBox.Text = Settings.HealthReminderFontColor;
+        try { HealthReminderColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.HealthReminderFontColor)); } catch { }
+
+        RenderHealthRemindersUI();
+    }
+
+    private void RenderHealthRemindersUI()
+    {
+        _healthReminderRows.Clear();
+        HealthReminderListBox.ItemsSource = null;
+        List<IntervalReminderItem> items;
+        try { items = JsonSerializer.Deserialize<List<IntervalReminderItem>>(Settings.HealthRemindersJson) ?? new(); }
+        catch { items = new(); }
+        var list = new List<Grid>();
+        if (items.Count == 0)
+        {
+            // 默认三条:喝水/站立/眼操
+            items.Add(new IntervalReminderItem { Id = "water", Label = "喝水", IntervalMinutes = 60, Enabled = true });
+            items.Add(new IntervalReminderItem { Id = "stand", Label = "站立", IntervalMinutes = 45, Enabled = true });
+            items.Add(new IntervalReminderItem { Id = "eyes", Label = "眼保健操", IntervalMinutes = 20, Enabled = false });
+        }
+        foreach (var it in items) list.Add(BuildHealthReminderRow(it).Row);
+        HealthReminderListBox.ItemsSource = list;
+    }
+
+    private HealthReminderRowItem BuildHealthReminderRow(IntervalReminderItem model)
+    {
+        var item = new HealthReminderRowItem { Model = model };
+        var g = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var cb = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+        cb.IsChecked = model.Enabled;
+        Grid.SetColumn(cb, 0); g.Children.Add(cb);
+        item.EnabledCheck = cb;
+
+        var nb = new TextBox { Text = model.Label, Margin = new Thickness(2, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(nb, 1); g.Children.Add(nb);
+        item.NameBox = nb;
+
+        var ib = new TextBox { Text = model.IntervalMinutes.ToString(), Margin = new Thickness(10, 0, 2, 0), Width = 60, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(ib, 2); g.Children.Add(ib);
+        item.IntervalBox = ib;
+
+        var del = new Button { Content = "×", Width = 22, Height = 22, Style = (Style)FindResource("SecondaryButton"), VerticalAlignment = VerticalAlignment.Center };
+        del.Click += (_, _) =>
+        {
+            HealthReminderListBox.ItemsSource = null;
+            _healthReminderRows.Remove(item);
+            HealthReminderListBox.ItemsSource = _healthReminderRows.Select(x => x.Row).ToList();
+        };
+        Grid.SetColumn(del, 3); g.Children.Add(del);
+        item.DeleteButton = del;
+
+        item.Row = g;
+        _healthReminderRows.Add(item);
+        return item;
+    }
+
+    private void HealthAddButton_Click(object sender, RoutedEventArgs e)
+    {
+        var m = new IntervalReminderItem { Id = Guid.NewGuid().ToString("N"), Label = "新提醒", IntervalMinutes = 30, Enabled = true };
+        BuildHealthReminderRow(m);
+        HealthReminderListBox.ItemsSource = null;
+        HealthReminderListBox.ItemsSource = _healthReminderRows.Select(x => x.Row).ToList();
+    }
+    private void HealthPresetWater_Click(object sender, RoutedEventArgs e) => AddPresetHealth("喝水", 60);
+    private void HealthPresetStand_Click(object sender, RoutedEventArgs e) => AddPresetHealth("站立", 45);
+    private void HealthPresetEyes_Click(object sender, RoutedEventArgs e) => AddPresetHealth("眼保健操", 20);
+
+    private void AddPresetHealth(string label, int interval)
+    {
+        if (_healthReminderRows.Any(x => x.NameBox.Text == label)) return;
+        BuildHealthReminderRow(new IntervalReminderItem { Id = Guid.NewGuid().ToString("N"), Label = label, IntervalMinutes = interval, Enabled = true });
+        HealthReminderListBox.ItemsSource = null;
+        HealthReminderListBox.ItemsSource = _healthReminderRows.Select(x => x.Row).ToList();
+    }
+
+    private void SaveHealthRemindersFromUI()
+    {
+        var list = new List<IntervalReminderItem>();
+        foreach (var r in _healthReminderRows)
+        {
+            list.Add(new IntervalReminderItem
+            {
+                Id = r.Model.Id,
+                Label = r.NameBox.Text,
+                IntervalMinutes = int.TryParse(r.IntervalBox.Text, out var v) ? Math.Clamp(v, 1, 1440) : 60,
+                Enabled = r.EnabledCheck.IsChecked == true
+            });
+        }
+        Settings.HealthRemindersJson = JsonSerializer.Serialize(list);
+    }
+
+    private void HealthReminderCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.HealthReminderEnabled = HealthReminderCheck.IsChecked == true;
+        HealthReminderPanel.Visibility = Settings.HealthReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void HealthReminderFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || HealthReminderFontSizeLabel == null) return;
+        Settings.HealthReminderFontSize = e.NewValue;
+        HealthReminderFontSizeLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void HealthReminderColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)HealthReminderColorPreview.Background).Color.R, ((SolidColorBrush)HealthReminderColorPreview.Background).Color.G, ((SolidColorBrush)HealthReminderColorPreview.Background).Color.B) };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                HealthReminderColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+        }
+        catch { }
+    }
+
+    private void HealthReminderColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.HealthReminderFontColor = HealthReminderColorBox.Text;
+        try { HealthReminderColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(HealthReminderColorBox.Text)); } catch { }
+    }
+
+    // ========================================================================================
+    // P2: 番茄钟 Pomodoro
+    // ========================================================================================
+
+    private void LoadPomodoroSettings()
+    {
+        PomodoroCheck.IsChecked = Settings.PomodoroEnabled;
+        PomodoroPanel.Visibility = Settings.PomodoroEnabled ? Visibility.Visible : Visibility.Collapsed;
+        PomodoroFocusSlider.Value = Settings.PomodoroFocusMinutes;
+        PomodoroFocusLabel.Text = Settings.PomodoroFocusMinutes.ToString();
+        PomodoroShortSlider.Value = Settings.PomodoroShortBreakMinutes;
+        PomodoroShortLabel.Text = Settings.PomodoroShortBreakMinutes.ToString();
+        PomodoroLongSlider.Value = Settings.PomodoroLongBreakMinutes;
+        PomodoroLongLabel.Text = Settings.PomodoroLongBreakMinutes.ToString();
+        PomodoroIntervalSlider.Value = Settings.PomodoroLongBreakInterval;
+        PomodoroIntervalLabel.Text = Settings.PomodoroLongBreakInterval.ToString();
+        PomodoroAutoStartCheck.IsChecked = Settings.PomodoroAutoStart;
+        PopulateFontCombo(PomodoroFontCombo, Settings.PomodoroFontFamily);
+        PomodoroFontSizeSlider.Value = Settings.PomodoroFontSize;
+        PomodoroFontSizeLabel.Text = Settings.PomodoroFontSize.ToString("F0");
+        PomodoroColorBox.Text = Settings.PomodoroFontColor;
+        try { PomodoroColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.PomodoroFontColor)); } catch { }
+    }
+
+    private void PomodoroCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.PomodoroEnabled = PomodoroCheck.IsChecked == true;
+        PomodoroPanel.Visibility = Settings.PomodoroEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void PomodoroFocusSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || PomodoroFocusLabel == null) return;
+        PomodoroFocusLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void PomodoroShortSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || PomodoroShortLabel == null) return;
+        PomodoroShortLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void PomodoroLongSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || PomodoroLongLabel == null) return;
+        PomodoroLongLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void PomodoroIntervalSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || PomodoroIntervalLabel == null) return;
+        PomodoroIntervalLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void PomodoroFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || PomodoroFontSizeLabel == null) return;
+        PomodoroFontSizeLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void PomodoroColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)PomodoroColorPreview.Background).Color.R, ((SolidColorBrush)PomodoroColorPreview.Background).Color.G, ((SolidColorBrush)PomodoroColorPreview.Background).Color.B) };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                PomodoroColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+        }
+        catch { }
+    }
+
+    private void PomodoroColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded) return;
+        try { PomodoroColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(PomodoroColorBox.Text)); } catch { }
+    }
+
+    // ========================================================================================
+    // P3: 每日一言 DailyQuote
+    // ========================================================================================
+
+    private void LoadDailyQuoteSettings()
+    {
+        DailyQuoteCheck.IsChecked = Settings.DailyQuoteEnabled;
+        DailyQuotePanel.Visibility = Settings.DailyQuoteEnabled ? Visibility.Visible : Visibility.Collapsed;
+        DailyQuoteApiCheck.IsChecked = Settings.DailyQuoteApiEnabled;
+        DailyQuoteApiBox.Text = Settings.DailyQuoteApiUrl;
+        DailyQuoteSpeedSlider.Value = Settings.DailyQuoteSpeed;
+        DailyQuoteSpeedLabel.Text = Settings.DailyQuoteSpeed.ToString("F0");
+        PopulateFontCombo(DailyQuoteFontCombo, Settings.DailyQuoteFontFamily);
+        DailyQuoteFontSizeSlider.Value = Settings.DailyQuoteFontSize;
+        DailyQuoteFontSizeLabel.Text = Settings.DailyQuoteFontSize.ToString("F0");
+        DailyQuoteColorBox.Text = Settings.DailyQuoteFontColor;
+        try { DailyQuoteColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.DailyQuoteFontColor)); } catch { }
+    }
+
+    private void DailyQuoteCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.DailyQuoteEnabled = DailyQuoteCheck.IsChecked == true;
+        DailyQuotePanel.Visibility = Settings.DailyQuoteEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void DailyQuoteSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || DailyQuoteSpeedLabel == null) return;
+        DailyQuoteSpeedLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void DailyQuoteFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || DailyQuoteFontSizeLabel == null) return;
+        DailyQuoteFontSizeLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void DailyQuoteColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)DailyQuoteColorPreview.Background).Color.R, ((SolidColorBrush)DailyQuoteColorPreview.Background).Color.G, ((SolidColorBrush)DailyQuoteColorPreview.Background).Color.B) };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                DailyQuoteColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+        }
+        catch { }
+    }
+
+    private void DailyQuoteColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded) return;
+        try { DailyQuoteColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(DailyQuoteColorBox.Text)); } catch { }
+    }
+
+    // ========================================================================================
+    // P4: 习惯打卡 HabitTracker
+    // ========================================================================================
+
+    private class HabitRowItem
+    {
+        public CheckBox EnabledCheck = null!;
+        public TextBox NameBox = null!;
+        public Button DeleteButton = null!;
+        public HabitItem Model = null!;
+        public Grid Row = null!;
+    }
+    private readonly List<HabitRowItem> _habitRows = new();
+
+    private void LoadHabitTrackerSettings()
+    {
+        HabitTrackerCheck.IsChecked = Settings.HabitTrackerEnabled;
+        HabitTrackerPanel.Visibility = Settings.HabitTrackerEnabled ? Visibility.Visible : Visibility.Collapsed;
+        PopulateFontCombo(HabitTrackerFontCombo, Settings.HabitTrackerFontFamily);
+        HabitTrackerFontSizeSlider.Value = Settings.HabitTrackerFontSize;
+        HabitTrackerFontSizeLabel.Text = Settings.HabitTrackerFontSize.ToString("F0");
+        HabitTrackerColorBox.Text = Settings.HabitTrackerFontColor;
+        try { HabitTrackerColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.HabitTrackerFontColor)); } catch { }
+
+        RenderHabitsUI();
+    }
+
+    private void RenderHabitsUI()
+    {
+        _habitRows.Clear();
+        HabitListBox.ItemsSource = null;
+        List<HabitItem> items;
+        try { items = JsonSerializer.Deserialize<List<HabitItem>>(Settings.HabitsJson) ?? new(); }
+        catch { items = new(); }
+        var list = new List<Grid>();
+        if (items.Count == 0)
+        {
+            items.Add(new HabitItem { Id = "sport", Name = "运动", Enabled = true });
+            items.Add(new HabitItem { Id = "read", Name = "阅读30分钟", Enabled = true });
+            items.Add(new HabitItem { Id = "meditation", Name = "冥想", Enabled = false });
+        }
+        foreach (var it in items) list.Add(BuildHabitRow(it).Row);
+        HabitListBox.ItemsSource = list;
+    }
+
+    private HabitRowItem BuildHabitRow(HabitItem model)
+    {
+        var item = new HabitRowItem { Model = model };
+        var g = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        var cb = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+        cb.IsChecked = model.Enabled;
+        Grid.SetColumn(cb, 0); g.Children.Add(cb);
+        item.EnabledCheck = cb;
+
+        var nb = new TextBox { Text = model.Name, Margin = new Thickness(2, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(nb, 1); g.Children.Add(nb);
+        item.NameBox = nb;
+
+        var del = new Button { Content = "×", Width = 22, Height = 22, Style = (Style)FindResource("SecondaryButton"), VerticalAlignment = VerticalAlignment.Center };
+        del.Click += (_, _) =>
+        {
+            HabitListBox.ItemsSource = null;
+            _habitRows.Remove(item);
+            HabitListBox.ItemsSource = _habitRows.Select(x => x.Row).ToList();
+        };
+        Grid.SetColumn(del, 2); g.Children.Add(del);
+        item.DeleteButton = del;
+
+        item.Row = g;
+        _habitRows.Add(item);
+        return item;
+    }
+
+    private void HabitAddButton_Click(object sender, RoutedEventArgs e)
+    {
+        BuildHabitRow(new HabitItem { Id = Guid.NewGuid().ToString("N"), Name = "新习惯", Enabled = true });
+        HabitListBox.ItemsSource = null;
+        HabitListBox.ItemsSource = _habitRows.Select(x => x.Row).ToList();
+    }
+
+    private void SaveHabitsFromUI()
+    {
+        var list = new List<HabitItem>();
+        foreach (var r in _habitRows)
+        {
+            list.Add(new HabitItem
+            {
+                Id = r.Model.Id,
+                Name = r.NameBox.Text,
+                Enabled = r.EnabledCheck.IsChecked == true
+            });
+        }
+        Settings.HabitsJson = JsonSerializer.Serialize(list);
+    }
+
+    private void HabitTrackerCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_loaded) return;
+        Settings.HabitTrackerEnabled = HabitTrackerCheck.IsChecked == true;
+        HabitTrackerPanel.Visibility = Settings.HabitTrackerEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void HabitTrackerFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || HabitTrackerFontSizeLabel == null) return;
+        HabitTrackerFontSizeLabel.Text = e.NewValue.ToString("F0");
+    }
+
+    private void HabitTrackerColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)HabitTrackerColorPreview.Background).Color.R, ((SolidColorBrush)HabitTrackerColorPreview.Background).Color.G, ((SolidColorBrush)HabitTrackerColorPreview.Background).Color.B) };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                HabitTrackerColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+        }
+        catch { }
+    }
+
+    private void HabitTrackerColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded) return;
+        try { HabitTrackerColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(HabitTrackerColorBox.Text)); } catch { }
+    }
+
+    #endregion
 }
