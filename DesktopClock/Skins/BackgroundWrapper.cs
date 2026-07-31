@@ -25,6 +25,8 @@ public class BackgroundWrapper : IClockComponent
     public string DisplayName => _inner.DisplayName;
     public FrameworkElement View => _rootGrid;
     public ComponentConfig Config { get; set; } = new();
+    /// <summary>获取被包裹的内部组件(用于穿透访问 SkinHost 等)。</summary>
+    public IClockComponent Inner => _inner;
 
     public BackgroundWrapper(IClockComponent inner)
     {

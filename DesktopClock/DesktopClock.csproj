@@ -53,6 +53,11 @@
     <EmbeddedResource Include="Clock\1.png" LogicalName="DesktopClock.Skins.1.png" />
   </ItemGroup>
 
+  <!-- 指针方案 PNG 素材作为 Resource(支持 pack URI 加载) -->
+  <ItemGroup>
+    <Resource Include="Assets\PointerSets\**\*.png" />
+  </ItemGroup>
+
   <!-- Exclude build output and plugin sub-projects from compilation -->
   <ItemGroup>
     <Compile Remove="obj\**" />

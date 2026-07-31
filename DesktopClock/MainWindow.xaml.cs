@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private readonly PluginManager _pluginManager;
     private readonly HashSet<string> _firedReminders = new();
     private bool _hoverActive;
+    private Services.PointerStyleManager? _pointerStyleManager;
 
     private const int HOTKEY_ID = 9000;
     private const int HOTKEY_ID_SKIN_NEXT = 9001;
@@ -62,17 +63,55 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        Logger.Information("[MainWindow] constructor start");
         InitializeComponent();
 
         _settings = AppSettings.Load();
         if (!string.IsNullOrEmpty(App.StartupDisplayMode))
             _settings.DisplayMode = App.StartupDisplayMode;
+        Logger.Information($"[MainWindow] settings loaded, DisplayMode={_settings.DisplayMode}");
+
+        // 初始化指针样式管理器
+        InitializePointerStyleManager();
+
         RegisterComponents();
+        Logger.Information("[MainWindow] components registered");
+        // 天气组件 IP 自动定位成功后,将新坐标持久化到 AppSettings
+        WeatherComponent.LocationAutoDetected += () =>
+        {
+            try
+            {
+                var weather = _registry.Get("weather");
+                if (weather != null)
+                {
+                    if (weather.Config.Settings.TryGetValue("latitude", out var la) && la is double lat)
+                        _settings.WeatherLatitude = lat;
+                    if (weather.Config.Settings.TryGetValue("longitude", out var lo) && lo is double lon)
+                        _settings.WeatherLongitude = lon;
+                    if (weather.Config.Settings.TryGetValue("city", out var city))
+                        _settings.WeatherCity = city?.ToString() ?? _settings.WeatherCity;
+                    _settings.Save();
+                    Logger.Information("[MainWindow] weather location auto-detected and saved");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[MainWindow] saving auto-located weather coords failed", ex);
+            }
+        };
         _pluginManager = new PluginManager(
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins"), _registry);
         _pluginManager.LoadAll(_settings.Plugins);
+        Logger.Information("[MainWindow] plugins loaded");
         ApplySettings();
+        Logger.Information("[MainWindow] ApplySettings done");
+        // 先设置尺寸再加载位置,否则默认位置用到 NaN 的 Width/Height 会导致窗口不可见
         LoadPosition();
+        Logger.Information($"[MainWindow] LoadPosition done, Left={this.Left}, Top={this.Top}, W={this.Width}, H={this.Height}");
+        // 强制确保窗口可见,避免 HotkeyHide / Hidden 残留
+        if (this.Visibility != Visibility.Visible) this.Visibility = Visibility.Visible;
+        if (!this.IsVisible) this.Show();
+        Logger.Information($"[MainWindow] visibility ensured, IsVisible={this.IsVisible}");
 
         _timer = new DispatcherTimer();
         _timer.Interval = TimeSpan.FromSeconds(1);
@@ -127,6 +166,19 @@ public partial class MainWindow : Window
         CreateTrayIcon();
     }
 
+    /// <summary>初始化指针样式管理器并注入到 AnalogClockSkin</summary>
+    private void InitializePointerStyleManager()
+    {
+        _pointerStyleManager = new Services.PointerStyleManager();
+        // 数据目录与 settings.json 同目录
+        _pointerStyleManager.DataDir = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "DesktopClock");
+        _pointerStyleManager.Load();
+        // 注入到 AnalogClockSkin 静态属性
+        Skins.AnalogClockSkin.StyleManager = _pointerStyleManager;
+    }
+
     private void RegisterComponents()
     {
         _registry.Register(new DateComponent());
@@ -168,24 +220,39 @@ public partial class MainWindow : Window
             "analog_skin" => "analog_clock_skin",
             "ribbon" => "ribbon_clock_skin",
             "dual_analog" => "dual_analog_clock_skin",
+            "cyberpunk" => "cyberpunk_neon_clock_skin",
+            // 指针样式编辑器模式:复用 analog_clock_skin 容器,但强制使用编辑器方案
+            "pointer_editor" => "analog_clock_skin",
             _ => "digital_clock"
         };
+        // 记录是否为"指针样式编辑器"模式,后续用于强制注入 pointerSetId
+        bool isPointerEditorMode = _settings.DisplayMode == "pointer_editor";
 
-        // 指针表盘/缎带皮肤/双时区通过 SkinHost 包装,动态注册到组件中心
-        if (clockId == "analog_clock_skin" || clockId == "ribbon_clock_skin" || clockId == "dual_analog_clock_skin")
+        // 指针表盘/缎带皮肤/双时区/赛博朋克通过 SkinHost 包装,动态注册到组件中心
+        if (clockId == "analog_clock_skin" || clockId == "ribbon_clock_skin" || clockId == "dual_analog_clock_skin" || clockId == "cyberpunk_neon_clock_skin")
         {
             _registry.Unregister("analog_clock_skin");
             _registry.Unregister("ribbon_clock_skin");
             _registry.Unregister("dual_analog_clock_skin");
+            _registry.Unregister("cyberpunk_neon_clock_skin");
             var skin = clockId switch
             {
                 "analog_clock_skin" => (IClockSkin)new AnalogClockSkin(),
                 "dual_analog_clock_skin" => new DualAnalogClockSkin(),
+                "cyberpunk_neon_clock_skin" => new CyberpunkNeonSkin(),
                 _ => new RibbonClockSkin()
             };
             var host = new SkinHost(skin);
             if (!_settings.Components.TryGetValue(clockId, out var cfg))
                 cfg = new Models.ComponentConfig();
+            // 注入当前激活的指针方案 ID(如果有)
+            if (!string.IsNullOrEmpty(_settings.ActivePointerSetId))
+                cfg.Settings["pointerSetId"] = _settings.ActivePointerSetId;
+            // 指针样式编辑器模式:强制要求使用编辑器方案,若未设置则给出提示日志
+            if (isPointerEditorMode && string.IsNullOrEmpty(_settings.ActivePointerSetId))
+            {
+                Logger.Warning("[MainWindow] pointer_editor mode enabled but no ActivePointerSetId set, falling back to default hands");
+            }
             // 相册背景开启时,把全局背景参数注入 SkinHost 配置,使其同样生效
             if (_settings.SkinBackgroundEnabled && !string.IsNullOrWhiteSpace(_settings.SkinBackgroundPath))
                 InjectBackgroundSettings(cfg);
@@ -205,6 +272,7 @@ public partial class MainWindow : Window
             _registry.Unregister("analog_clock_skin");
             _registry.Unregister("ribbon_clock_skin");
             _registry.Unregister("dual_analog_clock_skin");
+            _registry.Unregister("cyberpunk_neon_clock_skin");
 
             // 相册背景仅适用于指针表盘(analog_skin/ribbon/dual_analog),
             // 切换到其他表盘时自动关闭,避免背景层残留影响显示
@@ -305,13 +373,20 @@ public partial class MainWindow : Window
             }
         }
 
-        // Weather: 注入经纬度
+        // Weather: 注入经纬度 + 显示样式配置
         var weather = _registry.Get("weather");
         if (weather != null)
         {
             weather.Config.Settings["latitude"] = _settings.WeatherLatitude;
             weather.Config.Settings["longitude"] = _settings.WeatherLongitude;
             weather.Config.Settings["city"] = _settings.WeatherCity;
+            weather.Config.Settings["fontSize"] = _settings.WeatherFontSize;
+            weather.Config.Settings["detailFontSize"] = _settings.WeatherDetailFontSize;
+            weather.Config.Settings["fontColor"] = _settings.WeatherFontColor;
+            weather.Config.Settings["detailColor"] = _settings.WeatherDetailColor;
+            weather.Config.Settings["alignment"] = _settings.WeatherAlignment;
+            weather.Config.Position = _settings.WeatherPosition;
+            weather.ApplyConfig();
         }
 
         // Countdown: 注入目标时间和标签
@@ -634,7 +709,8 @@ public partial class MainWindow : Window
             ("数字", "digital"), ("翻转", "flip"), ("二进制", "binary"),
             ("模拟时钟", "progress"), ("超精美模拟", "analog_premium"),
             ("机械时钟", "mechanical"), ("指针表盘", "analog_skin"),
-            ("双时区指针", "dual_analog"), ("缎带流光", "ribbon"), ("极简", "minimal")
+            ("双时区指针", "dual_analog"), ("缎带流光", "ribbon"),
+            ("赛博朋克霓虹发光指针", "cyberpunk"), ("极简", "minimal")
         };
         foreach (var (name, mode) in presets)
         {
@@ -658,6 +734,11 @@ public partial class MainWindow : Window
         var editModeItem = new MenuItem { Header = _settings.Layout.Mode == "free" ? "退出编辑模式" : "编辑布局模式" };
         editModeItem.Click += (_, _) => ToggleEditMode();
         menu.Items.Add(editModeItem);
+
+        // 指针样式编辑器入口
+        var pointerEditorItem = new MenuItem { Header = "指针样式编辑器" };
+        pointerEditorItem.Click += (_, _) => OpenPointerStyleEditor();
+        menu.Items.Add(pointerEditorItem);
 
         menu.Items.Add(new Separator());
 
@@ -850,6 +931,58 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>打开指针样式编辑器</summary>
+    private void OpenPointerStyleEditor()
+    {
+        if (_pointerStyleManager == null) return;
+        var editor = new PointerStyleEditor(_pointerStyleManager) { Owner = this };
+        editor.OnApply = (set) =>
+        {
+            // 保存方案 ID 到 AppSettings
+            _settings.ActivePointerSetId = set.Id;
+
+            // 同步到所有可能的皮肤组件配置
+            var skinIds = new[] { "analog_clock_skin", "ribbon_clock_skin", "dual_analog_clock_skin", "cyberpunk_neon_clock_skin" };
+            foreach (var id in skinIds)
+            {
+                if (_settings.Components.TryGetValue(id, out var cfg))
+                    cfg.Settings["pointerSetId"] = set.Id;
+            }
+
+            // 也同步到 analog_clock 组件（老式 key）
+            if (_settings.Components.TryGetValue("analog_clock", out var oldCfg))
+                oldCfg.Settings["pointerSetId"] = set.Id;
+
+            _settings.Save();
+
+            // 遍历注册表刷新所有皮肤宿主(包括 BackgroundWrapper 包裹的)
+            RefreshAllSkinHosts(set.Id);
+        };
+        editor.Show();
+    }
+
+    /// <summary>
+    /// 遍历注册表,找到所有 SkinHost(包括 BackgroundWrapper 包裹的),
+    /// 设置 pointerSetId 并调用 ApplyConfig 刷新指针样式。
+    /// </summary>
+    private void RefreshAllSkinHosts(string setId)
+    {
+        foreach (var comp in _registry.GetAll())
+        {
+            SkinHost? host = null;
+
+            if (comp is SkinHost directHost)
+                host = directHost;
+            else if (comp is BackgroundWrapper wrapper && wrapper.Inner is SkinHost wrappedHost)
+                host = wrappedHost;
+
+            if (host == null) continue;
+
+            host.Config.Settings["pointerSetId"] = setId;
+            host.ApplyConfig();
+        }
+    }
+
     private void OpenSettings()
     {
         var win = new SettingsWindow(_settings, _pluginManager) { Owner = this };
@@ -912,6 +1045,10 @@ public partial class MainWindow : Window
                 this.Width = 420;
                 this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
                 break;
+            case "cyberpunk":
+                this.Width = 420;
+                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                break;
             case "dual_analog":
                 this.Width = 460;
                 this.Height = 280 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
@@ -947,16 +1084,7 @@ public partial class MainWindow : Window
 
     private void ApplyBackground()
     {
-        // 模拟时钟/缎带/双时区模式:玻璃圆盘之外完全透明,只显示组件本身的圆盘
-        if (_settings.DisplayMode == "progress" || _settings.DisplayMode == "analog_premium" || _settings.DisplayMode == "mechanical" || _settings.DisplayMode == "analog_skin" || _settings.DisplayMode == "ribbon" || _settings.DisplayMode == "dual_analog")
-        {
-            MainBorder.Background = Brushes.Transparent;
-            MainBorder.Opacity = 1.0;
-            WindowBackdrop.Clear(this);
-            return;
-        }
-
-        // 应用 Mica/Acrylic 背景效果(Windows 11)
+        // 1) Mica/Acrylic 背景效果优先(Windows 11)
         var backdrop = _settings.BackdropType?.ToLower() switch
         {
             "mica" => BackdropType.Mica,
@@ -966,59 +1094,56 @@ public partial class MainWindow : Window
         };
         if (backdrop != BackdropType.None && WindowBackdrop.IsWindows11())
         {
-            // Mica/Acrylic 模式下窗口背景需不透明,由 DWM 绘制
+            // Mica/Acrylic 模式下窗口背景由 DWM 绘制
             MainBorder.Background = Brushes.Transparent;
+            MainBorder.Opacity = 1.0;
             bool dark = IsSystemDarkMode();
             WindowBackdrop.Apply(this, backdrop, dark);
+            ApplyGlobalFilter();
+            return;
         }
-        else
+
+        WindowBackdrop.Clear(this);
+
+        // 2) 渐变背景:用户明确选择时才绘制
+        if (_settings.BackgroundType == "gradient")
         {
-            WindowBackdrop.Clear(this);
-            // 应用悬停透明度状态(如果启用)
-            ApplyHoverOpacity(_hoverActive);
-
-            if (_settings.BackgroundType == "gradient")
+            try
             {
-                try
-                {
-                    var start = (Color)ColorConverter.ConvertFromString(_settings.GradientStartColor);
-                    var end = (Color)ColorConverter.ConvertFromString(_settings.GradientEndColor);
-                    var gradient = new LinearGradientBrush(start, end, _settings.GradientAngle);
-                    gradient.Opacity = _settings.BackgroundOpacity;
-                    MainBorder.Background = gradient;
-                }
-                catch
-                {
-                    MainBorder.Background = new SolidColorBrush(Color.FromArgb(
-                        (byte)(_settings.BackgroundOpacity * 255), 0, 0, 0));
-                }
+                var start = (Color)ColorConverter.ConvertFromString(_settings.GradientStartColor);
+                var end = (Color)ColorConverter.ConvertFromString(_settings.GradientEndColor);
+                var gradient = new LinearGradientBrush(start, end, _settings.GradientAngle);
+                gradient.Opacity = _settings.BackgroundOpacity;
+                MainBorder.Background = gradient;
+                MainBorder.Opacity = 1.0;
+                ApplyHoverOpacity(_hoverActive);
+                ApplyGlobalFilter();
+                return;
             }
-            else
-            {
-                MainBorder.Background = new SolidColorBrush(Color.FromArgb(
-                    (byte)(_settings.BackgroundOpacity * 255), 0, 0, 0));
-            }
+            catch { }
         }
 
+        // 3) 默认:所有模式(数字/翻转/二进制/模拟/赛博朋克/极简等)窗口背景完全透明,
+        //    只显示组件本身内容,避免黑色底板影响外观
+        MainBorder.Background = Brushes.Transparent;
+        MainBorder.Opacity = 1.0;
         ApplyGlobalFilter();
     }
 
     /// <summary>
     /// 应用悬停透明度效果。鼠标靠近时提高不透明度(更清晰),离开时恢复。
-    /// 对透明表盘模式(progress/analog_premium/mechanical/analog_skin)无效。
+    /// 仅在渐变背景模式下生效;透明背景下改 Opacity 会让组件内容一起消失,故跳过。
     /// </summary>
     private void ApplyHoverOpacity(bool hover)
     {
         _hoverActive = hover;
-        // 透明表盘模式下 MainBorder 是 Transparent,Opacity 无意义,跳过
-        if (_settings.DisplayMode == "progress" || _settings.DisplayMode == "analog_premium"
-            || _settings.DisplayMode == "mechanical" || _settings.DisplayMode == "analog_skin"
-            || _settings.DisplayMode == "ribbon" || _settings.DisplayMode == "dual_analog")
-            return;
+        // 透明背景(默认)或 Mica/Acrylic 模式下 MainBorder 是 Transparent,
+        // 改 Opacity 会让时钟数字/表盘内容一起变透明,因此只在渐变背景时生效
+        if (_settings.BackgroundType != "gradient") return;
 
         if (_settings.HoverOpacityEnabled)
         {
-            double target = hover ? _settings.HoverOpacity : _settings.BackgroundOpacity;
+            double target = hover ? _settings.HoverOpacity : Math.Max(0.1, _settings.BackgroundOpacity);
             MainBorder.Opacity = target;
         }
         else
@@ -1223,7 +1348,7 @@ public partial class MainWindow : Window
     {
         if (_skinCycle.Length == 0)
         {
-            _skinCycle = new[] { "digital", "flip", "binary", "progress", "analog_premium", "mechanical", "analog_skin", "dual_analog", "ribbon", "minimal" };
+            _skinCycle = new[] { "digital", "flip", "binary", "progress", "analog_premium", "mechanical", "analog_skin", "dual_analog", "ribbon", "cyberpunk", "minimal" };
         }
         _skinCycleIndex = (_skinCycleIndex + 1) % _skinCycle.Length;
         SwitchDisplayMode(_skinCycle[_skinCycleIndex]);
@@ -1260,18 +1385,28 @@ public partial class MainWindow : Window
 
     private void LoadPosition()
     {
+        var sw = SystemParameters.PrimaryScreenWidth;
+        var sh = SystemParameters.PrimaryScreenHeight;
+        // 先保证自己的尺寸有效,避免 NaN
+        if (double.IsNaN(this.Width) || this.Width < 100) this.Width = 400;
+        if (double.IsNaN(this.Height) || this.Height < 100) this.Height = 200;
+
         var path = AppSettings.GetPositionFilePath();
         if (File.Exists(path))
         {
             var parts = File.ReadAllText(path).Split(',');
             if (parts.Length == 2 && double.TryParse(parts[0], out var left) && double.TryParse(parts[1], out var top))
             {
-                this.Left = left; this.Top = top; return;
+                // 夹紧到屏幕范围内,避免窗口在屏幕外看不见
+                left = Math.Clamp(left, 0, Math.Max(0, sw - this.Width));
+                top = Math.Clamp(top, 0, Math.Max(0, sh - this.Height));
+                this.Left = left; this.Top = top;
+                return;
             }
         }
         // 多实例时错开默认位置,避免完全重叠
         int offset = AppSettings.CurrentInstanceId * 30;
-        this.Left = SystemParameters.PrimaryScreenWidth - this.Width - 20 - offset;
+        this.Left = Math.Max(0, sw - this.Width - 20 - offset);
         this.Top = 20 + offset;
     }
 }

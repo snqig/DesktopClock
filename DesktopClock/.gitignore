@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+.vscode/
+.workbuddy/
+*.user
+*.suo
+*.cache
+publish/
+Release/
+Debug/

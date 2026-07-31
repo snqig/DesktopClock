@@ -211,6 +211,20 @@ public partial class SettingsWindow : Window
         WeatherCityBox.Text = Settings.WeatherCity;
         WeatherLatBox.Text = Settings.WeatherLatitude.ToString();
         WeatherLonBox.Text = Settings.WeatherLongitude.ToString();
+        WeatherFontSizeSlider.Value = Settings.WeatherFontSize;
+        WeatherFontSizeText.Text = Settings.WeatherFontSize.ToString("F0");
+        WeatherDetailFontSizeSlider.Value = Settings.WeatherDetailFontSize;
+        WeatherDetailFontSizeText.Text = Settings.WeatherDetailFontSize.ToString("F0");
+        WeatherMainColorBox.Text = Settings.WeatherFontColor;
+        WeatherDetailColorBox.Text = Settings.WeatherDetailColor;
+        try { WeatherMainColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.WeatherFontColor)); } catch { }
+        try { WeatherDetailColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.WeatherDetailColor)); } catch { }
+        foreach (var item in WeatherAlignmentCombo.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.WeatherAlignment)
+                WeatherAlignmentCombo.SelectedItem = item;
+        foreach (var item in WeatherPositionCombo.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.WeatherPosition)
+                WeatherPositionCombo.SelectedItem = item;
         WeatherPanel.Visibility = Settings.WeatherEnabled ? Visibility.Visible : Visibility.Collapsed;
 
         // Countdown
@@ -953,6 +967,12 @@ public partial class SettingsWindow : Window
         Settings.WeatherCity = WeatherCityBox.Text;
         if (double.TryParse(WeatherLatBox.Text, out var lat)) Settings.WeatherLatitude = lat;
         if (double.TryParse(WeatherLonBox.Text, out var lon)) Settings.WeatherLongitude = lon;
+        Settings.WeatherFontSize = WeatherFontSizeSlider.Value;
+        Settings.WeatherDetailFontSize = WeatherDetailFontSizeSlider.Value;
+        Settings.WeatherFontColor = WeatherMainColorBox.Text;
+        Settings.WeatherDetailColor = WeatherDetailColorBox.Text;
+        Settings.WeatherAlignment = (WeatherAlignmentCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "center";
+        Settings.WeatherPosition = (WeatherPositionCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "bottom";
 
         // Countdown
         Settings.CountdownEnabled = CountdownCheck.IsChecked == true;
@@ -1048,6 +1068,80 @@ public partial class SettingsWindow : Window
         if (!_loaded) return;
         Settings.WeatherEnabled = WeatherCheck.IsChecked == true;
         WeatherPanel.Visibility = Settings.WeatherEnabled ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void WeatherFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || WeatherFontSizeText == null) return;
+        WeatherFontSizeText.Text = e.NewValue.ToString("F0");
+    }
+
+    private void WeatherDetailFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_loaded || WeatherDetailFontSizeText == null) return;
+        WeatherDetailFontSizeText.Text = e.NewValue.ToString("F0");
+    }
+
+    private void WeatherMainColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded || WeatherMainColorPreview == null) return;
+        try { WeatherMainColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(WeatherMainColorBox.Text)); }
+        catch { WeatherMainColorPreview.Background = new SolidColorBrush(Colors.Gray); }
+    }
+
+    private void WeatherMainColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            using var dialog = new System.Windows.Forms.ColorDialog
+            {
+                AllowFullOpen = true,
+                FullOpen = true,
+                Color = System.Drawing.Color.FromArgb(
+                    ((SolidColorBrush)WeatherMainColorPreview.Background).Color.R,
+                    ((SolidColorBrush)WeatherMainColorPreview.Background).Color.G,
+                    ((SolidColorBrush)WeatherMainColorPreview.Background).Color.B)
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
+                var hex = $"#{dialog.Color.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+                WeatherMainColorBox.Text = hex;
+                WeatherMainColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+            }
+        }
+        catch { }
+    }
+
+    private void WeatherDetailColorBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_loaded || WeatherDetailColorPreview == null) return;
+        try { WeatherDetailColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(WeatherDetailColorBox.Text)); }
+        catch { WeatherDetailColorPreview.Background = new SolidColorBrush(Colors.Gray); }
+    }
+
+    private void WeatherDetailColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            using var dialog = new System.Windows.Forms.ColorDialog
+            {
+                AllowFullOpen = true,
+                FullOpen = true,
+                Color = System.Drawing.Color.FromArgb(
+                    ((SolidColorBrush)WeatherDetailColorPreview.Background).Color.R,
+                    ((SolidColorBrush)WeatherDetailColorPreview.Background).Color.G,
+                    ((SolidColorBrush)WeatherDetailColorPreview.Background).Color.B)
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
+                var hex = $"#{dialog.Color.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
+                WeatherDetailColorBox.Text = hex;
+                WeatherDetailColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+            }
+        }
+        catch { }
     }
 
     private void CountdownCheck_Changed(object sender, RoutedEventArgs e)

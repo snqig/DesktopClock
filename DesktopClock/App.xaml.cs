@@ -59,7 +59,9 @@ public partial class App : Application
             Logger.Error("[App] I18n apply failed", ex);
         }
 
+        Logger.Information("[App] before base.OnStartup");
         base.OnStartup(e);
+        Logger.Information("[App] after base.OnStartup, MainWindow created");
     }
 
     private void RegisterGlobalExceptionHandlers()
@@ -69,6 +71,7 @@ public partial class App : Application
         {
             Logger.Error("[DispatcherUnhandledException]", args.Exception);
             WriteCrashLog($"[DispatcherUnhandledException] {args.Exception}");
+            Serilog.Log.CloseAndFlush();
             args.Handled = true;
         };
 
@@ -78,6 +81,7 @@ public partial class App : Application
             var ex = args.ExceptionObject as Exception;
             Logger.Error($"[AppDomainUnhandledException] isTerminating={args.IsTerminating}", ex);
             WriteCrashLog($"[AppDomainUnhandledException] isTerminating={args.IsTerminating} ex={args.ExceptionObject}");
+            Serilog.Log.CloseAndFlush();
         };
 
         // Task 未观察异常

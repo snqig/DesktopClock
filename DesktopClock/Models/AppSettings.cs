@@ -77,9 +77,15 @@ public class AppSettings
 
     // === 天气 ===
     public bool WeatherEnabled { get; set; } = false;
-    public string WeatherCity { get; set; } = "Beijing";
-    public double WeatherLatitude { get; set; } = 39.9042;
-    public double WeatherLongitude { get; set; } = 116.4074;
+    public string WeatherCity { get; set; } = "Suzhou";
+    public double WeatherLatitude { get; set; } = 31.2989;
+    public double WeatherLongitude { get; set; } = 120.5853;
+    public double WeatherFontSize { get; set; } = 13;
+    public double WeatherDetailFontSize { get; set; } = 11;
+    public string WeatherFontColor { get; set; } = "#FFD3D3D3"; // LightGray
+    public string WeatherDetailColor { get; set; } = "#FFAAAAAA";
+    public string WeatherAlignment { get; set; } = "center"; // left / center / right
+    public string WeatherPosition { get; set; } = "bottom"; // top / bottom (ComponentConfig.Position)
 
     // === 倒计时 ===
     public bool CountdownEnabled { get; set; } = false;
@@ -117,6 +123,12 @@ public class AppSettings
     public Models.LayoutConfig Layout { get; set; } = new();
     public Dictionary<string, Models.ComponentConfig> Components { get; set; } = new();
     public Dictionary<string, bool> Plugins { get; set; } = new();
+
+    // === 指针方案持久化 ===
+    /// <summary>所有自定义指针方案(启动时由 PointerStyleManager 加载)</summary>
+    public List<Models.PointerSet> PointerSets { get; set; } = new();
+    /// <summary>当前激活的指针方案 ID(空=使用默认矢量指针)</summary>
+    public string ActivePointerSetId { get; set; } = string.Empty;
 
     // 旧路径:程序目录(仅用于一次性迁移到新路径)
     private static readonly string LegacyFilePath = Path.Combine(
@@ -337,6 +349,17 @@ public class AppSettings
 
         SetComponentSetting("world_clock", "timeZone", WorldClockTimeZone);
         SetComponentSetting("reminder", "items", RemindersJson);
+
+        SetComponentSetting("weather", "city", WeatherCity);
+        SetComponentSetting("weather", "latitude", WeatherLatitude);
+        SetComponentSetting("weather", "longitude", WeatherLongitude);
+        SetComponentSetting("weather", "fontSize", WeatherFontSize);
+        SetComponentSetting("weather", "detailFontSize", WeatherDetailFontSize);
+        SetComponentSetting("weather", "fontColor", WeatherFontColor);
+        SetComponentSetting("weather", "detailColor", WeatherDetailColor);
+        SetComponentSetting("weather", "alignment", WeatherAlignment);
+        if (Components.TryGetValue("weather", out var wcfg))
+            wcfg.Position = WeatherPosition;
     }
 
     private void MigrateFlatFromStructured()
@@ -372,6 +395,17 @@ public class AppSettings
 
             WorldClockTimeZone = GetComponentSetting<string>("world_clock", "timeZone", WorldClockTimeZone);
             RemindersJson = GetComponentSetting<string>("reminder", "items", RemindersJson);
+
+            WeatherCity = GetComponentSetting<string>("weather", "city", WeatherCity);
+            WeatherLatitude = GetComponentSetting<double>("weather", "latitude", WeatherLatitude);
+            WeatherLongitude = GetComponentSetting<double>("weather", "longitude", WeatherLongitude);
+            WeatherFontSize = GetComponentSetting<double>("weather", "fontSize", WeatherFontSize);
+            WeatherDetailFontSize = GetComponentSetting<double>("weather", "detailFontSize", WeatherDetailFontSize);
+            WeatherFontColor = GetComponentSetting<string>("weather", "fontColor", WeatherFontColor);
+            WeatherDetailColor = GetComponentSetting<string>("weather", "detailColor", WeatherDetailColor);
+            WeatherAlignment = GetComponentSetting<string>("weather", "alignment", WeatherAlignment);
+            if (Components.TryGetValue("weather", out var wcfg) && !string.IsNullOrEmpty(wcfg.Position))
+                WeatherPosition = wcfg.Position;
         }
     }
 

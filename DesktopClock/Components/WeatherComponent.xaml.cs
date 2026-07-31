@@ -24,12 +24,17 @@ public class WeatherComponent : IClockComponent
     private string? _cached;
     private string? _cachedDetail;
     private DateTime _lastFetch = DateTime.MinValue;
+    private bool _autoLocating;
+    private bool _autoLocated;
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
-    /// <summary>
-    /// 离线缓存文件路径,位于 %LOCALAPPDATA%\DesktopClock\cache\weather.json。
-    /// 缓存结构:{ "main":"...", "detail":"...", "ts":"ISO8601" }
-    /// </summary>
+    private const double DefaultMainFontSize = 13;
+    private const double DefaultDetailFontSize = 11;
+    private static readonly Color DefaultMainColor = Colors.LightGray;
+    private static readonly Color DefaultDetailColor = Color.FromRgb(0xAA, 0xAA, 0xAA);
+
+    public static event Action? LocationAutoDetected;
+
     private static string CachePath
     {
         get
@@ -52,16 +57,16 @@ public class WeatherComponent : IClockComponent
         _mainText = new TextBlock
         {
             Text = "天气加载中...",
-            FontSize = 13,
-            Foreground = Brushes.LightGray,
+            FontSize = DefaultMainFontSize,
+            Foreground = new SolidColorBrush(DefaultMainColor),
             FontFamily = new FontFamily("Microsoft YaHei"),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         _detailText = new TextBlock
         {
             Text = "",
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
+            FontSize = DefaultDetailFontSize,
+            Foreground = new SolidColorBrush(DefaultDetailColor),
             FontFamily = new FontFamily("Microsoft YaHei"),
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 2, 0, 0)
@@ -72,12 +77,17 @@ public class WeatherComponent : IClockComponent
 
     public void Update(DateTime now)
     {
-        // 首次更新:优先从离线缓存恢复,避免启动时显示"加载中"
         if (_cached == null)
         {
             LoadCache();
             if (_cached != null)
                 DispatcherUpdate(_cached + " (缓存)", _cachedDetail ?? "");
+        }
+
+        if (!_autoLocated && !_autoLocating && !HasValidCoords())
+        {
+            _autoLocating = true;
+            _ = TryLocateAsync();
         }
 
         if ((now - _lastFetch).TotalMinutes >= 30)
@@ -87,18 +97,104 @@ public class WeatherComponent : IClockComponent
         }
     }
 
+    private bool HasValidCoords()
+    {
+        double lat = 0, lon = 0;
+        if (Config.Settings.TryGetValue("latitude", out var la))
+        {
+            if (la is double d1) lat = d1;
+            else if (la is JsonElement je1 && je1.TryGetDouble(out var d2)) lat = d2;
+            else if (double.TryParse(la?.ToString(), out var d3)) lat = d3;
+        }
+        if (Config.Settings.TryGetValue("longitude", out var lo))
+        {
+            if (lo is double e1) lon = e1;
+            else if (lo is JsonElement je2 && je2.TryGetDouble(out var e2)) lon = e2;
+            else if (double.TryParse(lo?.ToString(), out var e3)) lon = e3;
+        }
+        return lat != 0 && lon != 0;
+    }
+
     public void ApplyConfig()
     {
+        // 主文字大小
+        if (Config.Settings.TryGetValue("fontSize", out var fs))
+        {
+            double v = DefaultMainFontSize;
+            if (fs is double d1) v = d1;
+            else if (fs is JsonElement je1 && je1.TryGetDouble(out var d2)) v = d2;
+            else if (double.TryParse(fs?.ToString(), out var d3)) v = d3;
+            _mainText.FontSize = Math.Clamp(v, 8, 120);
+            // 详情默认按主字号 0.85 缩放
+            if (!Config.Settings.ContainsKey("detailFontSize"))
+                _detailText.FontSize = Math.Clamp(v * 0.85, 6, 100);
+        }
+
+        // 详情文字大小
+        if (Config.Settings.TryGetValue("detailFontSize", out var dfs))
+        {
+            double v = DefaultDetailFontSize;
+            if (dfs is double d1) v = d1;
+            else if (dfs is JsonElement je1 && je1.TryGetDouble(out var d2)) v = d2;
+            else if (double.TryParse(dfs?.ToString(), out var d3)) v = d3;
+            _detailText.FontSize = Math.Clamp(v, 6, 100);
+        }
+
+        // 主文字颜色(fontColor / mainColor 双 key 兼容)
+        Color mainColor = DefaultMainColor;
+        bool mainColorSet = false;
         if (Config.Settings.TryGetValue("fontColor", out var fc))
         {
-            try { _mainText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fc.ToString()!)); }
-            catch { }
+            try { mainColor = (Color)ColorConverter.ConvertFromString(fc.ToString()!); mainColorSet = true; } catch { }
+        }
+        else if (Config.Settings.TryGetValue("mainColor", out var mc))
+        {
+            try { mainColor = (Color)ColorConverter.ConvertFromString(mc.ToString()!); mainColorSet = true; } catch { }
+        }
+        if (mainColorSet) _mainText.Foreground = new SolidColorBrush(mainColor);
+
+        // 详情文字颜色
+        if (Config.Settings.TryGetValue("detailColor", out var dc))
+        {
+            try { _detailText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(dc.ToString()!)); }
+            catch
+            {
+                // 失败则按主色 0.7 亮度推导
+                if (_mainText.Foreground is SolidColorBrush mcb)
+                {
+                    var c = mcb.Color;
+                    _detailText.Foreground = new SolidColorBrush(Color.FromRgb((byte)(c.R * 0.7), (byte)(c.G * 0.7), (byte)(c.B * 0.7)));
+                }
+            }
+        }
+        else
+        {
+            if (_mainText.Foreground is SolidColorBrush mcb2)
+            {
+                var c = mcb2.Color;
+                _detailText.Foreground = new SolidColorBrush(Color.FromRgb((byte)(c.R * 0.7), (byte)(c.G * 0.7), (byte)(c.B * 0.7)));
+            }
+        }
+
+        // 水平对齐(left / center / right)
+        if (Config.Settings.TryGetValue("alignment", out var align))
+        {
+            var a = (align?.ToString() ?? "center").ToLowerInvariant();
+            var ha = a switch
+            {
+                "left" => HorizontalAlignment.Left,
+                "right" => HorizontalAlignment.Right,
+                _ => HorizontalAlignment.Center
+            };
+            _panel.HorizontalAlignment = ha;
+            _mainText.HorizontalAlignment = ha;
+            _detailText.HorizontalAlignment = ha;
         }
     }
 
     private async Task FetchAsync()
     {
-        double lat = 39.9042, lon = 116.4074;
+        double lat = 31.2989, lon = 120.5853; // 默认苏州
         if (Config.Settings.TryGetValue("latitude", out var la))
         {
             if (la is double d1) lat = d1;
@@ -133,7 +229,6 @@ public class WeatherComponent : IClockComponent
 
                 if (!string.IsNullOrEmpty(sunrise) && !string.IsNullOrEmpty(sunset))
                 {
-                    // 只取时间部分
                     if (sunrise.Length > 11) sunrise = sunrise.Substring(11, 5);
                     if (sunset.Length > 11) sunset = sunset.Substring(11, 5);
                     detail = $"日出 {sunrise}  日落 {sunset}";
@@ -155,19 +250,11 @@ public class WeatherComponent : IClockComponent
         }
     }
 
-    /// <summary>
-    /// 将天气主文本与详情写入离线缓存文件,带时间戳。
-    /// </summary>
     private void SaveCache(string main, string? detail)
     {
         try
         {
-            var payload = new
-            {
-                main,
-                detail = detail ?? "",
-                ts = DateTime.Now.ToString("O")
-            };
+            var payload = new { main, detail = detail ?? "", ts = DateTime.Now.ToString("O") };
             File.WriteAllText(CachePath, JsonSerializer.Serialize(payload));
         }
         catch (Exception ex)
@@ -176,9 +263,6 @@ public class WeatherComponent : IClockComponent
         }
     }
 
-    /// <summary>
-    /// 从离线缓存文件恢复天气文本。缓存超过 24 小时视为过期不加载。
-    /// </summary>
     private void LoadCache()
     {
         try
@@ -190,7 +274,6 @@ public class WeatherComponent : IClockComponent
             _cached = m.GetString();
             if (doc.RootElement.TryGetProperty("detail", out var d))
                 _cachedDetail = d.GetString();
-            // 缓存超过 24 小时视为过期,不阻塞但记录日志
             if (doc.RootElement.TryGetProperty("ts", out var t) &&
                 DateTime.TryParse(t.GetString(), out var ts) &&
                 (DateTime.Now - ts).TotalHours > 24)
@@ -212,6 +295,49 @@ public class WeatherComponent : IClockComponent
             _detailText.Text = detail;
             _detailText.Visibility = string.IsNullOrEmpty(detail) ? Visibility.Collapsed : Visibility.Visible;
         }));
+    }
+
+    private async Task TryLocateAsync()
+    {
+        try
+        {
+            Logger.Information("[Weather] auto-locating via ipapi.co...");
+            var json = await _http.GetStringAsync("https://ipapi.co/json/");
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("latitude", out var latProp) &&
+                root.TryGetProperty("longitude", out var lonProp) &&
+                latProp.TryGetDouble(out var lat) &&
+                lonProp.TryGetDouble(out var lon))
+            {
+                Config.Settings["latitude"] = lat;
+                Config.Settings["longitude"] = lon;
+
+                if (root.TryGetProperty("city", out var cityProp))
+                    Config.Settings["city"] = cityProp.GetString() ?? "";
+                if (root.TryGetProperty("region", out var regionProp))
+                    Config.Settings["region"] = regionProp.GetString() ?? "";
+                if (root.TryGetProperty("country_name", out var countryProp))
+                    Config.Settings["country"] = countryProp.GetString() ?? "";
+
+                _autoLocated = true;
+                Logger.Information($"[Weather] auto-located: {lat},{lon} city={Config.Settings.GetValueOrDefault("city")}");
+                LocationAutoDetected?.Invoke();
+            }
+            else
+            {
+                Logger.Warning("[Weather] auto-locate response missing lat/lon");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warning($"[Weather] auto-locate failed: {ex.Message}");
+        }
+        finally
+        {
+            _autoLocating = false;
+        }
     }
 
     private static string WeatherCodeToDesc(int code)

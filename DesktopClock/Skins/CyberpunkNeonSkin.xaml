@@ -1,0 +1,131 @@
+<UserControl x:Class="DesktopClock.Skins.CyberpunkNeonSkin"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="400" Height="400"
+             Padding="30"
+             Background="Transparent">
+    <UserControl.Resources>
+        <!-- 呼吸动画:中心点双层脉冲,让赛博核心有"跳动"感 -->
+        <Storyboard x:Key="CenterBreath" RepeatBehavior="Forever" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetName="CenterGlow" Storyboard.TargetProperty="Opacity"
+                             From="0.5" To="1.0" Duration="0:0:1.4" />
+            <DoubleAnimation Storyboard.TargetName="CenterGlowInner" Storyboard.TargetProperty="Opacity"
+                             From="0.7" To="1.0" Duration="0:0:1.2" />
+        </Storyboard>
+    </UserControl.Resources>
+    <!-- Padding 30 = 预留 DropShadowEffect(最大 BlurRadius 28)的发光空间,防止外边框发光被裁掉 -->
+    <Viewbox Stretch="Uniform">
+        <!-- 所有矢量元素统一放在 Canvas 中,Canvas.Left/Top 才会生效,参考 AnalogClockSkin 惯例 -->
+        <Canvas x:Name="VectorLayer" Width="340" Height="340" Background="Transparent">
+
+            <!-- 深色内底:径向渐变纯黑(赛博暗底) -->
+            <Ellipse Width="340" Height="340" Canvas.Left="0" Canvas.Top="0" StrokeThickness="0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5">
+                        <GradientStop Color="#0f1022" Offset="0" />
+                        <GradientStop Color="#07080f" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <!-- 外发光外边框(主霓虹青 Cyan) -->
+            <Ellipse x:Name="OuterRing" Width="336" Height="336"
+                     Canvas.Left="2" Canvas.Top="2"
+                     StrokeThickness="4"
+                     Stroke="#00ffff" StrokeDashCap="Round"
+                     Opacity="0.95">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="#00f0ff" BlurRadius="22" ShadowDepth="0" Opacity="0.95" />
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <!-- 第二层弱光晕(洋红,多色叠加辉光) -->
+            <Ellipse x:Name="OuterRing2" Width="316" Height="316"
+                     Canvas.Left="12" Canvas.Top="12"
+                     StrokeThickness="2"
+                     Stroke="#ff2bd6" StrokeDashArray="2 6">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="#ff2bd6" BlurRadius="28" ShadowDepth="0" Opacity="0.75" />
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <!-- 第三层蓝色柔光 -->
+            <Ellipse x:Name="OuterRing3" Width="292" Height="292"
+                     Canvas.Left="24" Canvas.Top="24"
+                     StrokeThickness="1"
+                     Stroke="#4a6fff" Opacity="0.7">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="#4a6fff" BlurRadius="20" ShadowDepth="0" Opacity="0.8" />
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <!-- 刻度层(Canvas.Left/Top 均在父 Canvas 下生效) -->
+            <Canvas x:Name="TicksLayer" Width="340" Height="340" Canvas.Left="0" Canvas.Top="0" />
+
+            <!-- 数字层 -->
+            <Canvas x:Name="NumbersLayer" Width="340" Height="340" Canvas.Left="0" Canvas.Top="0" />
+
+            <!-- 时针 + 霓虹青发光 (200,200)→(200,120) 相对 Canvas340: 中心 170,170 → 内半径 90 -->
+            <Line x:Name="HourHand" X1="170" Y1="170" X2="170" Y2="90"
+                  Stroke="#00ffff" StrokeThickness="8"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                <Line.Effect>
+                    <DropShadowEffect Color="#00ffff" BlurRadius="16" ShadowDepth="0" Opacity="0.9" />
+                </Line.Effect>
+                <Line.RenderTransform>
+                    <RotateTransform x:Name="HourRotate" CenterX="170" CenterY="170" Angle="0" />
+                </Line.RenderTransform>
+            </Line>
+
+            <!-- 分针 + 洋红发光:中心(170,170)→(170,55) 长度 115 -->
+            <Line x:Name="MinuteHand" X1="170" Y1="170" X2="170" Y2="55"
+                  Stroke="#ff2bd6" StrokeThickness="5"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                <Line.Effect>
+                    <DropShadowEffect Color="#ff2bd6" BlurRadius="14" ShadowDepth="0" Opacity="0.9" />
+                </Line.Effect>
+                <Line.RenderTransform>
+                    <RotateTransform x:Name="MinuteRotate" CenterX="170" CenterY="170" Angle="0" />
+                </Line.RenderTransform>
+            </Line>
+
+            <!-- 秒针 + 橙黄发光(含尾巴,中心穿过):尾(170,210)→尖(170,30) 横跨圆心 -->
+            <Line x:Name="SecondHand" X1="170" Y1="210" X2="170" Y2="30"
+                  Stroke="#ffa300" StrokeThickness="2.5"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                <Line.Effect>
+                    <DropShadowEffect Color="#ffa300" BlurRadius="16" ShadowDepth="0" Opacity="0.95" />
+                </Line.Effect>
+                <Line.RenderTransform>
+                    <RotateTransform x:Name="SecondRotate" CenterX="170" CenterY="170" Angle="0" />
+                </Line.RenderTransform>
+            </Line>
+
+            <!-- 中心大光晕(呼吸): 尺寸 44,放在 170-22=148 处 -->
+            <Ellipse x:Name="CenterGlow" Width="44" Height="44" Fill="Transparent"
+                     Canvas.Left="148" Canvas.Top="148"
+                     Opacity="0.9">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="#00ffff" BlurRadius="30" ShadowDepth="0" Opacity="1.0" />
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <!-- 中心内发光点(呼吸): 尺寸 22,放在 170-11=159 处 -->
+            <Ellipse x:Name="CenterGlowInner" Width="22" Height="22" Fill="#ffffff"
+                     Canvas.Left="159" Canvas.Top="159"
+                     Opacity="0.95">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="#ffffff" BlurRadius="14" ShadowDepth="0" Opacity="0.95" />
+                </Ellipse.Effect>
+            </Ellipse>
+
+            <!-- 中心实点: 尺寸 10,放在 170-5=165 处 -->
+            <Ellipse x:Name="CenterDot" Width="10" Height="10" Fill="#00ffff"
+                     Canvas.Left="165" Canvas.Top="165">
+                <Ellipse.Effect>
+                    <DropShadowEffect Color="#00ffff" BlurRadius="8" ShadowDepth="0" Opacity="1.0" />
+                </Ellipse.Effect>
+            </Ellipse>
+        </Canvas>
+    </Viewbox>
+</UserControl>

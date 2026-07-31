@@ -80,6 +80,27 @@ public class LayoutEngine
                 orderedIds.Insert(0, "date");
         }
 
+        // 根据各组件自身 ComponentConfig.Position 调整顺序(仅识别 top / bottom)
+        // 例如 weather 组件可通过 WeatherPosition = "top"/"bottom" 控制在 Stack 布局中的位置
+        for (int i = orderedIds.Count - 1; i >= 0; i--)
+        {
+            var id = orderedIds[i];
+            if (id == "date") continue; // date 已按 DatePosition 处理
+            var comp = registry.Get(id);
+            var pos = comp?.Config?.Position;
+            if (string.IsNullOrEmpty(pos)) continue;
+            if (pos.Equals("top", StringComparison.OrdinalIgnoreCase))
+            {
+                orderedIds.RemoveAt(i);
+                orderedIds.Insert(0, id);
+            }
+            else if (pos.Equals("bottom", StringComparison.OrdinalIgnoreCase))
+            {
+                orderedIds.RemoveAt(i);
+                orderedIds.Add(id);
+            }
+        }
+
         foreach (var id in orderedIds)
         {
             var comp = registry.Get(id);

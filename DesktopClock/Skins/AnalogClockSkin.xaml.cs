@@ -7,6 +7,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using DesktopClock.Models;
+using DesktopClock.Services;
 
 namespace DesktopClock.Skins;
 
@@ -15,6 +17,9 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
     public string Id => "analog_clock_skin";
     public string DisplayName => "指针表盘(自定义)";
     public FrameworkElement View => this;
+
+    /// <summary>全局指针样式管理器(由 MainWindow 在启动时注入)</summary>
+    public static PointerStyleManager? StyleManager { get; set; }
 
     private readonly Dictionary<string, object> _config = new();
 
@@ -29,6 +34,16 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
     private Color TickColor { get; set; } = Color.FromRgb(0x80, 0x80, 0x80);
     private string DialImagePath { get; set; } = string.Empty;
     private readonly DispatcherTimer _smoothTimer;
+
+    // === PNG 指针支持 ===
+    private PointerSet? _activePointerSet;
+    private Image? _hourImage;
+    private Image? _minuteImage;
+    private Image? _secondImage;
+    private bool _useImageHands;
+    // 表盘中心坐标(与 XAML 中 RotateTransform CenterX/CenterY 一致)
+    private const double DialCenter = 200.0;
+    private const double HandBaseSize = 200.0;
 
     public AnalogClockSkin()
     {
@@ -61,9 +76,22 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
         double min = now.Minute + sec / 60.0;
         double hour = (now.Hour % 12) + min / 60.0;
 
-        HourRotate.Angle = hour * 30.0;
-        MinuteRotate.Angle = min * 6.0;
-        SecondRotate.Angle = sec * 6.0;
+        double hourAngle = hour * 30.0;
+        double minAngle = min * 6.0;
+        double secAngle = sec * 6.0;
+
+        if (_useImageHands)
+        {
+            if (_hourImage != null) PointerRenderer.UpdateAngle(_hourImage, hourAngle);
+            if (_minuteImage != null) PointerRenderer.UpdateAngle(_minuteImage, minAngle);
+            if (_secondImage != null) PointerRenderer.UpdateAngle(_secondImage, secAngle);
+        }
+        else
+        {
+            HourRotate.Angle = hourAngle;
+            MinuteRotate.Angle = minAngle;
+            SecondRotate.Angle = secAngle;
+        }
     }
 
     public void LoadConfig(Dictionary<string, object> config)
@@ -81,6 +109,9 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
         if (TryColor("tickColor", out var tc)) TickColor = tc;
         if (TryString("dialImage", out var img)) DialImagePath = img ?? string.Empty;
 
+        // 加载 PNG 指针方案
+        TryLoadPointerSet();
+
         ApplyVisual();
     }
 
@@ -94,11 +125,39 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
         ["showTicks"] = ShowTicks,
         ["showCenterDot"] = ShowCenterDot,
         ["tickColor"] = TickColor.ToString(),
-        ["dialImage"] = DialImagePath
+        ["dialImage"] = DialImagePath,
+        ["pointerSetId"] = _activePointerSet?.Id ?? string.Empty
     };
+
+    /// <summary>尝试从配置中加载指针方案</summary>
+    private void TryLoadPointerSet()
+    {
+        _useImageHands = false;
+        if (StyleManager == null) return;
+        if (!TryString("pointerSetId", out var setId) || string.IsNullOrEmpty(setId)) return;
+
+        var set = StyleManager.GetById(setId);
+        if (set == null) return;
+
+        _activePointerSet = set;
+        _useImageHands = true;
+    }
 
     private void ApplyVisual()
     {
+        // === PNG 指针模式 ===
+        if (_useImageHands && _activePointerSet != null)
+        {
+            ApplyImageHands();
+            return;
+        }
+
+        // === 矢量 Line 指针模式(默认/降级) ===
+        ClearImageHands();
+        HourHand.Visibility = Visibility.Visible;
+        MinuteHand.Visibility = Visibility.Visible;
+        SecondHand.Visibility = ShowSecondHand ? Visibility.Visible : Visibility.Collapsed;
+
         HourHand.Stroke = new SolidColorBrush(HourColor);
         MinuteHand.Stroke = new SolidColorBrush(MinuteColor);
         SecondHand.Stroke = new SolidColorBrush(SecondColor);
@@ -107,7 +166,6 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
         MinuteHand.StrokeThickness = 4 * HandThickness;
         SecondHand.StrokeThickness = 2 * HandThickness;
 
-        SecondHand.Visibility = ShowSecondHand ? Visibility.Visible : Visibility.Collapsed;
         CenterDot.Visibility = ShowCenterDot ? Visibility.Visible : Visibility.Collapsed;
         TicksCanvas.Visibility = ShowTicks ? Visibility.Visible : Visibility.Collapsed;
 
@@ -115,6 +173,59 @@ public partial class AnalogClockSkin : UserControl, IClockSkin
         BuildTicks();
 
         LoadDialImage();
+    }
+
+    /// <summary>应用 PNG 图片指针:隐藏 Line,创建/更新 Image</summary>
+    private void ApplyImageHands()
+    {
+        // 隐藏矢量指针
+        HourHand.Visibility = Visibility.Collapsed;
+        MinuteHand.Visibility = Visibility.Collapsed;
+        SecondHand.Visibility = Visibility.Collapsed;
+        CenterDot.Visibility = ShowCenterDot ? Visibility.Visible : Visibility.Collapsed;
+        TicksCanvas.Visibility = ShowTicks ? Visibility.Visible : Visibility.Collapsed;
+
+        BuildTicks();
+        LoadDialImage();
+
+        var set = _activePointerSet!;
+        var now = DateTime.Now;
+        double ms = now.Millisecond / 1000.0;
+        double sec = now.Second + ms;
+        double min = now.Minute + sec / 60.0;
+        double hour = (now.Hour % 12) + min / 60.0;
+
+        _hourImage = PointerRenderer.CreateOrUpdate(
+            VectorLayer, _hourImage, set.HourStyle,
+            DialCenter, DialCenter, hour * 30.0, HandBaseSize);
+        _minuteImage = PointerRenderer.CreateOrUpdate(
+            VectorLayer, _minuteImage, set.MinuteStyle,
+            DialCenter, DialCenter, min * 6.0, HandBaseSize);
+
+        if (ShowSecondHand)
+            _secondImage = PointerRenderer.CreateOrUpdate(
+                VectorLayer, _secondImage, set.SecondStyle,
+                DialCenter, DialCenter, sec * 6.0, HandBaseSize);
+        else if (_secondImage != null)
+        {
+            VectorLayer.Children.Remove(_secondImage);
+            _secondImage = null;
+        }
+
+        // 如果全部 PNG 加载失败 → 降级回 Line
+        if (_hourImage == null && _minuteImage == null && _secondImage == null)
+        {
+            _useImageHands = false;
+            ApplyVisual();
+        }
+    }
+
+    /// <summary>清除图片指针,恢复矢量模式</summary>
+    private void ClearImageHands()
+    {
+        if (_hourImage != null) { VectorLayer.Children.Remove(_hourImage); _hourImage = null; }
+        if (_minuteImage != null) { VectorLayer.Children.Remove(_minuteImage); _minuteImage = null; }
+        if (_secondImage != null) { VectorLayer.Children.Remove(_secondImage); _secondImage = null; }
     }
 
     private void LoadDialImage()
