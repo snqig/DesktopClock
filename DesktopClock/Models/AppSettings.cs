@@ -149,6 +149,44 @@ public class AppSettings
     public bool MediaInfoEnabled { get; set; } = false;
     public bool MediaInfoShowArtist { get; set; } = true;
 
+    // === 健康提醒(P1) ===
+    public bool HealthReminderEnabled { get; set; } = false;
+    public string HealthRemindersJson { get; set; } = "[]";
+    public int HealthReminderWorkStartHour { get; set; } = 0;
+    public int HealthReminderWorkEndHour { get; set; } = 24;
+    public double HealthReminderFontSize { get; set; } = 13;
+    public string HealthReminderFontColor { get; set; } = "#FFD1D1D6";
+    public string HealthReminderFontFamily { get; set; } = "Microsoft YaHei UI";
+
+    // === 番茄钟(P2) ===
+    public bool PomodoroEnabled { get; set; } = false;
+    public int PomodoroFocusMinutes { get; set; } = 25;
+    public int PomodoroShortBreakMinutes { get; set; } = 5;
+    public int PomodoroLongBreakMinutes { get; set; } = 15;
+    public int PomodoroLongBreakInterval { get; set; } = 4;
+    public bool PomodoroAutoStart { get; set; } = false;
+    public double PomodoroFontSize { get; set; } = 16;
+    public string PomodoroFontColor { get; set; } = "#FF66BB6A";
+    public string PomodoroFontFamily { get; set; } = "Microsoft YaHei UI";
+
+    // === 每日一言(P3) ===
+    public bool DailyQuoteEnabled { get; set; } = false;
+    public string DailyQuoteQuotesJson { get; set; } = "[]";
+    public bool DailyQuoteApiEnabled { get; set; } = false;
+    public string DailyQuoteApiUrl { get; set; } = "https://v1.hitokoto.cn/?c=d&c=i&c=k";
+    public double DailyQuoteSpeed { get; set; } = 30.0;
+    public double DailyQuoteFontSize { get; set; } = 12;
+    public string DailyQuoteFontColor { get; set; } = "#FF87CEFA"; // LightSkyBlue
+    public string DailyQuoteFontFamily { get; set; } = "Microsoft YaHei";
+
+    // === 习惯打卡(P4) ===
+    public bool HabitTrackerEnabled { get; set; } = false;
+    public string HabitsJson { get; set; } = "[]";
+    public string HabitRecordsJson { get; set; } = "{}";
+    public double HabitTrackerFontSize { get; set; } = 12;
+    public string HabitTrackerFontColor { get; set; } = "#FFD1D1D6";
+    public string HabitTrackerFontFamily { get; set; } = "Microsoft YaHei UI";
+
     // === 定时自动切换表盘 ===
     public bool AutoSwitchEnabled { get; set; } = false;
     public string AutoSwitchDayMode { get; set; } = "digital";

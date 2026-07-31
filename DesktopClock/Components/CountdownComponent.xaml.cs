@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -8,11 +10,14 @@ namespace DesktopClock.Components;
 
 /// <summary>
 /// 倒计时组件(主窗口布局内嵌)。
-/// 显示格式与 CountdownEngine 保持一致:
+/// 支持两种模式:
+/// 1. 单任务模式(向后兼容):从 Config.Settings["target"] 读取单个目标时间
+/// 2. 多任务轮播模式:从 Config.Settings["tasks"] 读取 CountdownTask 列表,
+///    按 rotationSeconds 自动轮播显示启用的任务
+/// 显示格式:
 /// - displayMode=time: HH:MM:SS
 /// - displayMode=days: D 天 HH:MM:SS
 /// 到达目标时间后按 stopAtZero 显示 00:00:00 / 0 天 00:00:00。
-/// 不再显示"倒计时:时间到!"这样的中文提示文本。
 /// </summary>
 public class CountdownComponent : IClockComponent
 {
@@ -30,6 +35,12 @@ public class CountdownComponent : IClockComponent
     private string _displayMode = "days"; // days / time
     private bool _stopAtZero = true;
     private bool _showTitle = true;
+
+    // 多任务轮播
+    private List<CountdownTask> _tasks = new();
+    private int _rotationSeconds = 10;
+    private DateTime _lastRotation = DateTime.Now;
+    private int _currentIndex = -1;
 
     public CountdownComponent()
     {
@@ -67,31 +78,106 @@ public class CountdownComponent : IClockComponent
     /// </summary>
     public void Update(DateTime nowLocal)
     {
+        // 多任务轮播模式
+        if (_tasks.Count > 0)
+        {
+            var enabledTasks = _tasks.Where(t => t.Enabled).ToList();
+            if (enabledTasks.Count == 0)
+            {
+                _countdownText.Text = "";
+                _titleText.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            // 轮播切换
+            if ((nowLocal - _lastRotation).TotalSeconds >= _rotationSeconds || _currentIndex < 0)
+            {
+                _currentIndex = (_currentIndex + 1) % enabledTasks.Count;
+                _lastRotation = nowLocal;
+            }
+
+            var task = enabledTasks[_currentIndex % enabledTasks.Count];
+            var target = task.TargetTimeLocal;
+            var remaining = target - nowLocal;
+
+            // 标题
+            if (_showTitle)
+            {
+                _titleText.Text = task.Title;
+                _titleText.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                _titleText.Visibility = Visibility.Collapsed;
+            }
+
+            // 倒计时显示(优先使用任务自身的 displayMode)
+            var mode = string.IsNullOrEmpty(task.DisplayMode) ? _displayMode : task.DisplayMode;
+            if (remaining <= TimeSpan.Zero)
+            {
+                _countdownText.Text = _stopAtZero
+                    ? (mode == "time" ? "00:00:00" : "0 天 00:00:00")
+                    : "";
+            }
+            else
+            {
+                _countdownText.Text = mode == "time"
+                    ? $"{(int)remaining.TotalHours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}"
+                    : $"{remaining.Days:D1} 天 {remaining.Hours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+            }
+            return;
+        }
+
+        // 单任务模式(向后兼容)
         if (_targetLocal == null)
         {
             _countdownText.Text = "";
             return;
         }
 
-        var remaining = _targetLocal.Value - nowLocal;
-
-        if (remaining <= TimeSpan.Zero)
         {
-            if (_stopAtZero)
-                _countdownText.Text = _displayMode == "time" ? "00:00:00" : "0 天 00:00:00";
-            else
-                _countdownText.Text = "";
-            return;
-        }
+            var remaining = _targetLocal.Value - nowLocal;
 
-        _countdownText.Text = _displayMode == "time"
-            ? $"{(int)remaining.TotalHours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}"
-            : $"{remaining.Days:D1} 天 {remaining.Hours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+            if (remaining <= TimeSpan.Zero)
+            {
+                if (_stopAtZero)
+                    _countdownText.Text = _displayMode == "time" ? "00:00:00" : "0 天 00:00:00";
+                else
+                    _countdownText.Text = "";
+                return;
+            }
+
+            _countdownText.Text = _displayMode == "time"
+                ? $"{(int)remaining.TotalHours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}"
+                : $"{remaining.Days:D1} 天 {remaining.Hours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+        }
     }
 
     public void ApplyConfig()
     {
-        // 目标时间(本地时间)
+        // 多任务列表(优先):JSON 序列化的 CountdownTask 列表
+        if (Config.Settings.TryGetValue("tasks", out var tk))
+        {
+            var json = tk is string s ? s : tk.ToString() ?? "[]";
+            try
+            {
+                _tasks = System.Text.Json.JsonSerializer.Deserialize<List<CountdownTask>>(json) ?? new();
+                _currentIndex = -1; // 重置轮播索引
+            }
+            catch { _tasks = new(); }
+        }
+        else
+        {
+            _tasks.Clear();
+        }
+
+        if (Config.Settings.TryGetValue("rotationSeconds", out var rs))
+        {
+            if (rs is int rsi) _rotationSeconds = rsi;
+            else if (rs is string rss && int.TryParse(rss, out var r)) _rotationSeconds = r;
+        }
+
+        // 单任务目标时间(本地时间,向后兼容)
         if (Config.Settings.TryGetValue("target", out var t))
         {
             if (t is DateTime dt)

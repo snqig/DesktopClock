@@ -172,6 +172,13 @@ public partial class MainWindow : Window
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         CreateTrayIcon();
+
+        // 订阅通知服务:组件通过 NotificationService.Notify 触发桌面通知
+        Services.NotificationService.NotificationRequested += (title, body) =>
+        {
+            try { _trayIcon?.ShowBalloonTip(3000, title, body, System.Windows.Forms.ToolTipIcon.Info); }
+            catch { }
+        };
     }
 
     /// <summary>初始化指针样式管理器并注入到 AnalogClockSkin</summary>
@@ -205,6 +212,10 @@ public partial class MainWindow : Window
         _registry.Register(new CountdownComponent());
         _registry.Register(new ScrollingTodoComponent());
         _registry.Register(new MediaInfoComponent());
+        _registry.Register(new HealthReminderComponent());
+        _registry.Register(new PomodoroComponent());
+        _registry.Register(new DailyQuoteComponent());
+        _registry.Register(new HabitTrackerComponent());
     }
 
     private void RebuildLayout()
@@ -303,6 +314,10 @@ public partial class MainWindow : Window
         if (_settings.CountdownEnabled) active.Add("countdown");
         if (_settings.TodoScrollEnabled) active.Add("scrolling_todo");
         if (_settings.MediaInfoEnabled) active.Add("media_info");
+        if (_settings.HealthReminderEnabled) active.Add("health_reminder");
+        if (_settings.PomodoroEnabled) active.Add("pomodoro");
+        if (_settings.DailyQuoteEnabled) active.Add("daily_quote");
+        if (_settings.HabitTrackerEnabled) active.Add("habit_tracker");
 
         // Add external plugin components
         foreach (var kvp in _registry.GetAllExternal())
@@ -350,6 +365,8 @@ public partial class MainWindow : Window
                 todo.SetScrollWidth(w);
             if (_registry.Get("sys_mon") is SysMonComponent sysMon)
                 sysMon.SetScrollWidth(w);
+            if (_registry.Get("daily_quote") is DailyQuoteComponent dq)
+                dq.SetScrollWidth(w);
         }
 
         // 立即同步一次(ActualWidth 可能此时为 0,SizeChanged 时再触发)
@@ -479,6 +496,73 @@ public partial class MainWindow : Window
         if (media != null)
         {
             media.Config.Settings["showArtist"] = _settings.MediaInfoShowArtist;
+        }
+
+        // HealthReminder: 注入提醒列表与样式
+        var health = _registry.Get("health_reminder");
+        if (health != null)
+        {
+            health.Config.Settings["items"] = _settings.HealthRemindersJson;
+            health.Config.Settings["workStartHour"] = _settings.HealthReminderWorkStartHour;
+            health.Config.Settings["workEndHour"] = _settings.HealthReminderWorkEndHour;
+            health.Config.Settings["fontSize"] = _settings.HealthReminderFontSize;
+            health.Config.Settings["fontColor"] = _settings.HealthReminderFontColor;
+            health.Config.Settings["fontFamily"] = _settings.HealthReminderFontFamily;
+        }
+
+        // Pomodoro: 注入番茄钟配置
+        var pomodoro = _registry.Get("pomodoro");
+        if (pomodoro != null)
+        {
+            pomodoro.Config.Settings["focusMinutes"] = _settings.PomodoroFocusMinutes;
+            pomodoro.Config.Settings["shortBreakMinutes"] = _settings.PomodoroShortBreakMinutes;
+            pomodoro.Config.Settings["longBreakMinutes"] = _settings.PomodoroLongBreakMinutes;
+            pomodoro.Config.Settings["longBreakInterval"] = _settings.PomodoroLongBreakInterval;
+            pomodoro.Config.Settings["autoStart"] = _settings.PomodoroAutoStart;
+            pomodoro.Config.Settings["fontSize"] = _settings.PomodoroFontSize;
+            pomodoro.Config.Settings["fontColor"] = _settings.PomodoroFontColor;
+            pomodoro.Config.Settings["fontFamily"] = _settings.PomodoroFontFamily;
+        }
+
+        // DailyQuote: 注入语录库与跑马灯样式
+        var quote = _registry.Get("daily_quote");
+        if (quote != null)
+        {
+            quote.Config.Settings["quotesJson"] = _settings.DailyQuoteQuotesJson;
+            quote.Config.Settings["apiEnabled"] = _settings.DailyQuoteApiEnabled;
+            quote.Config.Settings["apiUrl"] = _settings.DailyQuoteApiUrl;
+            quote.Config.Settings["speed"] = _settings.DailyQuoteSpeed;
+            quote.Config.Settings["fontSize"] = _settings.DailyQuoteFontSize;
+            quote.Config.Settings["fontColor"] = _settings.DailyQuoteFontColor;
+            quote.Config.Settings["fontFamily"] = _settings.DailyQuoteFontFamily;
+        }
+
+        // HabitTracker: 注入习惯列表、打卡记录与样式
+        var habit = _registry.Get("habit_tracker");
+        if (habit != null)
+        {
+            habit.Config.Settings["habitsJson"] = _settings.HabitsJson;
+            habit.Config.Settings["recordsJson"] = _settings.HabitRecordsJson;
+            habit.Config.Settings["fontSize"] = _settings.HabitTrackerFontSize;
+            habit.Config.Settings["fontColor"] = _settings.HabitTrackerFontColor;
+            habit.Config.Settings["fontFamily"] = _settings.HabitTrackerFontFamily;
+            // 打卡回写:组件内部 ToggleHabit 后同步到 _settings 并持久化
+            if (habit is HabitTrackerComponent htc)
+            {
+                htc.OnRecordsChanged = () =>
+                {
+                    _settings.HabitRecordsJson = htc.GetRecordsJson();
+                    _settings.Save();
+                };
+            }
+        }
+
+        // Countdown: 多任务模式注入(若 CountdownTasks 非空,优先使用多任务轮播)
+        if (countdown != null && _settings.CountdownTasks.Count > 0)
+        {
+            countdown.Config.Settings["tasks"] = System.Text.Json.JsonSerializer.Serialize(
+                _settings.CountdownTasks, AppSettings.JsonOpts);
+            countdown.Config.Settings["rotationSeconds"] = _settings.CountdownTaskRotationSeconds;
         }
     }
 
@@ -1192,6 +1276,10 @@ public partial class MainWindow : Window
         if (_settings.SysMonEnabled) extraHeight += Math.Max(20, _settings.SysMonFontSize + 8);
         if (_settings.WeatherEnabled) extraHeight += Math.Max(20, _settings.WeatherFontSize + 8);
         if (_settings.MediaInfoEnabled) extraHeight += 24;
+        if (_settings.HealthReminderEnabled) extraHeight += Math.Max(20, _settings.HealthReminderFontSize + 12);
+        if (_settings.PomodoroEnabled) extraHeight += Math.Max(20, _settings.PomodoroFontSize + 12);
+        if (_settings.DailyQuoteEnabled) extraHeight += Math.Max(20, _settings.DailyQuoteFontSize + 8);
+        if (_settings.HabitTrackerEnabled) extraHeight += Math.Max(40, _settings.HabitTrackerFontSize * 3 + 12);
 
         switch (_settings.DisplayMode)
         {
