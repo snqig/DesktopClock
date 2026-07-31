@@ -14,6 +14,10 @@
     <Authors>DesktopClock</Authors>
     <Description>Desktop Clock Application with rich display modes and plugin system</Description>
     <Product>DesktopClock</Product>
+    <!-- PerMonitorV2 DPI 感知:通过 app.manifest 嵌入 -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 启用动态加载程序集,利于插件系统 -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug' AND '$(TargetFramework)'=='net9.0-windows'">
@@ -37,6 +41,8 @@
     <PackageReference Include="System.Windows.Extensions" Version="9.0.0" />
     <PackageReference Include="Serilog" Version="4.0.2" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
   </ItemGroup>
 
   <!-- The .NET SDK automatically includes:
@@ -63,6 +69,10 @@
     <Compile Remove="obj\**" />
     <Compile Remove="bin\**" />
     <Compile Remove="Plugins\**" />
+    <Compile Remove="tests\**" />
+    <None Remove="tests\**" />
+    <Page Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
   </ItemGroup>
 
 </Project>

@@ -28,8 +28,13 @@ public partial class MainWindow : Window
     private bool _hoverActive;
     private Services.PointerStyleManager? _pointerStyleManager;
 
+    // 挂件管理器 + 渲染调度器(倒计时等其他挂件共享)
+    private Services.WidgetManager? _widgetManager;
+    private Render.FrameRenderScheduler? _frameScheduler;
+
     private const int HOTKEY_ID = 9000;
     private const int HOTKEY_ID_SKIN_NEXT = 9001;
+    private const int HOTKEY_ID_COUNTDOWN = 9002;
     private const int WM_HOTKEY = 0x0312;
     private const int WM_NCHITTEST = 0x0084;
     private const int HTTRANSPARENT = -1;
@@ -117,6 +122,9 @@ public partial class MainWindow : Window
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += Timer_Tick;
         _timer.Start();
+
+        // 初始化 FrameRenderScheduler + WidgetManager(共享服务)
+        InitializeWidgetRuntime();
 
         this.MouseLeftButtonDown += (s, e) =>
         {
@@ -283,6 +291,8 @@ public partial class MainWindow : Window
             }
         }
 
+        _currentClockId = clockId;
+
         var active = new List<string>();
         if (_settings.ShowDate) active.Add("date");
         if (_settings.LunarEnabled) active.Add("lunar");
@@ -307,12 +317,46 @@ public partial class MainWindow : Window
         // 如需拖拽定位,用户可在设置中手动切换到 Free 模式
 
         _layoutEngine.BuildLayout(MainContainer, _registry, _settings.Layout);
+
+        // 同步时钟宽度到滚动组件,使跑马灯区域与时间右边缘对齐
+        SyncScrollComponentWidths();
     }
 
     /// <summary>
     /// 当前被 BackgroundWrapper 包裹的原始表盘组件(为 null 表示未包裹)。
     /// </summary>
     private IClockComponent? _wrappedClock;
+
+    /// <summary>
+    /// 当前布局使用的时钟组件 ID,用于宽度同步。
+    /// </summary>
+    private string _currentClockId = "digital_clock";
+
+    /// <summary>
+    /// 同步时钟宽度到滚动组件(待办滚动、系统监控),
+    /// 使滚动区域与时间显示右边缘对齐,文字从右到左滚动。
+    /// </summary>
+    private void SyncScrollComponentWidths()
+    {
+        var clockComp = _registry.Get(_currentClockId) ?? _wrappedClock;
+        if (clockComp?.View is not FrameworkElement clockView) return;
+
+        void UpdateWidths()
+        {
+            double w = clockView.ActualWidth;
+            if (w <= 0) return;
+
+            if (_registry.Get("scrolling_todo") is ScrollingTodoComponent todo)
+                todo.SetScrollWidth(w);
+            if (_registry.Get("sys_mon") is SysMonComponent sysMon)
+                sysMon.SetScrollWidth(w);
+        }
+
+        // 立即同步一次(ActualWidth 可能此时为 0,SizeChanged 时再触发)
+        UpdateWidths();
+        clockView.SizeChanged -= (_, _) => UpdateWidths();
+        clockView.SizeChanged += (_, _) => UpdateWidths();
+    }
 
     /// <summary>
     /// 用 BackgroundWrapper 包裹指定表盘组件并替换注册表中的实例,
@@ -389,16 +433,24 @@ public partial class MainWindow : Window
             weather.ApplyConfig();
         }
 
-        // Countdown: 注入目标时间和标签
+        // Countdown: 注入目标时间、样式和显示配置
+        // 注意:CountdownTarget 是 UTC,CountdownComponent 的计时器每帧传入本地 now,
+        // 因此存入配置前必须先转为本地时间,避免时区偏移导致倒计时提前或延后结束。
         var countdown = _registry.Get("countdown");
         if (countdown != null)
         {
             if (_settings.CountdownTarget.HasValue)
-                countdown.Config.Settings["target"] = _settings.CountdownTarget.Value.ToString("yyyy-MM-dd HH:mm:ss");
+                countdown.Config.Settings["target"] = _settings.CountdownTarget.Value.ToLocalTime();
             countdown.Config.Settings["label"] = _settings.CountdownLabel;
+            countdown.Config.Settings["fontColor"] = _settings.CountdownFontColor;
+            countdown.Config.Settings["fontSize"] = _settings.CountdownFontSize;
+            countdown.Config.Settings["fontFamily"] = _settings.CountdownFontFamily;
+            countdown.Config.Settings["displayMode"] = _settings.CountdownDisplayMode; // days/time
+            countdown.Config.Settings["stopAtZero"] = _settings.CountdownStopAtZero;
+            countdown.Config.Settings["showTitle"] = _settings.CountdownShowTitle;
         }
 
-        // SysMon: 注入显示开关
+        // SysMon: 注入显示开关、字体样式
         var sysMon = _registry.Get("sys_mon");
         if (sysMon != null)
         {
@@ -406,14 +458,20 @@ public partial class MainWindow : Window
             sysMon.Config.Settings["showMemory"] = _settings.SysMonShowMemory;
             sysMon.Config.Settings["showNetwork"] = _settings.SysMonShowNetwork;
             sysMon.Config.Settings["showBattery"] = _settings.SysMonShowBattery;
+            sysMon.Config.Settings["fontColor"] = _settings.SysMonFontColor;
+            sysMon.Config.Settings["fontSize"] = _settings.SysMonFontSize;
+            sysMon.Config.Settings["fontFamily"] = _settings.SysMonFontFamily;
         }
 
-        // ScrollingTodo: 注入文字和速度
+        // ScrollingTodo: 注入文字、速度和字体样式
         var todo = _registry.Get("scrolling_todo");
         if (todo != null)
         {
             todo.Config.Settings["text"] = _settings.TodoScrollText;
             todo.Config.Settings["speed"] = _settings.TodoScrollSpeed;
+            todo.Config.Settings["fontColor"] = _settings.TodoScrollFontColor;
+            todo.Config.Settings["fontSize"] = _settings.TodoScrollFontSize;
+            todo.Config.Settings["fontFamily"] = _settings.TodoScrollFontFamily;
         }
 
         // MediaInfo: 注入显示开关
@@ -454,7 +512,40 @@ public partial class MainWindow : Window
 
         var menu = new System.Windows.Forms.ContextMenuStrip();
         menu.Items.Add("显示/隐藏", null, (_, _) => ToggleVisibility());
+
+        // 切换鼠标穿透
+        var clickThroughItem = menu.Items.Add(_settings.ClickThrough ? "取消鼠标穿透" : "鼠标穿透") as System.Windows.Forms.ToolStripMenuItem;
+        clickThroughItem!.Click += (_, _) =>
+        {
+            _settings.ClickThrough = !_settings.ClickThrough;
+            SetClickThrough(_settings.ClickThrough);
+            clickThroughItem.Text = _settings.ClickThrough ? "取消鼠标穿透" : "鼠标穿透";
+            _settings.Save();
+        };
+
+        // 切换置顶
+        var topmostItem = menu.Items.Add(this.Topmost ? "取消置顶" : "窗口置顶") as System.Windows.Forms.ToolStripMenuItem;
+        topmostItem!.Click += (_, _) =>
+        {
+            this.Topmost = !this.Topmost;
+            topmostItem.Text = this.Topmost ? "取消置顶" : "窗口置顶";
+        };
+
+        menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+
+        // 开机自启快捷开关
+        var autoStartItem = menu.Items.Add(_settings.AutoStart ? "取消开机自启" : "开机自启") as System.Windows.Forms.ToolStripMenuItem;
+        autoStartItem!.Click += (_, _) =>
+        {
+            _settings.AutoStart = !_settings.AutoStart;
+            try { App.SetAutoStart(_settings.AutoStart); } catch { }
+            autoStartItem.Text = _settings.AutoStart ? "取消开机自启" : "开机自启";
+            _settings.Save();
+        };
+
+        menu.Items.Add("倒计时显示/隐藏", null, (_, _) => ToggleCountdownVisibility());
         menu.Items.Add("设置", null, (_, _) => OpenSettings());
+        menu.Items.Add("重启程序", null, (_, _) => RestartApp());
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
         menu.Items.Add("退出", null, (_, _) =>
         {
@@ -506,6 +597,11 @@ public partial class MainWindow : Window
                 CycleSkin();
                 handled = true;
             }
+            else if (id == HOTKEY_ID_COUNTDOWN)
+            {
+                ToggleCountdownVisibility();
+                handled = true;
+            }
         }
         // 穿透模式下,鼠标事件默认穿过窗口;按住 Ctrl 时允许交互
         if (_settings.ClickThrough && msg == WM_NCHITTEST)
@@ -527,6 +623,7 @@ public partial class MainWindow : Window
         {
             UnregisterHotKey(_windowHandle, HOTKEY_ID);
             UnregisterHotKey(_windowHandle, HOTKEY_ID_SKIN_NEXT);
+            UnregisterHotKey(_windowHandle, HOTKEY_ID_COUNTDOWN);
             _hotkeyRegistered = false;
         }
         try
@@ -554,6 +651,31 @@ public partial class MainWindow : Window
             }
             // 全局切换表盘快捷键: Ctrl+Shift+S
             RegisterHotKey(_windowHandle, HOTKEY_ID_SKIN_NEXT, 0x0002 | 0x0004, (uint)KeyInterop.VirtualKeyFromKey(Key.S));
+            // 全局倒计时显示/隐藏快捷键: Ctrl+Shift+D (或从 _settings.HotkeyCountdown 读取)
+            try
+            {
+                var hotkeyCd = string.IsNullOrEmpty(_settings.HotkeyCountdown) ? "Ctrl+Shift+D" : _settings.HotkeyCountdown;
+                uint modCd = 0, vkCd = 0;
+                foreach (var part in hotkeyCd.Split('+'))
+                {
+                    switch (part.Trim().ToLower())
+                    {
+                        case "ctrl": modCd |= 0x0002; break;
+                        case "alt": modCd |= 0x0001; break;
+                        case "shift": modCd |= 0x0004; break;
+                        case "win": modCd |= 0x0008; break;
+                        default:
+                            var key = (Key)Enum.Parse(typeof(Key), part.Trim(), true);
+                            vkCd = (uint)KeyInterop.VirtualKeyFromKey(key);
+                            break;
+                    }
+                }
+                if (modCd != 0 && vkCd != 0)
+                {
+                    RegisterHotKey(_windowHandle, HOTKEY_ID_COUNTDOWN, modCd, vkCd);
+                }
+            }
+            catch { Logger.Warning("[Hotkey] countdown hotkey register failed"); }
         }
         catch { }
     }
@@ -565,6 +687,58 @@ public partial class MainWindow : Window
         CheckReminders();
         CheckAodState();
         CheckAutoSwitch();
+        CheckNightDim();
+    }
+
+    private bool _nightDimActive;
+
+    /// <summary>
+    /// 夜间自动降低透明度:
+    /// 在 NightDimStartHour ~ NightDimEndHour 时段内,
+    /// 将 MainBorder.Opacity 降低到 NightDimOpacity(范围 0~1)。
+    /// 跨午夜场景(22~6)已正确处理。
+    /// </summary>
+    private void CheckNightDim()
+    {
+        if (!_settings.NightDimEnabled)
+        {
+            if (_nightDimActive)
+            {
+                _nightDimActive = false;
+                ApplyOpacity(false);
+            }
+            return;
+        }
+
+        var hour = DateTime.Now.Hour;
+        var start = _settings.NightDimStartHour;
+        var end = _settings.NightDimEndHour;
+        // 跨午夜:start > end,如 22~6
+        bool inNight = start <= end
+            ? (hour >= start && hour < end)
+            : (hour >= start || hour < end);
+
+        if (inNight != _nightDimActive)
+        {
+            _nightDimActive = inNight;
+            ApplyOpacity(_nightDimActive);
+            Logger.Information($"[NightDim] active={_nightDimActive}, opacity={(_nightDimActive ? _settings.NightDimOpacity : _settings.BackgroundOpacity)}");
+        }
+    }
+
+    /// <summary>应用透明度(nightDim=true 时使用夜间透明度,否则用常规透明度)。</summary>
+    private void ApplyOpacity(bool nightDim)
+    {
+        try
+        {
+            // 避免悬停透明度逻辑干扰:只在非悬停状态应用
+            if (_hoverActive) return;
+            var target = nightDim
+                ? Math.Max(0.05, _settings.NightDimOpacity)
+                : Math.Max(0.1, _settings.BackgroundOpacity);
+            if (MainBorder != null) MainBorder.Opacity = target;
+        }
+        catch { }
     }
 
     private void UpdateChime()
@@ -677,7 +851,8 @@ public partial class MainWindow : Window
 
     private void SnapWindowToEdges()
     {
-        const double snapDist = 15;
+        // 吸附距离从设置读取,默认 20px,范围 5~100
+        var snapDist = (double)Math.Clamp(_settings.SnapDistance, 5, 100);
         var sw = SystemParameters.PrimaryScreenWidth;
         var sh = SystemParameters.PrimaryScreenHeight;
 
@@ -1011,57 +1186,65 @@ public partial class MainWindow : Window
         ApplyThemePreset();
 
         // Window sizing
+        double extraHeight = 0;
+        if (_settings.CountdownEnabled) extraHeight += Math.Max(20, _settings.CountdownFontSize + 8);
+        if (_settings.TodoScrollEnabled) extraHeight += Math.Max(20, _settings.TodoScrollFontSize + 8);
+        if (_settings.SysMonEnabled) extraHeight += Math.Max(20, _settings.SysMonFontSize + 8);
+        if (_settings.WeatherEnabled) extraHeight += Math.Max(20, _settings.WeatherFontSize + 8);
+        if (_settings.MediaInfoEnabled) extraHeight += 24;
+
         switch (_settings.DisplayMode)
         {
             case "minimal":
                 this.Width = Math.Max(200, _settings.FontSize * 5 + 40);
-                this.Height = Math.Max(60, _settings.FontSize * 1.2 + 40);
+                this.Height = Math.Max(60, _settings.FontSize * 1.2 + 40) + extraHeight;
                 break;
             case "word":
                 this.Width = 420;
-                this.Height = 160 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 160 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "binary":
                 this.Width = 340;
-                this.Height = 140 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 140 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "progress":
                 this.Width = 340;
-                this.Height = 340 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 340 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "analog_premium":
                 this.Width = 380;
-                this.Height = 380 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 380 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "mechanical":
                 this.Width = 420;
-                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "analog_skin":
                 this.Width = 420;
-                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "ribbon":
                 this.Width = 420;
-                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "cyberpunk":
                 this.Width = 420;
-                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 420 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "dual_analog":
                 this.Width = 460;
-                this.Height = 280 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 280 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             case "flip":
                 this.Width = 380;
-                this.Height = 140 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0);
+                this.Height = 140 + (_settings.LunarEnabled ? _settings.LunarFontSize + 6 : 0) + extraHeight;
                 break;
             default:
                 var h = _settings.FontSize * 1.3 + 40;
                 if (_settings.ShowDate) h += _settings.DateFontSize + 10;
                 if (_settings.LunarEnabled) h += _settings.LunarFontSize + 6;
                 if (_settings.WorldClockEnabled) h += 30;
+                h += extraHeight;
                 this.Width = _settings.FontSize * 7 + 40;
                 this.Height = h;
                 break;
@@ -1070,6 +1253,24 @@ public partial class MainWindow : Window
         if (_windowHandle != IntPtr.Zero)
             SetClickThrough(_settings.ClickThrough);
         SetAutoStart(_settings.AutoStart);
+
+        // 倒计时挂件:启用/关闭 + 刷新样式/目标/颜色/字体配置
+        try
+        {
+            if (_settings.CountdownEnabled)
+            {
+                TryStartCountdown();
+                RefreshCountdownConfig();
+            }
+            else
+            {
+                TryStopCountdown();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("[ApplySettings] countdown sync failed", ex);
+        }
 
         try
         {
@@ -1216,6 +1417,161 @@ public partial class MainWindow : Window
         if (enable) exStyle |= WS_EX_LAYERED;
         else exStyle &= ~WS_EX_LAYERED;
         SetWindowLong(_windowHandle, GWL_EXSTYLE, exStyle);
+    }
+
+    // ==================== 挂件运行时: WidgetManager + FrameRenderScheduler ====================
+    /// <summary>
+    /// 初始化多挂件共享的运行时:
+    /// 1. FrameRenderScheduler 统一调度所有需要高频刷新的挂件(倒计时、秒针等)
+    /// 2. WidgetManager 统一管理各挂件的创建、显示、隐藏、位置持久化
+    /// 3. 注册 CountdownWidget 工厂,根据 CountdownEnabled 自动启动
+    /// </summary>
+    private void InitializeWidgetRuntime()
+    {
+        try
+        {
+            // 渲染调度器:Interactive 模式 ~30 FPS 用于倒计时秒级刷新
+            _frameScheduler = new Render.FrameRenderScheduler(Render.FrameMode.Interactive);
+            _frameScheduler.Start();
+
+            // 窗口管理器(基于 Win32 NativeMethods)
+            var windowManager = new Core.WindowManager();
+
+            _widgetManager = new Services.WidgetManager(windowManager, _frameScheduler);
+
+            // 注册倒计时挂件工厂
+            _widgetManager.RegisterFactory("countdown", () =>
+            {
+                var widget = new Views.Widgets.CountdownWindow();
+                // 应用持久化配置(位置、尺寸、置顶等)
+                if (!double.IsNaN(_settings.CountdownWindowLeft) && !double.IsNaN(_settings.CountdownWindowTop))
+                {
+                    widget.WindowStartupLocation = WindowStartupLocation.Manual;
+                    widget.Left = _settings.CountdownWindowLeft;
+                    widget.Top = _settings.CountdownWindowTop;
+                }
+                widget.Width = _settings.CountdownWindowWidth;
+                widget.Height = _settings.CountdownWindowHeight;
+                widget.Topmost = _settings.CountdownTopmost;
+
+                // 注入配置(支持多任务轮播)
+                widget.ApplyConfigMulti(_settings);
+
+                // FrameRenderScheduler 订阅倒计时 OnFrame 刷新
+                _frameScheduler?.Subscribe(widget.OnFrame);
+
+                // 窗口关闭前保存位置
+                widget.Closing += (_, e) =>
+                {
+                    if (!_isShuttingDown)
+                    {
+                        e.Cancel = true;
+                        widget.Visibility = Visibility.Hidden;
+                        SaveCountdownWindowPos(widget);
+                    }
+                    else
+                    {
+                        SaveCountdownWindowPos(widget);
+                    }
+                };
+
+                // 关闭时解除订阅
+                widget.Unloaded += (_, _) => _frameScheduler?.Unsubscribe(widget.OnFrame);
+
+                return widget;
+            }, enabledByDefault: _settings.CountdownEnabled);
+
+            Logger.Information("[WidgetRuntime] initialized, countdownEnabled=" + _settings.CountdownEnabled);
+
+            // 若配置中已启用,立即启动倒计时挂件
+            if (_settings.CountdownEnabled)
+            {
+                TryStartCountdown();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("[WidgetRuntime] init failed", ex);
+        }
+    }
+
+    private void SaveCountdownWindowPos(Window widget)
+    {
+        try
+        {
+            _settings.CountdownWindowLeft = widget.Left;
+            _settings.CountdownWindowTop = widget.Top;
+            _settings.CountdownWindowWidth = widget.Width;
+            _settings.CountdownWindowHeight = widget.Height;
+            _settings.CountdownTopmost = widget.Topmost;
+            _settings.CountdownWindowOpacity = widget.Opacity;
+            _settings.Save();
+        }
+        catch { }
+    }
+
+    /// <summary>启动倒计时挂件(已运行则无操作)。</summary>
+    public void TryStartCountdown()
+    {
+        try
+        {
+            if (_widgetManager == null) return;
+            _widgetManager.Start("countdown");
+            Logger.Information($"[Countdown] started, target={_settings.CountdownTarget?.ToLocalTime():O}, label={_settings.CountdownLabel}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("[Countdown] start failed", ex);
+        }
+    }
+
+    /// <summary>停止倒计时挂件并释放。</summary>
+    public void TryStopCountdown()
+    {
+        try
+        {
+            if (_widgetManager == null) return;
+            _widgetManager.Stop("countdown");
+            Logger.Information("[Countdown] stopped");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("[Countdown] stop failed", ex);
+        }
+    }
+
+    /// <summary>倒计时显示/隐藏切换(托盘菜单 + 热键共用)。</summary>
+    public void ToggleCountdownVisibility()
+    {
+        if (_widgetManager == null) return;
+        var layered = _widgetManager.WindowManager.Get("countdown");
+        if (layered == null)
+        {
+            TryStartCountdown();
+            return;
+        }
+        // LayeredWindow.Window 为实际 WPF Window 句柄
+        var wpfWin = layered.Window;
+        if (wpfWin.Visibility == Visibility.Visible)
+        {
+            SaveCountdownWindowPos(wpfWin);
+            _widgetManager.Hide("countdown");
+        }
+        else
+        {
+            _widgetManager.Show("countdown");
+        }
+    }
+
+    /// <summary>应用新的倒计时配置到已运行的挂件(支持多任务)。</summary>
+    public void RefreshCountdownConfig()
+    {
+        if (_widgetManager == null) return;
+        var layered = _widgetManager.WindowManager.Get("countdown");
+        if (layered?.Window is Views.Widgets.CountdownWindow cw)
+        {
+            cw.ApplyConfigMulti(_settings);
+        }
     }
 
     private void SetAutoStart(bool enable)
@@ -1365,8 +1721,19 @@ public partial class MainWindow : Window
         {
             UnregisterHotKey(_windowHandle, HOTKEY_ID);
             UnregisterHotKey(_windowHandle, HOTKEY_ID_SKIN_NEXT);
+            UnregisterHotKey(_windowHandle, HOTKEY_ID_COUNTDOWN);
             _hotkeyRegistered = false;
         }
+        // 释放 WidgetManager + FrameRenderScheduler
+        try
+        {
+            _widgetManager?.StopAll();
+            _widgetManager = null;
+            _frameScheduler?.Stop();
+            _frameScheduler?.Dispose();
+            _frameScheduler = null;
+        }
+        catch { }
         _trayIcon?.Dispose();
         _trayIcon = null;
         Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;

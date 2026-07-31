@@ -71,8 +71,8 @@ public partial class App : Application
         {
             Logger.Error("[DispatcherUnhandledException]", args.Exception);
             WriteCrashLog($"[DispatcherUnhandledException] {args.Exception}");
-            Serilog.Log.CloseAndFlush();
             args.Handled = true;
+            ShowCrashDialog(args.Exception, isTerminating: false);
         };
 
         // 非托管/后台线程未处理异常
@@ -81,7 +81,11 @@ public partial class App : Application
             var ex = args.ExceptionObject as Exception;
             Logger.Error($"[AppDomainUnhandledException] isTerminating={args.IsTerminating}", ex);
             WriteCrashLog($"[AppDomainUnhandledException] isTerminating={args.IsTerminating} ex={args.ExceptionObject}");
-            Serilog.Log.CloseAndFlush();
+            if (args.IsTerminating)
+            {
+                Serilog.Log.CloseAndFlush();
+                ShowCrashDialog(ex, isTerminating: true);
+            }
         };
 
         // Task 未观察异常
@@ -90,6 +94,38 @@ public partial class App : Application
             Logger.Error("[UnobservedTaskException]", args.Exception);
             args.SetObserved();
         };
+    }
+
+    /// <summary>
+    /// 严重异常弹窗:提供【重启】和【退出】两个选项,避免直接闪退。
+    /// terminating=true 时表示进程即将终止,弹窗关闭后强制退出。
+    /// </summary>
+    private void ShowCrashDialog(Exception? ex, bool isTerminating)
+    {
+        try
+        {
+            var msg = $"程序遇到严重错误,已记录到日志。\n\n" +
+                      $"异常类型: {ex?.GetType().Name ?? "Unknown"}\n" +
+                      $"消息: {ex?.Message ?? "无详细信息"}\n\n" +
+                      $"是否重启程序?";
+            var result = MessageBox.Show(msg, "DesktopClock 异常",
+                MessageBoxButton.YesNo, MessageBoxImage.Error);
+            if (result == MessageBoxResult.Yes)
+            {
+                // 重启程序
+                System.Diagnostics.Process.Start(
+                    Environment.ProcessPath ?? "DesktopClock.exe");
+            }
+            if (isTerminating || result != MessageBoxResult.Yes)
+            {
+                Shutdown();
+            }
+        }
+        catch
+        {
+            // 弹窗自身失败则直接退出
+            if (isTerminating) Environment.Exit(1);
+        }
     }
 
     /// <summary>

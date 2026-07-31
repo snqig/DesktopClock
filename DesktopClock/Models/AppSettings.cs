@@ -40,9 +40,11 @@ public class AppSettings
     public bool WorldClockEnabled { get; set; } = false;
     public string WorldClockTimeZone { get; set; } = "China Standard Time";
     public string HotkeyHide { get; set; } = "Ctrl+H";
+    public string HotkeyCountdown { get; set; } = "Ctrl+Shift+D";
     public string Language { get; set; } = "zh";
     public string ThemePreset { get; set; } = "default";
     public bool SnapToEdge { get; set; } = false;
+    public int SnapDistance { get; set; } = 20;
     public bool AutoStart { get; set; } = false;
     public bool LockPosition { get; set; } = false;
     public bool ClickThrough { get; set; } = false;
@@ -50,6 +52,12 @@ public class AppSettings
     // === 悬停透明度增强 ===
     public bool HoverOpacityEnabled { get; set; } = false;
     public double HoverOpacity { get; set; } = 1.0;
+
+    // === 夜间自动降低透明度 ===
+    public bool NightDimEnabled { get; set; } = false;
+    public int NightDimStartHour { get; set; } = 22;
+    public int NightDimEndHour { get; set; } = 6;
+    public double NightDimOpacity { get; set; } = 0.4;
 
     // === AOD 省电模式 ===
     public bool AodEnabled { get; set; } = false;
@@ -74,6 +82,9 @@ public class AppSettings
     public bool SysMonShowMemory { get; set; } = true;
     public bool SysMonShowNetwork { get; set; } = false;
     public bool SysMonShowBattery { get; set; } = true;
+    public string SysMonFontColor { get; set; } = "#FFD1D1D6";
+    public double SysMonFontSize { get; set; } = 12;
+    public string SysMonFontFamily { get; set; } = "Consolas, Microsoft YaHei";
 
     // === 天气 ===
     public bool WeatherEnabled { get; set; } = false;
@@ -92,10 +103,47 @@ public class AppSettings
     public DateTime? CountdownTarget { get; set; }
     public string CountdownLabel { get; set; } = "倒计时";
 
+    /// <summary>多任务倒计时列表(P3 增值功能)。空列表时回退到单任务模式。</summary>
+    public System.Collections.Generic.List<Models.CountdownTask> CountdownTasks { get; set; } = new();
+
+    /// <summary>多任务轮播间隔(秒),默认 10 秒</summary>
+    public int CountdownTaskRotationSeconds { get; set; } = 10;
+    public bool CountdownShowTitle { get; set; } = true;
+    public string CountdownDisplayMode { get; set; } = "days"; // days / time
+    public string CountdownEndAction { get; set; } = "blink"; // none / blink / alert / sound
+    public bool CountdownStopAtZero { get; set; } = true;
+
+    // 倒计时样式
+    public string CountdownFontFamily { get; set; } = "Microsoft YaHei UI";
+    public double CountdownFontSize { get; set; } = 48;
+    public string CountdownFontColor { get; set; } = "#FFFFFFFF";
+    public double CountdownOpacity { get; set; } = 1.0;
+
+    // 倒计时描边
+    public bool CountdownStrokeEnabled { get; set; } = false;
+    public double CountdownStrokeThickness { get; set; } = 1.0;
+    public string CountdownStrokeColor { get; set; } = "#FF000000";
+
+    // 倒计时阴影
+    public bool CountdownShadowEnabled { get; set; } = true;
+    public double CountdownShadowSize { get; set; } = 4.0;
+    public string CountdownShadowColor { get; set; } = "#FF000000";
+
+    // 倒计时窗口
+    public double CountdownWindowLeft { get; set; } = double.NaN;
+    public double CountdownWindowTop { get; set; } = double.NaN;
+    public double CountdownWindowWidth { get; set; } = 240;
+    public double CountdownWindowHeight { get; set; } = 120;
+    public double CountdownWindowOpacity { get; set; } = 1.0;
+    public bool CountdownTopmost { get; set; } = true;
+
     // === 待办文字 ===
     public bool TodoScrollEnabled { get; set; } = false;
     public string TodoScrollText { get; set; } = "";
     public double TodoScrollSpeed { get; set; } = 40.0; // pixels per second
+    public string TodoScrollFontColor { get; set; } = "#FFFFF8DC"; // LightYellow
+    public double TodoScrollFontSize { get; set; } = 12;
+    public string TodoScrollFontFamily { get; set; } = "Microsoft YaHei";
 
     // === 音乐播放信息 ===
     public bool MediaInfoEnabled { get; set; } = false;

@@ -69,11 +69,12 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Segmented control: 显示 / 外观 / 日期 / 功能 / 系统 -->
+        <!-- Segmented control: 显示 / 外观 / 日期 / 功能 / 系统 / 倒计时 -->
         <Border Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,20"
                 Background="#E5E5EA" CornerRadius="8" Padding="3">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70" />
                     <ColumnDefinition Width="70" />
                     <ColumnDefinition Width="70" />
                     <ColumnDefinition Width="70" />
@@ -108,6 +109,12 @@
                         Background="Transparent" Padding="8,6" Cursor="Hand"
                         MouseLeftButtonDown="SystemSegment_Click">
                     <TextBlock Text="系统" HorizontalAlignment="Center"
+                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
+                </Border>
+                <Border x:Name="CountdownSegment" Grid.Column="5" CornerRadius="6"
+                        Background="Transparent" Padding="8,6" Cursor="Hand"
+                        MouseLeftButtonDown="CountdownSegment_Click">
+                    <TextBlock Text="倒计时" HorizontalAlignment="Center"
                                FontSize="13" FontWeight="Medium" Foreground="#86868B" />
                 </Border>
             </Grid>
@@ -285,8 +292,8 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="FontFamilyBox" Text="DS-Digital"
-                                 TextChanged="FontFamilyBox_TextChanged" />
+                        <ComboBox x:Name="FontFamilyCombo" Grid.Column="1"
+                                  SelectionChanged="FontFamilyCombo_SelectionChanged" />
                     </Grid>
 
                     <Grid Margin="0,0,0,14">
@@ -584,8 +591,8 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="DateFontFamilyBox" Grid.Column="1" Text="DS-Digital"
-                                 TextChanged="DateFontFamilyBox_TextChanged" />
+                        <ComboBox x:Name="DateFontFamilyCombo" Grid.Column="1"
+                                  SelectionChanged="DateFontFamilyCombo_SelectionChanged" />
                     </Grid>
 
                     <Grid Margin="0,14,0,0">
@@ -643,6 +650,20 @@
 
                     <CheckBox x:Name="SnapToEdgeCheck" Content="窗口贴边" Margin="0,0,0,14" />
 
+                    <Grid Margin="20,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="44" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="吸附距离" Style="{StaticResource FieldLabel}" />
+                        <Slider x:Name="SnapDistanceSlider" Grid.Column="1" Minimum="5" Maximum="100" Value="20"
+                                TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
+                                ValueChanged="SnapDistanceSlider_ValueChanged" />
+                        <TextBlock x:Name="SnapDistanceLabel" Grid.Column="2" Text="20px"
+                                   Style="{StaticResource ValueLabel}" />
+                    </Grid>
+
                     <CheckBox x:Name="LockPositionCheck" Content="锁定位置" Margin="0,0,0,14" />
 
                     <Grid Margin="0,0,0,14">
@@ -660,7 +681,7 @@
                     <!-- Plugin Management -->
                     <TextBlock Text="插件" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
 
-                    <ListBox x:Name="PluginListBox" Height="100" Margin="0,0,0,8" SelectionMode="Single">
+                    <ListBox x:Name="PluginListBox" Height="120" Margin="0,0,0,8" SelectionMode="Single">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                         <Grid>
@@ -671,12 +692,21 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
                                 <TextBlock Text="{Binding Version}" FontSize="11" Foreground="#86868B" />
+                                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="#AEAEB2" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <CheckBox Grid.Column="1" IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" />
                         </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+
+                    <WrapPanel Margin="0,0,0,14">
+                        <Button x:Name="RefreshPluginsButton" Content="刷新插件列表" Style="{StaticResource SecondaryButton}"
+                                Click="RefreshPluginsButton_Click" />
+                        <Button x:Name="OpenPluginFolderButton" Content="打开插件目录" Style="{StaticResource SecondaryButton}"
+                                Click="OpenPluginFolderButton_Click" Margin="8,0,0,0" />
+                        <TextBlock x:Name="PluginStatusText" VerticalAlignment="Center" FontSize="11" Foreground="#86868B" Margin="10,0,0,0" />
+                    </WrapPanel>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -685,6 +715,16 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="快捷键隐藏" Style="{StaticResource FieldLabel}" />
                         <TextBox x:Name="HotkeyBox" Text="Ctrl+H" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="倒计时热键" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="HotkeyCountdownBox" Text="Ctrl+Shift+D"
+                                 ToolTip="格式: 修饰符+键,例如 Ctrl+Shift+D / Alt+C / Win+T" />
                     </Grid>
 
                     <!-- Lunar Calendar Section -->
@@ -788,6 +828,37 @@
                                    Style="{StaticResource ValueLabel}" />
                     </Grid>
 
+                    <!-- 夜间自动降低透明度 -->
+                    <TextBlock Text="夜间降透明度" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+                    <CheckBox x:Name="NightDimEnabledCheck" Content="夜间自动降低透明度" Margin="0,0,0,10" />
+                    <Grid Margin="20,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="时段" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="NightDimStartHourBox" Grid.Column="1" Text="22" />
+                        <TextBlock Grid.Column="2" Text="~" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBox x:Name="NightDimEndHourBox" Grid.Column="3" Text="6" />
+                        <TextBlock Grid.Column="4" Text="(0-23,跨午夜自动处理)" FontSize="11" Foreground="#86868B" VerticalAlignment="Center" Margin="10,0,0,0" />
+                    </Grid>
+                    <Grid Margin="20,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="44" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="夜间透明度" Style="{StaticResource FieldLabel}" />
+                        <Slider x:Name="NightDimOpacitySlider" Grid.Column="1" Minimum="5" Maximum="100" Value="40"
+                                TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
+                                ValueChanged="NightDimOpacitySlider_ValueChanged" />
+                        <TextBlock x:Name="NightDimOpacityLabel" Grid.Column="2" Text="40%"
+                                   Style="{StaticResource ValueLabel}" />
+                    </Grid>
+
                     <!-- 系统监控 -->
                     <TextBlock Text="系统监控" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
                     <CheckBox x:Name="SysMonCheck" Content="启用系统监控" Margin="0,0,0,10"
@@ -798,6 +869,40 @@
                             <CheckBox x:Name="SysMonMemCheck" Content="显示内存" Margin="0,0,0,6" />
                             <CheckBox x:Name="SysMonNetCheck" Content="显示网速" Margin="0,0,0,6" />
                             <CheckBox x:Name="SysMonBatCheck" Content="显示电池" Margin="0,0,0,6" />
+                            <Grid Margin="0,8,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                <ComboBox x:Name="SysMonFontCombo" Grid.Column="1" IsEditable="True" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                <Slider x:Name="SysMonFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32"
+                                        Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
+                                        ValueChanged="SysMonFontSize_ValueChanged" />
+                                <TextBlock x:Name="SysMonFontSizeLabel" Grid.Column="2" Text="12" Width="30"
+                                           Style="{StaticResource ValueLabel}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                <Border x:Name="SysMonColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                        Background="#FFD1D1D6" Cursor="Hand"
+                                        MouseLeftButtonDown="SysMonColorPreview_MouseDown" />
+                                <TextBox x:Name="SysMonColorBox" Grid.Column="2" Text="#FFD1D1D6" Margin="10,0,0,0"
+                                         TextChanged="SysMonColorBox_TextChanged" />
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -923,31 +1028,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 倒计时 -->
-                    <TextBlock Text="倒计时" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="CountdownCheck" Content="启用倒计时" Margin="0,0,0,10"
-                              Checked="CountdownCheck_Changed" Unchecked="CountdownCheck_Changed" />
-                    <Border x:Name="CountdownPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="目标时间" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="CountdownTargetBox" Grid.Column="1"
-                                         ToolTip="格式: 2026-12-31 23:59:59" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="标签" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="CountdownLabelBox" Grid.Column="1" Text="倒计时" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+                    <!-- 倒计时:已迁移至独立"倒计时"Tab,此处不再保留旧版配置 -->
 
                     <!-- 待办滚动 -->
                     <TextBlock Text="待办滚动" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
@@ -974,6 +1055,40 @@
                                         TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF" />
                                 <TextBlock x:Name="TodoScrollSpeedLabel" Grid.Column="2" Text="40"
                                            Style="{StaticResource ValueLabel}" />
+                            </Grid>
+                            <Grid Margin="0,8,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                <ComboBox x:Name="TodoScrollFontCombo" Grid.Column="1" IsEditable="True" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                <Slider x:Name="TodoScrollFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32"
+                                        Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
+                                        ValueChanged="TodoScrollFontSize_ValueChanged" />
+                                <TextBlock x:Name="TodoScrollFontSizeLabel" Grid.Column="2" Text="12" Width="30"
+                                           Style="{StaticResource ValueLabel}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                <Border x:Name="TodoScrollColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                        Background="#FFFFF8DC" Cursor="Hand"
+                                        MouseLeftButtonDown="TodoScrollColorPreview_MouseDown" />
+                                <TextBox x:Name="TodoScrollColorBox" Grid.Column="2" Text="#FFFFF8DC" Margin="10,0,0,0"
+                                         TextChanged="TodoScrollColorBox_TextChanged" />
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -1066,6 +1181,211 @@
                             <ComboBoxItem Content="中文" Tag="zh" />
                             <ComboBoxItem Content="English" Tag="en" />
                         </ComboBox>
+                    </Grid>
+
+                    <TextBlock Text="日志" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+                    <Button x:Name="OpenLogFolderButton" Content="打开日志文件夹"
+                            Style="{StaticResource SecondaryButton}"
+                            Click="OpenLogFolderButton_Click"
+                            HorizontalAlignment="Left" Margin="0,0,0,14" />
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+
+        <!-- 倒计时 (Countdown) Panel -->
+        <ScrollViewer x:Name="CountdownPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
+                <StackPanel>
+                    <TextBlock Text="倒计时挂件" Style="{StaticResource SectionTitle}" />
+
+                    <CheckBox x:Name="CountdownEnabledCheck" Content="启用倒计时挂件" Margin="0,0,0,14"
+                              Checked="CountdownEnabledCheck_Changed" Unchecked="CountdownEnabledCheck_Changed" />
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="目标时间" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                        <Grid Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <DatePicker x:Name="CountdownDatePicker" Grid.Column="0"
+                                        SelectedDateFormat="Short"
+                                        SelectedDateChanged="CountdownDatePicker_SelectedDateChanged"
+                                        VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                <TextBox x:Name="CountdownHourBox" Width="42" Text="23" HorizontalContentAlignment="Center"
+                                         TextChanged="CountdownTimeBox_TextChanged" />
+                                <TextBlock Text=":" VerticalAlignment="Center" Margin="2,0,2,0" Foreground="#86868B" />
+                                <TextBox x:Name="CountdownMinuteBox" Width="42" Text="59" HorizontalContentAlignment="Center"
+                                         TextChanged="CountdownTimeBox_TextChanged" />
+                                <TextBlock Text=":" VerticalAlignment="Center" Margin="2,0,2,0" Foreground="#86868B" />
+                                <TextBox x:Name="CountdownSecondBox" Width="42" Text="59" HorizontalContentAlignment="Center"
+                                         TextChanged="CountdownTimeBox_TextChanged" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="标题" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="CountdownLabelBox" Grid.Column="1" Text="倒计时"
+                                 TextChanged="CountdownLabelBox_TextChanged" />
+                    </Grid>
+
+                    <CheckBox x:Name="CountdownShowTitleCheck" Content="显示标题" Margin="0,0,0,14" />
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="显示模式" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="CountdownDisplayModeCombo" Grid.Column="1">
+                            <ComboBoxItem Content="D 天 H:M:S" Tag="days" />
+                            <ComboBoxItem Content="仅 H:M:S" Tag="time" />
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="结束动作" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="CountdownEndActionCombo" Grid.Column="1">
+                            <ComboBoxItem Content="无动作" Tag="none" />
+                            <ComboBoxItem Content="文字闪烁" Tag="blink" />
+                            <ComboBoxItem Content="弹窗通知" Tag="alert" />
+                            <ComboBoxItem Content="提示音" Tag="sound" />
+                        </ComboBox>
+                    </Grid>
+
+                    <CheckBox x:Name="CountdownStopAtZeroCheck" Content="归零显示 00:00:00" Margin="0,0,0,14" />
+
+                    <TextBlock Text="文字样式" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                        <ComboBox x:Name="CountdownFontFamilyCombo" Grid.Column="1" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="44" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                        <Slider x:Name="CountdownFontSizeSlider" Grid.Column="1"
+                                Minimum="12" Maximum="120" Value="48"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                ValueChanged="CountdownFontSizeSlider_ValueChanged" />
+                        <TextBlock x:Name="CountdownFontSizeLabel" Grid.Column="2" Text="48"
+                                   Style="{StaticResource ValueLabel}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="文字颜色" Style="{StaticResource FieldLabel}" />
+                        <Border x:Name="CountdownFontColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                Background="#FFFFFFFF" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                MouseLeftButtonDown="CountdownFontColorPreview_MouseDown" />
+                        <TextBox x:Name="CountdownFontColorBox" Grid.Column="2" Text="#FFFFFFFF" Margin="10,0,0,0"
+                                 TextChanged="CountdownFontColorBox_TextChanged" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="44" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
+                        <Slider x:Name="CountdownOpacitySlider" Grid.Column="1"
+                                Minimum="10" Maximum="100" Value="100"
+                                TickFrequency="5" IsSnapToTickEnabled="True"
+                                ValueChanged="CountdownOpacitySlider_ValueChanged" />
+                        <TextBlock x:Name="CountdownOpacityLabel" Grid.Column="2" Text="100%"
+                                   Style="{StaticResource ValueLabel}" />
+                    </Grid>
+
+                    <TextBlock Text="描边" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+                    <CheckBox x:Name="CountdownStrokeEnabledCheck" Content="启用描边" Margin="0,0,0,14" />
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="44" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="描边粗细" Style="{StaticResource FieldLabel}" />
+                        <Slider x:Name="CountdownStrokeThicknessSlider" Grid.Column="1"
+                                Minimum="0.5" Maximum="6" Value="1.0"
+                                TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                ValueChanged="CountdownStrokeThicknessSlider_ValueChanged" />
+                        <TextBlock x:Name="CountdownStrokeThicknessLabel" Grid.Column="2" Text="1.0"
+                                   Style="{StaticResource ValueLabel}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="描边颜色" Style="{StaticResource FieldLabel}" />
+                        <Border x:Name="CountdownStrokeColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                Background="#FF000000" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                MouseLeftButtonDown="CountdownStrokeColorPreview_MouseDown" />
+                        <TextBox x:Name="CountdownStrokeColorBox" Grid.Column="2" Text="#FF000000" Margin="10,0,0,0"
+                                 TextChanged="CountdownStrokeColorBox_TextChanged" />
+                    </Grid>
+
+                    <TextBlock Text="阴影" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
+                    <CheckBox x:Name="CountdownShadowEnabledCheck" Content="启用阴影" Margin="0,0,0,14" />
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="44" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="阴影大小" Style="{StaticResource FieldLabel}" />
+                        <Slider x:Name="CountdownShadowSizeSlider" Grid.Column="1"
+                                Minimum="0" Maximum="20" Value="4"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                ValueChanged="CountdownShadowSizeSlider_ValueChanged" />
+                        <TextBlock x:Name="CountdownShadowSizeLabel" Grid.Column="2" Text="4"
+                                   Style="{StaticResource ValueLabel}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="阴影颜色" Style="{StaticResource FieldLabel}" />
+                        <Border x:Name="CountdownShadowColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                Background="#FF000000" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                MouseLeftButtonDown="CountdownShadowColorPreview_MouseDown" />
+                        <TextBox x:Name="CountdownShadowColorBox" Grid.Column="2" Text="#FF000000" Margin="10,0,0,0"
+                                 TextChanged="CountdownShadowColorBox_TextChanged" />
                     </Grid>
                 </StackPanel>
             </Border>
