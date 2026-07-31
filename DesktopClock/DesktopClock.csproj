@@ -10,7 +10,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>clock.ico</ApplicationIcon>
     <AssemblyTitle>DesktopClock</AssemblyTitle>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <Authors>DesktopClock</Authors>
     <Description>Desktop Clock Application with rich display modes and plugin system</Description>
     <Product>DesktopClock</Product>
