@@ -551,7 +551,7 @@
 
                     <Border DockPanel.Dock="Top" BorderBrush="#e3e3e8" BorderThickness="1" CornerRadius="10"
                             Background="#fafafa" Padding="10" HorizontalAlignment="Center" Margin="0,0,0,14">
-                        <Grid Width="240" Height="240">
+                        <Grid Width="200" Height="200">
                             <Ellipse Stroke="#d2d2d7" StrokeThickness="1" Fill="#ffffff" />
                             <Path Stroke="#c7c7cc" StrokeThickness="1" Data="M120,6 L120,14 M120,226 L120,234 M6,120 L14,120 M226,120 L234,120" />
                             <Canvas x:Name="PreviewCanvas" Width="240" Height="240" Background="Transparent" />

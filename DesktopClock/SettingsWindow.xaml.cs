@@ -57,144 +57,12 @@ public partial class SettingsWindow : Window
         Settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(
             System.Text.Json.JsonSerializer.Serialize(settings, AppSettings.JsonOpts), AppSettings.JsonOpts) ?? new AppSettings();
 
-        PopulateTimeZones();
-        PopulateDualAnalogTimeZones();
-
-        foreach (var item in HourFormatCombo.Items)
-            if (item is ComboBoxItem ci && string.Equals(ci.Tag?.ToString(), Settings.Use24Hour.ToString(), StringComparison.OrdinalIgnoreCase))
-                HourFormatCombo.SelectedItem = item;
-        ShowSecondsCheck.IsChecked = Settings.ShowSeconds;
-        foreach (var item in DisplayModeCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.DisplayMode)
-                DisplayModeCombo.SelectedItem = item;
-        WorldClockCheck.IsChecked = Settings.WorldClockEnabled;
-        SelectTimeZone(Settings.WorldClockTimeZone);
-        ChimeCheck.IsChecked = Settings.ChimeEnabled;
-
-        // 时钟字体下拉框:枚举系统字体,默认选中 DS-Digital
-        FontFamilyCombo.Items.Clear();
-        foreach (var ff in System.Windows.Media.Fonts.SystemFontFamilies)
-        {
-            var item = new ComboBoxItem { Content = ff.Source, Tag = ff.Source };
-            FontFamilyCombo.Items.Add(item);
-            if (string.Equals(ff.Source, Settings.FontFamily, StringComparison.OrdinalIgnoreCase))
-                FontFamilyCombo.SelectedItem = item;
-        }
-        if (FontFamilyCombo.SelectedItem == null)
-        {
-            // 未命中:优先找 DS-Digital,再退回第一项
-            var dsdigital = FontFamilyCombo.Items.Cast<ComboBoxItem>()
-                .FirstOrDefault(i => string.Equals(i.Tag?.ToString(), "DS-Digital", StringComparison.OrdinalIgnoreCase));
-            if (dsdigital != null) FontFamilyCombo.SelectedItem = dsdigital;
-            else if (FontFamilyCombo.Items.Count > 0) FontFamilyCombo.SelectedIndex = 0;
-        }
-        FontSizeSlider.Value = Settings.FontSize;
-        FontSizeLabel.Text = Settings.FontSize.ToString("F0");
-        OpacitySlider.Value = Settings.BackgroundOpacity * 100;
-        OpacityLabel.Text = $"{(int)(Settings.BackgroundOpacity * 100)}%";
-        ColorBox.Text = Settings.FontColor;
-        UpdateColorPreview();
-
-        foreach (var item in BackgroundTypeCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.BackgroundType)
-                BackgroundTypeCombo.SelectedItem = item;
-        GradientStartBox.Text = Settings.GradientStartColor;
-        GradientEndBox.Text = Settings.GradientEndColor;
-        GradientAngleSlider.Value = Settings.GradientAngle;
-        GradientAngleLabel.Text = Settings.GradientAngle.ToString("F0");
-        UpdateGradientPreviews();
-
-        BorderColorBox.Text = Settings.BorderColor;
-        UpdateBorderColorPreview();
-        BorderThicknessSlider.Value = Settings.BorderThickness;
-        BorderThicknessLabel.Text = Settings.BorderThickness.ToString("F0");
-
-        foreach (var item in ThemePresetCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.ThemePreset)
-                ThemePresetCombo.SelectedItem = item;
-
-        // 相册背景
-        SkinBackgroundEnableCheck.IsChecked = Settings.SkinBackgroundEnabled;
-        SkinBackgroundPathBox.Text = Settings.SkinBackgroundPath;
-        SkinBackgroundOpacitySlider.Value = Settings.SkinBackgroundOpacity * 100;
-        SkinBackgroundOpacityLabel.Text = $"{(int)(Settings.SkinBackgroundOpacity * 100)}%";
-        SkinBackgroundBlurSlider.Value = Settings.SkinBackgroundBlur;
-        SkinBackgroundBlurLabel.Text = Settings.SkinBackgroundBlur.ToString("F0");
-        foreach (var item in SkinBackgroundStretchCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.SkinBackgroundStretch)
-                SkinBackgroundStretchCombo.SelectedItem = item;
-        SkinBackgroundPanel.Visibility = Settings.SkinBackgroundEnabled ? Visibility.Visible : Visibility.Collapsed;
-
-        ShowDateCheck.IsChecked = Settings.ShowDate;
-
-        // 日期字体下拉框:枚举系统字体,默认选中 DS-Digital
-        DateFontFamilyCombo.Items.Clear();
-        foreach (var ff in System.Windows.Media.Fonts.SystemFontFamilies)
-        {
-            var item = new ComboBoxItem { Content = ff.Source, Tag = ff.Source };
-            DateFontFamilyCombo.Items.Add(item);
-            if (string.Equals(ff.Source, Settings.DateFontFamily, StringComparison.OrdinalIgnoreCase))
-                DateFontFamilyCombo.SelectedItem = item;
-        }
-        if (DateFontFamilyCombo.SelectedItem == null)
-        {
-            var dsdigital = DateFontFamilyCombo.Items.Cast<ComboBoxItem>()
-                .FirstOrDefault(i => string.Equals(i.Tag?.ToString(), "DS-Digital", StringComparison.OrdinalIgnoreCase));
-            if (dsdigital != null) DateFontFamilyCombo.SelectedItem = dsdigital;
-            else if (DateFontFamilyCombo.Items.Count > 0) DateFontFamilyCombo.SelectedIndex = 0;
-        }
-        DateFontSizeSlider.Value = Settings.DateFontSize;
-        DateFontSizeLabel.Text = Settings.DateFontSize.ToString("F0");
-        DateColorBox.Text = Settings.DateColor;
-        UpdateDateColorPreview();
-        foreach (var item in DatePositionCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.DatePosition)
-                DatePositionCombo.SelectedItem = item;
-
-        ClickThroughCheck.IsChecked = Settings.ClickThrough;
-        SnapToEdgeCheck.IsChecked = Settings.SnapToEdge;
-        SnapDistanceSlider.Value = Math.Clamp(Settings.SnapDistance, 5, 100);
-        SnapDistanceLabel.Text = $"{(int)SnapDistanceSlider.Value}px";
-        LockPositionCheck.IsChecked = Settings.LockPosition;
-        HotkeyBox.Text = Settings.HotkeyHide;
-        HotkeyCountdownBox.Text = Settings.HotkeyCountdown;
-
+        // 全局设置加载
         AutoStartCheck.IsChecked = Settings.AutoStart;
         foreach (var item in LanguageCombo.Items)
             if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.Language)
                 LanguageCombo.SelectedItem = item;
-
-        TimeZoneRow.Visibility = Settings.WorldClockEnabled ? Visibility.Visible : Visibility.Collapsed;
-
-        // Dual analog
-        foreach (var item in DualAnalogTimeZoneCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.DualAnalogTimeZone)
-                DualAnalogTimeZoneCombo.SelectedItem = item;
-        DualAnalogLabelBox.Text = Settings.DualAnalogLabel;
-        UpdateDualAnalogVisibility();
-
-        // Analog skin colors
-        LoadAnalogSkinConfig();
-
-        // Lunar calendar
-        LunarCheck.IsChecked = Settings.LunarEnabled;
-        SolarTermCheck.IsChecked = Settings.ShowSolarTerm;
-        ZodiacCheck.IsChecked = Settings.ShowZodiac;
-        LunarFontSizeSlider.Value = Settings.LunarFontSize;
-        LunarFontSizeLabel.Text = Settings.LunarFontSize.ToString("F0");
-        LunarColorBox.Text = Settings.LunarColor;
-        UpdateLunarColorPreview();
-        LunarSettingsPanel.Visibility = Settings.LunarEnabled ? Visibility.Visible : Visibility.Collapsed;
-
-        // Reminders
-        ReminderCheck.IsChecked = Settings.ReminderEnabled;
-        ReminderSettingsPanel.Visibility = Settings.ReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
-        LoadReminderList();
-
-        // Layout mode
-        foreach (var item in LayoutModeCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.Layout.Mode)
-                LayoutModeCombo.SelectedItem = item;
+        HotkeyBox.Text = Settings.HotkeyHide;
 
         // Plugins
         PluginListBox.ItemsSource = _plugins;
@@ -202,103 +70,9 @@ public partial class SettingsWindow : Window
         PluginListBox.Visibility = _plugins.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         PluginStatusText.Text = _plugins.Count > 0 ? $"已加载 {_plugins.Count} 个插件" : "未检测到任何插件";
 
-        // Backdrop
-        foreach (var item in BackdropTypeCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.BackdropType)
-                BackdropTypeCombo.SelectedItem = item;
-
-        // Global filter
-        GlobalFilterEnableCheck.IsChecked = Settings.GlobalFilterEnabled;
-        VignetteSlider.Value = Settings.GlobalFilterVignette * 100;
-        VignetteLabel.Text = $"{(int)(Settings.GlobalFilterVignette * 100)}%";
-        GrayscaleSlider.Value = Settings.GlobalFilterGrayscale * 100;
-        GrayscaleLabel.Text = $"{(int)(Settings.GlobalFilterGrayscale * 100)}%";
-        ColorTempSlider.Value = Settings.GlobalFilterColorTemp * 100;
-        ColorTempLabel.Text = Settings.GlobalFilterColorTemp.ToString("F0");
-        GlobalFilterPanel.Visibility = Settings.GlobalFilterEnabled ? Visibility.Visible : Visibility.Collapsed;
-
-        // AOD
-        AodCheck.IsChecked = Settings.AodEnabled;
-        AodIdleSlider.Value = Settings.AodIdleMinutes;
-        AodIdleLabel.Text = Settings.AodIdleMinutes.ToString();
-        FollowSystemThemeCheck.IsChecked = Settings.FollowSystemTheme;
-        HoverOpacityCheck.IsChecked = Settings.HoverOpacityEnabled;
-        HoverOpacitySlider.Value = Settings.HoverOpacity * 100;
-        HoverOpacityLabel.Text = $"{(int)(Settings.HoverOpacity * 100)}%";
-
-        // 夜间降透明度
-        NightDimEnabledCheck.IsChecked = Settings.NightDimEnabled;
-        NightDimStartHourBox.Text = Settings.NightDimStartHour.ToString();
-        NightDimEndHourBox.Text = Settings.NightDimEndHour.ToString();
-        NightDimOpacitySlider.Value = Settings.NightDimOpacity * 100;
-        NightDimOpacityLabel.Text = $"{(int)(Settings.NightDimOpacity * 100)}%";
-
-        // SysMon
-        SysMonCheck.IsChecked = Settings.SysMonEnabled;
-        SysMonCpuCheck.IsChecked = Settings.SysMonShowCpu;
-        SysMonMemCheck.IsChecked = Settings.SysMonShowMemory;
-        SysMonNetCheck.IsChecked = Settings.SysMonShowNetwork;
-        SysMonBatCheck.IsChecked = Settings.SysMonShowBattery;
-        SysMonPanel.Visibility = Settings.SysMonEnabled ? Visibility.Visible : Visibility.Collapsed;
-        PopulateFontCombo(SysMonFontCombo, Settings.SysMonFontFamily);
-        SysMonFontSizeSlider.Value = Settings.SysMonFontSize;
-        SysMonFontSizeLabel.Text = Settings.SysMonFontSize.ToString("F0");
-        SysMonColorBox.Text = Settings.SysMonFontColor;
-        try { SysMonColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.SysMonFontColor)); } catch { }
-
-        // Weather
-        WeatherCheck.IsChecked = Settings.WeatherEnabled;
-        WeatherCityBox.Text = Settings.WeatherCity;
-        WeatherLatBox.Text = Settings.WeatherLatitude.ToString();
-        WeatherLonBox.Text = Settings.WeatherLongitude.ToString();
-        WeatherFontSizeSlider.Value = Settings.WeatherFontSize;
-        WeatherFontSizeText.Text = Settings.WeatherFontSize.ToString("F0");
-        WeatherDetailFontSizeSlider.Value = Settings.WeatherDetailFontSize;
-        WeatherDetailFontSizeText.Text = Settings.WeatherDetailFontSize.ToString("F0");
-        WeatherMainColorBox.Text = Settings.WeatherFontColor;
-        WeatherDetailColorBox.Text = Settings.WeatherDetailColor;
-        try { WeatherMainColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.WeatherFontColor)); } catch { }
-        try { WeatherDetailColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.WeatherDetailColor)); } catch { }
-        foreach (var item in WeatherAlignmentCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.WeatherAlignment)
-                WeatherAlignmentCombo.SelectedItem = item;
-        foreach (var item in WeatherPositionCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.WeatherPosition)
-                WeatherPositionCombo.SelectedItem = item;
-        WeatherPanel.Visibility = Settings.WeatherEnabled ? Visibility.Visible : Visibility.Collapsed;
-
-        // Countdown:加载逻辑已迁移至 LoadCountdownSettings()
-
-        // Todo scroll
-        TodoScrollCheck.IsChecked = Settings.TodoScrollEnabled;
-        TodoScrollTextBox.Text = Settings.TodoScrollText;
-        TodoScrollSpeedSlider.Value = Settings.TodoScrollSpeed;
-        TodoScrollSpeedLabel.Text = Settings.TodoScrollSpeed.ToString("F0");
-        PopulateFontCombo(TodoScrollFontCombo, Settings.TodoScrollFontFamily);
-        TodoScrollFontSizeSlider.Value = Settings.TodoScrollFontSize;
-        TodoScrollFontSizeLabel.Text = Settings.TodoScrollFontSize.ToString("F0");
-        TodoScrollColorBox.Text = Settings.TodoScrollFontColor;
-        try { TodoScrollColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.TodoScrollFontColor)); } catch { }
-        TodoScrollPanel.Visibility = Settings.TodoScrollEnabled ? Visibility.Visible : Visibility.Collapsed;
-
-        // Auto switch
-        AutoSwitchCheck.IsChecked = Settings.AutoSwitchEnabled;
-        foreach (var item in AutoSwitchDayCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.AutoSwitchDayMode)
-                AutoSwitchDayCombo.SelectedItem = item;
-        foreach (var item in AutoSwitchNightCombo.Items)
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.AutoSwitchNightMode)
-                AutoSwitchNightCombo.SelectedItem = item;
-        AutoSwitchDayHourBox.Text = Settings.AutoSwitchDayStartHour.ToString();
-        AutoSwitchNightHourBox.Text = Settings.AutoSwitchNightStartHour.ToString();
-
         LoadCountdownSettings();
 
-        // === P0-P4 组件设置加载 ===
-        LoadHealthReminderSettings();
-        LoadPomodoroSettings();
-        LoadDailyQuoteSettings();
-        LoadHabitTrackerSettings();
+        // === 组件设置加载 ===
         LoadFloatWindowSettings();
 
         _loaded = true;
@@ -410,163 +184,6 @@ public partial class SettingsWindow : Window
         catch { }
     }
 
-    private void PopulateTimeZones()
-    {
-        TimeZoneCombo.Items.Clear();
-        foreach (var tz in TimeZoneInfo.GetSystemTimeZones())
-        {
-            var item = new ComboBoxItem
-            {
-                Content = tz.DisplayName,
-                Tag = tz.Id
-            };
-            TimeZoneCombo.Items.Add(item);
-        }
-    }
-
-    private void PopulateDualAnalogTimeZones()
-    {
-        DualAnalogTimeZoneCombo.Items.Clear();
-        foreach (var tz in TimeZoneInfo.GetSystemTimeZones())
-        {
-            var item = new ComboBoxItem
-            {
-                Content = tz.DisplayName,
-                Tag = tz.Id
-            };
-            DualAnalogTimeZoneCombo.Items.Add(item);
-        }
-    }
-
-    private void UpdateDualAnalogVisibility()
-    {
-        bool isDualAnalog = (DisplayModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "dual_analog";
-        DualAnalogRow.Visibility = isDualAnalog ? Visibility.Visible : Visibility.Collapsed;
-        DualAnalogLabelRow.Visibility = isDualAnalog ? Visibility.Visible : Visibility.Collapsed;
-
-        bool isAnalogSkin = (DisplayModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "analog_skin";
-        AnalogSkinColorPanel.Visibility = isAnalogSkin ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void DisplayModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        // InitializeComponent 加载 XAML 时会先触发一次 SelectionChanged,此时 DualAnalogRow 等 UI 可能尚未初始化
-        if (!_loaded || DualAnalogRow == null || DualAnalogLabelRow == null) return;
-        UpdateDualAnalogVisibility();
-    }
-
-    private void SelectTimeZone(string id)
-    {
-        foreach (var item in TimeZoneCombo.Items)
-        {
-            if (item is ComboBoxItem ci && ci.Tag?.ToString() == id)
-            {
-                TimeZoneCombo.SelectedItem = item;
-                return;
-            }
-        }
-    }
-
-    private void DisplaySegment_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(DisplaySegment, DisplayPanel);
-    }
-
-    private void AppearanceSegment_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(AppearanceSegment, AppearancePanel);
-    }
-
-    private void DateSegment2_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(DateSegment2, DatePanel2);
-    }
-
-    private void FeaturesSegment_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(FeaturesSegment, FeaturesPanel);
-    }
-
-    private void SystemSegment_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(SystemSegment, SystemPanel);
-    }
-
-    private void CountdownSegment_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(CountdownSegment, CountdownPanel);
-    }
-
-    private void ComponentsSegment_Click(object sender, MouseButtonEventArgs e)
-    {
-        ActivateSegment(ComponentsSegment, ComponentsPanel);
-    }
-
-    private void ActivateSegment(Border active, ScrollViewer panel)
-    {
-        var segments = new[] { DisplaySegment, AppearanceSegment, DateSegment2, FeaturesSegment, SystemSegment, CountdownSegment, ComponentsSegment };
-        var panels = new ScrollViewer[] { DisplayPanel, AppearancePanel, DatePanel2, FeaturesPanel, SystemPanel, CountdownPanel, ComponentsPanel };
-
-        for (int i = 0; i < segments.Length; i++)
-        {
-            var isActive = segments[i] == active;
-            segments[i].Background = isActive
-                ? new SolidColorBrush(Colors.White)
-                : Brushes.Transparent;
-            ((TextBlock)segments[i].Child).Foreground = isActive
-                ? new SolidColorBrush(Color.FromRgb(0x1D, 0x1D, 0x1F))
-                : new SolidColorBrush(Color.FromRgb(0x86, 0x86, 0x8B));
-            panels[i].Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
-        }
-    }
-
-    private void WorldClockCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.WorldClockEnabled = WorldClockCheck.IsChecked == true;
-        TimeZoneRow.Visibility = Settings.WorldClockEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void FontFamilyCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.FontFamily = (FontFamilyCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
-    }
-
-    private void FontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.FontSize = e.NewValue;
-        FontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.BackgroundOpacity = e.NewValue / 100.0;
-        OpacityLabel.Text = $"{(int)e.NewValue}%";
-    }
-
-    private void ColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.FontColor = ColorBox.Text;
-        UpdateColorPreview();
-    }
-
-    private void UpdateColorPreview()
-    {
-        try
-        {
-            var color = (Color)ColorConverter.ConvertFromString(ColorBox.Text);
-            ColorPreview.Background = new SolidColorBrush(color);
-        }
-        catch
-        {
-            ColorPreview.Background = new SolidColorBrush(Colors.Gray);
-        }
-    }
-
     /// <summary>
     /// 填充字体下拉框,枚举系统已安装字体,并选中指定字体。
     /// </summary>
@@ -584,529 +201,16 @@ public partial class SettingsWindow : Window
             combo.SelectedIndex = 0;
     }
 
-    private void ColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)ColorPreview.Background).Color.R,
-                ((SolidColorBrush)ColorPreview.Background).Color.G,
-                ((SolidColorBrush)ColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
-            ColorBox.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        }
-    }
-
-    private void BackgroundTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        var tag = (BackgroundTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "solid";
-        Settings.BackgroundType = tag;
-        GradientSettingsPanel.Visibility = tag == "gradient" ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void GradientStartBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.GradientStartColor = GradientStartBox.Text;
-        UpdateGradientPreviews();
-    }
-
-    private void GradientEndBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.GradientEndColor = GradientEndBox.Text;
-        UpdateGradientPreviews();
-    }
-
-    private void UpdateGradientPreviews()
-    {
-        try
-        {
-            var c = (Color)ColorConverter.ConvertFromString(GradientStartBox.Text);
-            GradientStartPreview.Background = new SolidColorBrush(c);
-        }
-        catch { GradientStartPreview.Background = new SolidColorBrush(Colors.Gray); }
-        try
-        {
-            var c = (Color)ColorConverter.ConvertFromString(GradientEndBox.Text);
-            GradientEndPreview.Background = new SolidColorBrush(c);
-        }
-        catch { GradientEndPreview.Background = new SolidColorBrush(Colors.Gray); }
-    }
-
-    private void GradientAngleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.GradientAngle = e.NewValue;
-        GradientAngleLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void BorderColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.BorderColor = BorderColorBox.Text;
-        UpdateBorderColorPreview();
-    }
-
-    private void UpdateBorderColorPreview()
-    {
-        try
-        {
-            var color = (Color)ColorConverter.ConvertFromString(BorderColorBox.Text);
-            BorderColorPreview.Background = new SolidColorBrush(color);
-        }
-        catch
-        {
-            BorderColorPreview.Background = new SolidColorBrush(Colors.Gray);
-        }
-    }
-
-    private void BorderColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)BorderColorPreview.Background).Color.R,
-                ((SolidColorBrush)BorderColorPreview.Background).Color.G,
-                ((SolidColorBrush)BorderColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
-            BorderColorBox.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        }
-    }
-
-    private void BorderThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.BorderThickness = e.NewValue;
-        BorderThicknessLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void ThemePresetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        var tag = (ThemePresetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "default";
-        Settings.ThemePreset = tag;
-    }
-
-    private void SkinBackgroundEnable_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.SkinBackgroundEnabled = SkinBackgroundEnableCheck.IsChecked == true;
-        SkinBackgroundPanel.Visibility = Settings.SkinBackgroundEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void SkinBackgroundPath_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.SkinBackgroundPath = SkinBackgroundPathBox.Text;
-    }
-
-    private void SkinBackgroundBrowse_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "图片文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif|所有文件|*.*",
-            Title = "选择相册背景图片"
-        };
-        if (dialog.ShowDialog() == true)
-            SkinBackgroundPathBox.Text = dialog.FileName;
-    }
-
-    private void SkinBackgroundOpacity_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.SkinBackgroundOpacity = e.NewValue / 100.0;
-        SkinBackgroundOpacityLabel.Text = $"{(int)e.NewValue}%";
-    }
-
-    private void SkinBackgroundBlur_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.SkinBackgroundBlur = e.NewValue;
-        SkinBackgroundBlurLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void SkinBackgroundStretch_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.SkinBackgroundStretch = (SkinBackgroundStretchCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "UniformToFill";
-    }
-
-    private void ShowDateCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.ShowDate = ShowDateCheck.IsChecked == true;
-    }
-
-    private void DateFontFamilyCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.DateFontFamily = (DateFontFamilyCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
-    }
-
-    private void DateFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.DateFontSize = e.NewValue;
-        DateFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void DateColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.DateColor = DateColorBox.Text;
-        UpdateDateColorPreview();
-    }
-
-    private void UpdateDateColorPreview()
-    {
-        try
-        {
-            var color = (Color)ColorConverter.ConvertFromString(DateColorBox.Text);
-            DateColorPreview.Background = new SolidColorBrush(color);
-        }
-        catch
-        {
-            DateColorPreview.Background = new SolidColorBrush(Colors.Gray);
-        }
-    }
-
-    private void DateColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)DateColorPreview.Background).Color.R,
-                ((SolidColorBrush)DateColorPreview.Background).Color.G,
-                ((SolidColorBrush)DateColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
-            DateColorBox.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        }
-    }
-
-    private void LunarCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.LunarEnabled = LunarCheck.IsChecked == true;
-        LunarSettingsPanel.Visibility = Settings.LunarEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void SolarTermCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.ShowSolarTerm = SolarTermCheck.IsChecked == true;
-    }
-
-    private void ZodiacCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.ShowZodiac = ZodiacCheck.IsChecked == true;
-    }
-
-    private void LunarFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.LunarFontSize = e.NewValue;
-        LunarFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void LunarColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.LunarColor = LunarColorBox.Text;
-        UpdateLunarColorPreview();
-    }
-
-    private void UpdateLunarColorPreview()
-    {
-        try
-        {
-            var color = (Color)ColorConverter.ConvertFromString(LunarColorBox.Text);
-            LunarColorPreview.Background = new SolidColorBrush(color);
-        }
-        catch
-        {
-            LunarColorPreview.Background = new SolidColorBrush(Colors.Gray);
-        }
-    }
-
-    private void LunarColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)LunarColorPreview.Background).Color.R,
-                ((SolidColorBrush)LunarColorPreview.Background).Color.G,
-                ((SolidColorBrush)LunarColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
-            LunarColorBox.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        }
-    }
-
-    #region 指针表盘颜色
-
-    private void LoadAnalogSkinConfig()
-    {
-        var hc = Settings.GetComponentSetting("analog_clock_skin", "hourColor", "#3a2a1a");
-        var mc = Settings.GetComponentSetting("analog_clock_skin", "minuteColor", "#2a2a2a");
-        var sc = Settings.GetComponentSetting("analog_clock_skin", "secondColor", "#cc3333");
-        var th = Settings.GetComponentSetting("analog_clock_skin", "handThickness", 1.0);
-        var ss = Settings.GetComponentSetting("analog_clock_skin", "showSecondHand", true);
-        var st = Settings.GetComponentSetting("analog_clock_skin", "showTicks", true);
-        var cd = Settings.GetComponentSetting("analog_clock_skin", "showCenterDot", true);
-        var tkc = Settings.GetComponentSetting("analog_clock_skin", "tickColor", "#808080");
-
-        AnalogHourColorBox.Text = hc;
-        AnalogMinuteColorBox.Text = mc;
-        AnalogSecondColorBox.Text = sc;
-        AnalogTickColorBox.Text = tkc;
-        AnalogHandThicknessSlider.Value = th;
-        AnalogHandThicknessLabel.Text = th.ToString("F1");
-        AnalogShowSecondHandCheck.IsChecked = ss;
-        AnalogShowTicksCheck.IsChecked = st;
-        AnalogShowCenterDotCheck.IsChecked = cd;
-        UpdateAnalogColorPreviews();
-    }
-
-    private void UpdateAnalogColorPreviews()
-    {
-        try { AnalogHourColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AnalogHourColorBox.Text)); } catch { }
-        try { AnalogMinuteColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AnalogMinuteColorBox.Text)); } catch { }
-        try { AnalogSecondColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AnalogSecondColorBox.Text)); } catch { }
-        try { AnalogTickColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(AnalogTickColorBox.Text)); } catch { }
-    }
-
-    private void AnalogHourColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)AnalogHourColorPreview.Background).Color.R,
-                ((SolidColorBrush)AnalogHourColorPreview.Background).Color.G,
-                ((SolidColorBrush)AnalogHourColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            AnalogHourColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-    }
-
-    private void AnalogMinuteColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)AnalogMinuteColorPreview.Background).Color.R,
-                ((SolidColorBrush)AnalogMinuteColorPreview.Background).Color.G,
-                ((SolidColorBrush)AnalogMinuteColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            AnalogMinuteColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-    }
-
-    private void AnalogSecondColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)AnalogSecondColorPreview.Background).Color.R,
-                ((SolidColorBrush)AnalogSecondColorPreview.Background).Color.G,
-                ((SolidColorBrush)AnalogSecondColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            AnalogSecondColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-    }
-
-    private void AnalogTickColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)AnalogTickColorPreview.Background).Color.R,
-                ((SolidColorBrush)AnalogTickColorPreview.Background).Color.G,
-                ((SolidColorBrush)AnalogTickColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            AnalogTickColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-    }
-
-    private void AnalogHourColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        UpdateAnalogColorPreviews();
-    }
-
-    private void AnalogMinuteColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        UpdateAnalogColorPreviews();
-    }
-
-    private void AnalogSecondColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        UpdateAnalogColorPreviews();
-    }
-
-    private void AnalogTickColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        UpdateAnalogColorPreviews();
-    }
-
-    private void AnalogHandThicknessSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || AnalogHandThicknessLabel == null) return;
-        AnalogHandThicknessLabel.Text = e.NewValue.ToString("F1");
-    }
-
-    #endregion
-
-    private void ReminderCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.ReminderEnabled = ReminderCheck.IsChecked == true;
-        ReminderSettingsPanel.Visibility = Settings.ReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private List<ReminderItem> GetReminders()
-    {
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<ReminderItem>>(Settings.RemindersJson) ?? new();
-        }
-        catch
-        {
-            return new();
-        }
-    }
-
-    private void SaveReminders(List<ReminderItem> list)
-    {
-        Settings.RemindersJson = System.Text.Json.JsonSerializer.Serialize(list);
-    }
-
-    private void LoadReminderList()
-    {
-        var list = GetReminders();
-        ReminderListBox.Items.Clear();
-        foreach (var r in list)
-            ReminderListBox.Items.Add(r);
-    }
-
-    private void AddReminder_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new ReminderDialog();
-        if (dialog.ShowDialog() == true)
-        {
-            var list = GetReminders();
-            list.Add(dialog.Reminder);
-            SaveReminders(list);
-            LoadReminderList();
-        }
-    }
-
-    private void EditReminder_Click(object sender, RoutedEventArgs e)
-    {
-        if (ReminderListBox.SelectedItem is not ReminderItem item) return;
-        var dialog = new ReminderDialog(item);
-        if (dialog.ShowDialog() == true)
-        {
-            var list = GetReminders();
-            int idx = list.FindIndex(r => r.Id == item.Id);
-            if (idx >= 0)
-            {
-                list[idx] = dialog.Reminder;
-                SaveReminders(list);
-                LoadReminderList();
-            }
-        }
-    }
-
     private void PluginCheck_Changed(object sender, RoutedEventArgs e)
     {
         // Handled via data binding directly to PluginItem.Enabled
     }
 
-    private void DeleteReminder_Click(object sender, RoutedEventArgs e)
-    {
-        if (ReminderListBox.SelectedItem is not ReminderItem item) return;
-        var result = MessageBox.Show("确定删除此提醒？", "删除确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (result == MessageBoxResult.Yes)
-        {
-            var list = GetReminders();
-            list.RemoveAll(r => r.Id == item.Id);
-            SaveReminders(list);
-            LoadReminderList();
-        }
-    }
-
     private void OkButton_Click(object sender, RoutedEventArgs e)
     {
-        Settings.Use24Hour = (HourFormatCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "true";
-        Settings.ShowSeconds = ShowSecondsCheck.IsChecked == true;
-        Settings.DisplayMode = (DisplayModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "digital";
-        Settings.WorldClockEnabled = WorldClockCheck.IsChecked == true;
-        Settings.WorldClockTimeZone = (TimeZoneCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "China Standard Time";
-        Settings.ChimeEnabled = ChimeCheck.IsChecked == true;
+        Services.Logger.Information("[SettingsWindow] OkButton_Click entered");
 
-        Settings.FontFamily = (FontFamilyCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
-        Settings.FontSize = FontSizeSlider.Value;
-        Settings.BackgroundOpacity = OpacitySlider.Value / 100.0;
-        Settings.FontColor = ColorBox.Text;
-        Settings.BackgroundType = (BackgroundTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "solid";
-        Settings.GradientStartColor = GradientStartBox.Text;
-        Settings.GradientEndColor = GradientEndBox.Text;
-        Settings.GradientAngle = GradientAngleSlider.Value;
-        Settings.BorderColor = BorderColorBox.Text;
-        Settings.BorderThickness = BorderThicknessSlider.Value;
-        Settings.ThemePreset = (ThemePresetCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "default";
-
-        Settings.SkinBackgroundEnabled = SkinBackgroundEnableCheck.IsChecked == true;
-        Settings.SkinBackgroundPath = SkinBackgroundPathBox.Text;
-        Settings.SkinBackgroundOpacity = SkinBackgroundOpacitySlider.Value / 100.0;
-        Settings.SkinBackgroundBlur = SkinBackgroundBlurSlider.Value;
-        Settings.SkinBackgroundStretch = (SkinBackgroundStretchCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "UniformToFill";
-
-        Settings.ShowDate = ShowDateCheck.IsChecked == true;
-        Settings.DateFontFamily = (DateFontFamilyCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
-        Settings.DateFontSize = DateFontSizeSlider.Value;
-        Settings.DateColor = DateColorBox.Text;
-        Settings.DatePosition = (DatePositionCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "top";
-
-        Settings.ClickThrough = ClickThroughCheck.IsChecked == true;
-        Settings.SnapToEdge = SnapToEdgeCheck.IsChecked == true;
-        Settings.SnapDistance = (int)SnapDistanceSlider.Value;
-        Settings.LockPosition = LockPositionCheck.IsChecked == true;
         Settings.HotkeyHide = HotkeyBox.Text;
-        Settings.HotkeyCountdown = HotkeyCountdownBox.Text;
 
         Settings.AutoStart = AutoStartCheck.IsChecked == true;
         // 同步注册表写入,使开关即时生效(下次开机自启/取消)
@@ -1117,134 +221,9 @@ public partial class SettingsWindow : Window
         try { I18n.Apply(Settings.Language); }
         catch { /* 语言切换失败不阻塞设置保存 */ }
 
-        Settings.LunarEnabled = LunarCheck.IsChecked == true;
-        Settings.ShowSolarTerm = SolarTermCheck.IsChecked == true;
-        Settings.ShowZodiac = ZodiacCheck.IsChecked == true;
-        Settings.LunarFontSize = LunarFontSizeSlider.Value;
-        Settings.LunarColor = LunarColorBox.Text;
-        Settings.ReminderEnabled = ReminderCheck.IsChecked == true;
-
-        Settings.Layout.Mode = (LayoutModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "stack";
-
-        // Backdrop / Filter
-        Settings.BackdropType = (BackdropTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "none";
-        Settings.GlobalFilterEnabled = GlobalFilterEnableCheck.IsChecked == true;
-        Settings.GlobalFilterVignette = VignetteSlider.Value / 100.0;
-        Settings.GlobalFilterGrayscale = GrayscaleSlider.Value / 100.0;
-        Settings.GlobalFilterColorTemp = ColorTempSlider.Value / 100.0;
-
-        // AOD / Theme / Hover
-        Settings.AodEnabled = AodCheck.IsChecked == true;
-        Settings.AodIdleMinutes = (int)AodIdleSlider.Value;
-        Settings.FollowSystemTheme = FollowSystemThemeCheck.IsChecked == true;
-        Settings.HoverOpacityEnabled = HoverOpacityCheck.IsChecked == true;
-        Settings.HoverOpacity = HoverOpacitySlider.Value / 100.0;
-
-        // 夜间降透明度
-        Settings.NightDimEnabled = NightDimEnabledCheck.IsChecked == true;
-        if (int.TryParse(NightDimStartHourBox.Text, out var nsh)) Settings.NightDimStartHour = Math.Clamp(nsh, 0, 23);
-        if (int.TryParse(NightDimEndHourBox.Text, out var neh)) Settings.NightDimEndHour = Math.Clamp(neh, 0, 23);
-        Settings.NightDimOpacity = NightDimOpacitySlider.Value / 100.0;
-
-        // SysMon
-        Settings.SysMonEnabled = SysMonCheck.IsChecked == true;
-        Settings.SysMonShowCpu = SysMonCpuCheck.IsChecked == true;
-        Settings.SysMonShowMemory = SysMonMemCheck.IsChecked == true;
-        Settings.SysMonShowNetwork = SysMonNetCheck.IsChecked == true;
-        Settings.SysMonShowBattery = SysMonBatCheck.IsChecked == true;
-        Settings.SysMonFontFamily = (SysMonFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Consolas";
-        Settings.SysMonFontSize = SysMonFontSizeSlider.Value;
-        Settings.SysMonFontColor = SysMonColorBox.Text;
-
-        // Weather
-        Settings.WeatherEnabled = WeatherCheck.IsChecked == true;
-        Settings.WeatherCity = WeatherCityBox.Text;
-        if (double.TryParse(WeatherLatBox.Text, out var lat)) Settings.WeatherLatitude = lat;
-        if (double.TryParse(WeatherLonBox.Text, out var lon)) Settings.WeatherLongitude = lon;
-        Settings.WeatherFontSize = WeatherFontSizeSlider.Value;
-        Settings.WeatherDetailFontSize = WeatherDetailFontSizeSlider.Value;
-        Settings.WeatherFontColor = WeatherMainColorBox.Text;
-        Settings.WeatherDetailColor = WeatherDetailColorBox.Text;
-        Settings.WeatherAlignment = (WeatherAlignmentCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "center";
-        Settings.WeatherPosition = (WeatherPositionCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "bottom";
-
-        // Countdown
-        // Countdown:保存逻辑已迁移至 SaveCountdownSettings()
-
-        // Todo scroll
-        Settings.TodoScrollEnabled = TodoScrollCheck.IsChecked == true;
-        Settings.TodoScrollText = TodoScrollTextBox.Text;
-        Settings.TodoScrollSpeed = TodoScrollSpeedSlider.Value;
-        Settings.TodoScrollFontFamily = (TodoScrollFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei";
-        Settings.TodoScrollFontSize = TodoScrollFontSizeSlider.Value;
-        Settings.TodoScrollFontColor = TodoScrollColorBox.Text;
-
-        // Auto switch
-        Settings.AutoSwitchEnabled = AutoSwitchCheck.IsChecked == true;
-        Settings.AutoSwitchDayMode = (AutoSwitchDayCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "digital";
-        Settings.AutoSwitchNightMode = (AutoSwitchNightCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "minimal";
-        if (int.TryParse(AutoSwitchDayHourBox.Text, out var dsh)) Settings.AutoSwitchDayStartHour = Math.Clamp(dsh, 0, 23);
-        if (int.TryParse(AutoSwitchNightHourBox.Text, out var asnh)) Settings.AutoSwitchNightStartHour = Math.Clamp(asnh, 0, 23);
-
-        // Dual analog
-        Settings.DualAnalogTimeZone = (DualAnalogTimeZoneCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Eastern Standard Time";
-        Settings.DualAnalogLabel = DualAnalogLabelBox.Text;
-
-        // === P1-P4 组件设置写回 ===
-        // P1:健康提醒
-        Settings.HealthReminderEnabled = HealthReminderCheck.IsChecked == true;
-        if (int.TryParse(HealthWorkStartBox.Text, out var hws)) Settings.HealthReminderWorkStartHour = Math.Clamp(hws, 0, 23);
-        if (int.TryParse(HealthWorkEndBox.Text, out var hwe)) Settings.HealthReminderWorkEndHour = Math.Clamp(hwe, 0, 24);
-        Settings.HealthReminderFontFamily = (HealthReminderFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
-        Settings.HealthReminderFontSize = HealthReminderFontSizeSlider.Value;
-        Settings.HealthReminderFontColor = HealthReminderColorBox.Text;
-        SaveHealthRemindersFromUI();
-
-        // P2:番茄钟
-        Settings.PomodoroEnabled = PomodoroCheck.IsChecked == true;
-        Settings.PomodoroFocusMinutes = (int)PomodoroFocusSlider.Value;
-        Settings.PomodoroShortBreakMinutes = (int)PomodoroShortSlider.Value;
-        Settings.PomodoroLongBreakMinutes = (int)PomodoroLongSlider.Value;
-        Settings.PomodoroLongBreakInterval = (int)PomodoroIntervalSlider.Value;
-        Settings.PomodoroAutoStart = PomodoroAutoStartCheck.IsChecked == true;
-        Settings.PomodoroFontFamily = (PomodoroFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
-        Settings.PomodoroFontSize = PomodoroFontSizeSlider.Value;
-        Settings.PomodoroFontColor = PomodoroColorBox.Text;
-
-        // P3:每日一言
-        Settings.DailyQuoteEnabled = DailyQuoteCheck.IsChecked == true;
-        Settings.DailyQuoteApiEnabled = DailyQuoteApiCheck.IsChecked == true;
-        Settings.DailyQuoteApiUrl = DailyQuoteApiBox.Text;
-        Settings.DailyQuoteSpeed = DailyQuoteSpeedSlider.Value;
-        Settings.DailyQuoteFontFamily = (DailyQuoteFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei";
-        Settings.DailyQuoteFontSize = DailyQuoteFontSizeSlider.Value;
-        Settings.DailyQuoteFontColor = DailyQuoteColorBox.Text;
-
-        // P4:习惯打卡
-        Settings.HabitTrackerEnabled = HabitTrackerCheck.IsChecked == true;
-        Settings.HabitTrackerFontFamily = (HabitTrackerFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
-        Settings.HabitTrackerFontSize = HabitTrackerFontSizeSlider.Value;
-        Settings.HabitTrackerFontColor = HabitTrackerColorBox.Text;
-        SaveHabitsFromUI();
-
-        // Analog skin colors
-        Settings.SetComponentSetting("analog_clock_skin", "hourColor", AnalogHourColorBox.Text);
-        Settings.SetComponentSetting("analog_clock_skin", "minuteColor", AnalogMinuteColorBox.Text);
-        Settings.SetComponentSetting("analog_clock_skin", "secondColor", AnalogSecondColorBox.Text);
-        Settings.SetComponentSetting("analog_clock_skin", "tickColor", AnalogTickColorBox.Text);
-        Settings.SetComponentSetting("analog_clock_skin", "handThickness", AnalogHandThicknessSlider.Value);
-        Settings.SetComponentSetting("analog_clock_skin", "showSecondHand", AnalogShowSecondHandCheck.IsChecked == true);
-        Settings.SetComponentSetting("analog_clock_skin", "showTicks", AnalogShowTicksCheck.IsChecked == true);
-        Settings.SetComponentSetting("analog_clock_skin", "showCenterDot", AnalogShowCenterDotCheck.IsChecked == true);
-
         // Save plugin enabled states
         foreach (var pi in _plugins)
             Settings.Plugins[pi.Id] = pi.Enabled;
-
-        var finalList = new System.Collections.Generic.List<ReminderItem>();
-        foreach (ReminderItem item in ReminderListBox.Items)
-            finalList.Add(item);
-        Settings.RemindersJson = System.Text.Json.JsonSerializer.Serialize(finalList);
 
         // 保存倒计时挂件配置
         SaveCountdownSettings();
@@ -1252,7 +231,9 @@ public partial class SettingsWindow : Window
         // 保存独立悬浮窗口配置
         SaveFloatWindowSettings();
 
+        Services.Logger.Information($"[SettingsWindow] Before Save: DisplayMode={Settings.DisplayMode}, FontSize={Settings.FontSize}");
         Settings.Save();
+        Services.Logger.Information("[SettingsWindow] After Save, settings.json written");
         DialogResult = true;
         Close();
     }
@@ -1275,7 +256,7 @@ public partial class SettingsWindow : Window
         Settings.CountdownEndAction = (CountdownEndActionCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "blink";
         Settings.CountdownStopAtZero = CountdownStopAtZeroCheck.IsChecked == true;
 
-        Settings.CountdownFontFamily = (CountdownFontFamilyCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+        Settings.CountdownFontFamily = (CountdownFontFamilyCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
         Settings.CountdownFontSize = CountdownFontSizeSlider.Value;
         Settings.CountdownFontColor = CountdownFontColorBox.Text;
         Settings.CountdownOpacity = CountdownOpacitySlider.Value / 100.0;
@@ -1293,245 +274,6 @@ public partial class SettingsWindow : Window
             Settings.CountdownTaskRotationSeconds = Math.Clamp(rsec, 1, 120);
         SaveCountdownTasksFromUI();
     }
-
-    #region New Event Handlers
-
-    private void BackdropTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.BackdropType = (BackdropTypeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "none";
-    }
-
-    private void GlobalFilterEnable_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.GlobalFilterEnabled = GlobalFilterEnableCheck.IsChecked == true;
-        GlobalFilterPanel.Visibility = Settings.GlobalFilterEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void VignetteSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.GlobalFilterVignette = e.NewValue / 100.0;
-        VignetteLabel.Text = $"{(int)e.NewValue}%";
-    }
-
-    private void GrayscaleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.GlobalFilterGrayscale = e.NewValue / 100.0;
-        GrayscaleLabel.Text = $"{(int)e.NewValue}%";
-    }
-
-    private void ColorTempSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.GlobalFilterColorTemp = e.NewValue / 100.0;
-        ColorTempLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void SysMonCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.SysMonEnabled = SysMonCheck.IsChecked == true;
-        SysMonPanel.Visibility = Settings.SysMonEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void SysMonFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || SysMonFontSizeLabel == null) return;
-        Settings.SysMonFontSize = e.NewValue;
-        SysMonFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void SysMonColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)SysMonColorPreview.Background).Color.R,
-                ((SolidColorBrush)SysMonColorPreview.Background).Color.G,
-                ((SolidColorBrush)SysMonColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            SysMonColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-    }
-
-    private void SysMonColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.SysMonFontColor = SysMonColorBox.Text;
-        try { SysMonColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(SysMonColorBox.Text)); }
-        catch { }
-    }
-
-    private void WeatherCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.WeatherEnabled = WeatherCheck.IsChecked == true;
-        WeatherPanel.Visibility = Settings.WeatherEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void WeatherFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || WeatherFontSizeText == null) return;
-        WeatherFontSizeText.Text = e.NewValue.ToString("F0");
-    }
-
-    private void WeatherDetailFontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || WeatherDetailFontSizeText == null) return;
-        WeatherDetailFontSizeText.Text = e.NewValue.ToString("F0");
-    }
-
-    private void WeatherMainColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded || WeatherMainColorPreview == null) return;
-        try { WeatherMainColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(WeatherMainColorBox.Text)); }
-        catch { WeatherMainColorPreview.Background = new SolidColorBrush(Colors.Gray); }
-    }
-
-    private void WeatherMainColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            using var dialog = new System.Windows.Forms.ColorDialog
-            {
-                AllowFullOpen = true,
-                FullOpen = true,
-                Color = System.Drawing.Color.FromArgb(
-                    ((SolidColorBrush)WeatherMainColorPreview.Background).Color.R,
-                    ((SolidColorBrush)WeatherMainColorPreview.Background).Color.G,
-                    ((SolidColorBrush)WeatherMainColorPreview.Background).Color.B)
-            };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
-                var hex = $"#{dialog.Color.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
-                WeatherMainColorBox.Text = hex;
-                WeatherMainColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-            }
-        }
-        catch { }
-    }
-
-    private void WeatherDetailColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded || WeatherDetailColorPreview == null) return;
-        try { WeatherDetailColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(WeatherDetailColorBox.Text)); }
-        catch { WeatherDetailColorPreview.Background = new SolidColorBrush(Colors.Gray); }
-    }
-
-    private void WeatherDetailColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            using var dialog = new System.Windows.Forms.ColorDialog
-            {
-                AllowFullOpen = true,
-                FullOpen = true,
-                Color = System.Drawing.Color.FromArgb(
-                    ((SolidColorBrush)WeatherDetailColorPreview.Background).Color.R,
-                    ((SolidColorBrush)WeatherDetailColorPreview.Background).Color.G,
-                    ((SolidColorBrush)WeatherDetailColorPreview.Background).Color.B)
-            };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                var c = System.Drawing.Color.FromArgb(dialog.Color.R, dialog.Color.G, dialog.Color.B);
-                var hex = $"#{dialog.Color.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}";
-                WeatherDetailColorBox.Text = hex;
-                WeatherDetailColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-            }
-        }
-        catch { }
-    }
-
-    // CountdownCheck_Changed 已废弃:倒计时配置迁移至独立 Tab,见 CountdownEnabledCheck_Changed
-
-    private void TodoScrollCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.TodoScrollEnabled = TodoScrollCheck.IsChecked == true;
-        TodoScrollPanel.Visibility = Settings.TodoScrollEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void TodoScrollSpeed_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.TodoScrollSpeed = e.NewValue;
-        TodoScrollSpeedLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void TodoScrollFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || TodoScrollFontSizeLabel == null) return;
-        Settings.TodoScrollFontSize = e.NewValue;
-        TodoScrollFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void TodoScrollColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.ColorDialog
-        {
-            FullOpen = true,
-            Color = System.Drawing.Color.FromArgb(
-                ((SolidColorBrush)TodoScrollColorPreview.Background).Color.R,
-                ((SolidColorBrush)TodoScrollColorPreview.Background).Color.G,
-                ((SolidColorBrush)TodoScrollColorPreview.Background).Color.B)
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            TodoScrollColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-    }
-
-    private void TodoScrollColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.TodoScrollFontColor = TodoScrollColorBox.Text;
-        try { TodoScrollColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(TodoScrollColorBox.Text)); }
-        catch { }
-    }
-
-    private void MediaInfoCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.MediaInfoEnabled = MediaInfoCheck.IsChecked == true;
-        MediaInfoPanel.Visibility = Settings.MediaInfoEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void AodIdleSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.AodIdleMinutes = (int)e.NewValue;
-        AodIdleLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void HoverOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.HoverOpacity = e.NewValue / 100.0;
-        HoverOpacityLabel.Text = $"{(int)e.NewValue}%";
-    }
-
-    private void NightDimOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.NightDimOpacity = e.NewValue / 100.0;
-        NightDimOpacityLabel.Text = $"{(int)e.NewValue}%";
-    }
-
-    private void SnapDistanceSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded) return;
-        Settings.SnapDistance = (int)e.NewValue;
-        SnapDistanceLabel.Text = $"{(int)e.NewValue}px";
-    }
-
-    #endregion
 
     #region Countdown Tab Handlers
 
@@ -1810,11 +552,7 @@ public partial class SettingsWindow : Window
         Close();
     }
 
-    #region P0-P4 组件设置辅助方法
-
-    // ========================================================================================
-    // P0: 多任务倒计时 CountdownTask
-    // ========================================================================================
+    #region P0 多任务倒计时 CountdownTask
 
     // UI 模型:一行对应一个 CountdownTask
     private class CountdownTaskRowItem
@@ -1958,421 +696,6 @@ public partial class SettingsWindow : Window
         Settings.CountdownTasks = newList;
     }
 
-    // ========================================================================================
-    // P1: 健康提醒 HealthReminder
-    // ========================================================================================
-
-    private class HealthReminderRowItem
-    {
-        public CheckBox EnabledCheck = null!;
-        public TextBox NameBox = null!;
-        public TextBox IntervalBox = null!;
-        public Button DeleteButton = null!;
-        public IntervalReminderItem Model = null!;
-        public Grid Row = null!;
-    }
-    private readonly List<HealthReminderRowItem> _healthReminderRows = new();
-
-    private void LoadHealthReminderSettings()
-    {
-        HealthReminderCheck.IsChecked = Settings.HealthReminderEnabled;
-        HealthReminderPanel.Visibility = Settings.HealthReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
-        HealthWorkStartBox.Text = Settings.HealthReminderWorkStartHour.ToString();
-        HealthWorkEndBox.Text = Settings.HealthReminderWorkEndHour.ToString();
-        PopulateFontCombo(HealthReminderFontCombo, Settings.HealthReminderFontFamily);
-        HealthReminderFontSizeSlider.Value = Settings.HealthReminderFontSize;
-        HealthReminderFontSizeLabel.Text = Settings.HealthReminderFontSize.ToString("F0");
-        HealthReminderColorBox.Text = Settings.HealthReminderFontColor;
-        try { HealthReminderColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.HealthReminderFontColor)); } catch { }
-
-        RenderHealthRemindersUI();
-    }
-
-    private void RenderHealthRemindersUI()
-    {
-        _healthReminderRows.Clear();
-        HealthReminderListBox.ItemsSource = null;
-        List<IntervalReminderItem> items;
-        try { items = JsonSerializer.Deserialize<List<IntervalReminderItem>>(Settings.HealthRemindersJson) ?? new(); }
-        catch { items = new(); }
-        var list = new List<Grid>();
-        if (items.Count == 0)
-        {
-            // 默认三条:喝水/站立/眼操
-            items.Add(new IntervalReminderItem { Id = "water", Label = "喝水", IntervalMinutes = 60, Enabled = true });
-            items.Add(new IntervalReminderItem { Id = "stand", Label = "站立", IntervalMinutes = 45, Enabled = true });
-            items.Add(new IntervalReminderItem { Id = "eyes", Label = "眼保健操", IntervalMinutes = 20, Enabled = false });
-        }
-        foreach (var it in items) list.Add(BuildHealthReminderRow(it).Row);
-        HealthReminderListBox.ItemsSource = list;
-    }
-
-    private HealthReminderRowItem BuildHealthReminderRow(IntervalReminderItem model)
-    {
-        var item = new HealthReminderRowItem { Model = model };
-        var g = new Grid { Margin = new Thickness(0, 0, 0, 4) };
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-        var cb = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        cb.IsChecked = model.Enabled;
-        Grid.SetColumn(cb, 0); g.Children.Add(cb);
-        item.EnabledCheck = cb;
-
-        var nb = new TextBox { Text = model.Label, Margin = new Thickness(2, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(nb, 1); g.Children.Add(nb);
-        item.NameBox = nb;
-
-        var ib = new TextBox { Text = model.IntervalMinutes.ToString(), Margin = new Thickness(10, 0, 2, 0), Width = 60, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(ib, 2); g.Children.Add(ib);
-        item.IntervalBox = ib;
-
-        var del = new Button { Content = "×", Width = 22, Height = 22, Style = (Style)FindResource("SecondaryButton"), VerticalAlignment = VerticalAlignment.Center };
-        del.Click += (_, _) =>
-        {
-            HealthReminderListBox.ItemsSource = null;
-            _healthReminderRows.Remove(item);
-            HealthReminderListBox.ItemsSource = _healthReminderRows.Select(x => x.Row).ToList();
-        };
-        Grid.SetColumn(del, 3); g.Children.Add(del);
-        item.DeleteButton = del;
-
-        item.Row = g;
-        _healthReminderRows.Add(item);
-        return item;
-    }
-
-    private void HealthAddButton_Click(object sender, RoutedEventArgs e)
-    {
-        var m = new IntervalReminderItem { Id = Guid.NewGuid().ToString("N"), Label = "新提醒", IntervalMinutes = 30, Enabled = true };
-        BuildHealthReminderRow(m);
-        HealthReminderListBox.ItemsSource = null;
-        HealthReminderListBox.ItemsSource = _healthReminderRows.Select(x => x.Row).ToList();
-    }
-    private void HealthPresetWater_Click(object sender, RoutedEventArgs e) => AddPresetHealth("喝水", 60);
-    private void HealthPresetStand_Click(object sender, RoutedEventArgs e) => AddPresetHealth("站立", 45);
-    private void HealthPresetEyes_Click(object sender, RoutedEventArgs e) => AddPresetHealth("眼保健操", 20);
-
-    private void AddPresetHealth(string label, int interval)
-    {
-        if (_healthReminderRows.Any(x => x.NameBox.Text == label)) return;
-        BuildHealthReminderRow(new IntervalReminderItem { Id = Guid.NewGuid().ToString("N"), Label = label, IntervalMinutes = interval, Enabled = true });
-        HealthReminderListBox.ItemsSource = null;
-        HealthReminderListBox.ItemsSource = _healthReminderRows.Select(x => x.Row).ToList();
-    }
-
-    private void SaveHealthRemindersFromUI()
-    {
-        var list = new List<IntervalReminderItem>();
-        foreach (var r in _healthReminderRows)
-        {
-            list.Add(new IntervalReminderItem
-            {
-                Id = r.Model.Id,
-                Label = r.NameBox.Text,
-                IntervalMinutes = int.TryParse(r.IntervalBox.Text, out var v) ? Math.Clamp(v, 1, 1440) : 60,
-                Enabled = r.EnabledCheck.IsChecked == true
-            });
-        }
-        Settings.HealthRemindersJson = JsonSerializer.Serialize(list);
-    }
-
-    private void HealthReminderCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.HealthReminderEnabled = HealthReminderCheck.IsChecked == true;
-        HealthReminderPanel.Visibility = Settings.HealthReminderEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void HealthReminderFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || HealthReminderFontSizeLabel == null) return;
-        Settings.HealthReminderFontSize = e.NewValue;
-        HealthReminderFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void HealthReminderColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)HealthReminderColorPreview.Background).Color.R, ((SolidColorBrush)HealthReminderColorPreview.Background).Color.G, ((SolidColorBrush)HealthReminderColorPreview.Background).Color.B) };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                HealthReminderColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-        catch { }
-    }
-
-    private void HealthReminderColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.HealthReminderFontColor = HealthReminderColorBox.Text;
-        try { HealthReminderColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(HealthReminderColorBox.Text)); } catch { }
-    }
-
-    // ========================================================================================
-    // P2: 番茄钟 Pomodoro
-    // ========================================================================================
-
-    private void LoadPomodoroSettings()
-    {
-        PomodoroCheck.IsChecked = Settings.PomodoroEnabled;
-        PomodoroPanel.Visibility = Settings.PomodoroEnabled ? Visibility.Visible : Visibility.Collapsed;
-        PomodoroFocusSlider.Value = Settings.PomodoroFocusMinutes;
-        PomodoroFocusLabel.Text = Settings.PomodoroFocusMinutes.ToString();
-        PomodoroShortSlider.Value = Settings.PomodoroShortBreakMinutes;
-        PomodoroShortLabel.Text = Settings.PomodoroShortBreakMinutes.ToString();
-        PomodoroLongSlider.Value = Settings.PomodoroLongBreakMinutes;
-        PomodoroLongLabel.Text = Settings.PomodoroLongBreakMinutes.ToString();
-        PomodoroIntervalSlider.Value = Settings.PomodoroLongBreakInterval;
-        PomodoroIntervalLabel.Text = Settings.PomodoroLongBreakInterval.ToString();
-        PomodoroAutoStartCheck.IsChecked = Settings.PomodoroAutoStart;
-        PopulateFontCombo(PomodoroFontCombo, Settings.PomodoroFontFamily);
-        PomodoroFontSizeSlider.Value = Settings.PomodoroFontSize;
-        PomodoroFontSizeLabel.Text = Settings.PomodoroFontSize.ToString("F0");
-        PomodoroColorBox.Text = Settings.PomodoroFontColor;
-        try { PomodoroColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.PomodoroFontColor)); } catch { }
-    }
-
-    private void PomodoroCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.PomodoroEnabled = PomodoroCheck.IsChecked == true;
-        PomodoroPanel.Visibility = Settings.PomodoroEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void PomodoroFocusSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || PomodoroFocusLabel == null) return;
-        PomodoroFocusLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void PomodoroShortSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || PomodoroShortLabel == null) return;
-        PomodoroShortLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void PomodoroLongSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || PomodoroLongLabel == null) return;
-        PomodoroLongLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void PomodoroIntervalSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || PomodoroIntervalLabel == null) return;
-        PomodoroIntervalLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void PomodoroFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || PomodoroFontSizeLabel == null) return;
-        PomodoroFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void PomodoroColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)PomodoroColorPreview.Background).Color.R, ((SolidColorBrush)PomodoroColorPreview.Background).Color.G, ((SolidColorBrush)PomodoroColorPreview.Background).Color.B) };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                PomodoroColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-        catch { }
-    }
-
-    private void PomodoroColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        try { PomodoroColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(PomodoroColorBox.Text)); } catch { }
-    }
-
-    // ========================================================================================
-    // P3: 每日一言 DailyQuote
-    // ========================================================================================
-
-    private void LoadDailyQuoteSettings()
-    {
-        DailyQuoteCheck.IsChecked = Settings.DailyQuoteEnabled;
-        DailyQuotePanel.Visibility = Settings.DailyQuoteEnabled ? Visibility.Visible : Visibility.Collapsed;
-        DailyQuoteApiCheck.IsChecked = Settings.DailyQuoteApiEnabled;
-        DailyQuoteApiBox.Text = Settings.DailyQuoteApiUrl;
-        DailyQuoteSpeedSlider.Value = Settings.DailyQuoteSpeed;
-        DailyQuoteSpeedLabel.Text = Settings.DailyQuoteSpeed.ToString("F0");
-        PopulateFontCombo(DailyQuoteFontCombo, Settings.DailyQuoteFontFamily);
-        DailyQuoteFontSizeSlider.Value = Settings.DailyQuoteFontSize;
-        DailyQuoteFontSizeLabel.Text = Settings.DailyQuoteFontSize.ToString("F0");
-        DailyQuoteColorBox.Text = Settings.DailyQuoteFontColor;
-        try { DailyQuoteColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.DailyQuoteFontColor)); } catch { }
-    }
-
-    private void DailyQuoteCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.DailyQuoteEnabled = DailyQuoteCheck.IsChecked == true;
-        DailyQuotePanel.Visibility = Settings.DailyQuoteEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void DailyQuoteSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || DailyQuoteSpeedLabel == null) return;
-        DailyQuoteSpeedLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void DailyQuoteFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || DailyQuoteFontSizeLabel == null) return;
-        DailyQuoteFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void DailyQuoteColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)DailyQuoteColorPreview.Background).Color.R, ((SolidColorBrush)DailyQuoteColorPreview.Background).Color.G, ((SolidColorBrush)DailyQuoteColorPreview.Background).Color.B) };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                DailyQuoteColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-        catch { }
-    }
-
-    private void DailyQuoteColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        try { DailyQuoteColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(DailyQuoteColorBox.Text)); } catch { }
-    }
-
-    // ========================================================================================
-    // P4: 习惯打卡 HabitTracker
-    // ========================================================================================
-
-    private class HabitRowItem
-    {
-        public CheckBox EnabledCheck = null!;
-        public TextBox NameBox = null!;
-        public Button DeleteButton = null!;
-        public HabitItem Model = null!;
-        public Grid Row = null!;
-    }
-    private readonly List<HabitRowItem> _habitRows = new();
-
-    private void LoadHabitTrackerSettings()
-    {
-        HabitTrackerCheck.IsChecked = Settings.HabitTrackerEnabled;
-        HabitTrackerPanel.Visibility = Settings.HabitTrackerEnabled ? Visibility.Visible : Visibility.Collapsed;
-        PopulateFontCombo(HabitTrackerFontCombo, Settings.HabitTrackerFontFamily);
-        HabitTrackerFontSizeSlider.Value = Settings.HabitTrackerFontSize;
-        HabitTrackerFontSizeLabel.Text = Settings.HabitTrackerFontSize.ToString("F0");
-        HabitTrackerColorBox.Text = Settings.HabitTrackerFontColor;
-        try { HabitTrackerColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Settings.HabitTrackerFontColor)); } catch { }
-
-        RenderHabitsUI();
-    }
-
-    private void RenderHabitsUI()
-    {
-        _habitRows.Clear();
-        HabitListBox.ItemsSource = null;
-        List<HabitItem> items;
-        try { items = JsonSerializer.Deserialize<List<HabitItem>>(Settings.HabitsJson) ?? new(); }
-        catch { items = new(); }
-        var list = new List<Grid>();
-        if (items.Count == 0)
-        {
-            items.Add(new HabitItem { Id = "sport", Name = "运动", Enabled = true });
-            items.Add(new HabitItem { Id = "read", Name = "阅读30分钟", Enabled = true });
-            items.Add(new HabitItem { Id = "meditation", Name = "冥想", Enabled = false });
-        }
-        foreach (var it in items) list.Add(BuildHabitRow(it).Row);
-        HabitListBox.ItemsSource = list;
-    }
-
-    private HabitRowItem BuildHabitRow(HabitItem model)
-    {
-        var item = new HabitRowItem { Model = model };
-        var g = new Grid { Margin = new Thickness(0, 0, 0, 4) };
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-        var cb = new CheckBox { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        cb.IsChecked = model.Enabled;
-        Grid.SetColumn(cb, 0); g.Children.Add(cb);
-        item.EnabledCheck = cb;
-
-        var nb = new TextBox { Text = model.Name, Margin = new Thickness(2, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(nb, 1); g.Children.Add(nb);
-        item.NameBox = nb;
-
-        var del = new Button { Content = "×", Width = 22, Height = 22, Style = (Style)FindResource("SecondaryButton"), VerticalAlignment = VerticalAlignment.Center };
-        del.Click += (_, _) =>
-        {
-            HabitListBox.ItemsSource = null;
-            _habitRows.Remove(item);
-            HabitListBox.ItemsSource = _habitRows.Select(x => x.Row).ToList();
-        };
-        Grid.SetColumn(del, 2); g.Children.Add(del);
-        item.DeleteButton = del;
-
-        item.Row = g;
-        _habitRows.Add(item);
-        return item;
-    }
-
-    private void HabitAddButton_Click(object sender, RoutedEventArgs e)
-    {
-        BuildHabitRow(new HabitItem { Id = Guid.NewGuid().ToString("N"), Name = "新习惯", Enabled = true });
-        HabitListBox.ItemsSource = null;
-        HabitListBox.ItemsSource = _habitRows.Select(x => x.Row).ToList();
-    }
-
-    private void SaveHabitsFromUI()
-    {
-        var list = new List<HabitItem>();
-        foreach (var r in _habitRows)
-        {
-            list.Add(new HabitItem
-            {
-                Id = r.Model.Id,
-                Name = r.NameBox.Text,
-                Enabled = r.EnabledCheck.IsChecked == true
-            });
-        }
-        Settings.HabitsJson = JsonSerializer.Serialize(list);
-    }
-
-    private void HabitTrackerCheck_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!_loaded) return;
-        Settings.HabitTrackerEnabled = HabitTrackerCheck.IsChecked == true;
-        HabitTrackerPanel.Visibility = Settings.HabitTrackerEnabled ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    private void HabitTrackerFontSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!_loaded || HabitTrackerFontSizeLabel == null) return;
-        HabitTrackerFontSizeLabel.Text = e.NewValue.ToString("F0");
-    }
-
-    private void HabitTrackerColorPreview_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            using var dialog = new System.Windows.Forms.ColorDialog { FullOpen = true, Color = System.Drawing.Color.FromArgb(((SolidColorBrush)HabitTrackerColorPreview.Background).Color.R, ((SolidColorBrush)HabitTrackerColorPreview.Background).Color.G, ((SolidColorBrush)HabitTrackerColorPreview.Background).Color.B) };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                HabitTrackerColorBox.Text = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
-        }
-        catch { }
-    }
-
-    private void HabitTrackerColorBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!_loaded) return;
-        try { HabitTrackerColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(HabitTrackerColorBox.Text)); } catch { }
-    }
-
     #endregion
 
     #region 独立悬浮窗口设置
@@ -2400,18 +723,86 @@ public partial class SettingsWindow : Window
     {
         var mgr = ComponentManager.Instance;
 
-        // 时钟
+        // 时钟(窗口级行为读 ComponentWindowConfig,外观样式读 AppSettings 与"外观"面板同步)
         var clock = mgr.EnsureConfig("clock");
         CompClockEnabled.IsChecked = clock.Enabled;
         CompClockTopmost.IsChecked = clock.Topmost;
         CompClockLocked.IsChecked = clock.LockPosition;
-        CompClock24Hour.IsChecked = clock.GetBool("use24hour", true);
-        CompClockShowSec.IsChecked = clock.GetBool("showSeconds", true);
-        PopulateFloatFontCombo(CompClockFontCombo, clock.FontFamily);
-        CompClockFontSize.Value = clock.FontSize > 0 ? clock.FontSize : 56;
-        CompClockColor.Text = clock.FontColor;
+
+        // 时间格式与显示模式(来自 AppSettings)
+        foreach (var item in CompClockHourFormat.Items)
+            if (item is ComboBoxItem ci && string.Equals(ci.Tag?.ToString(), Settings.Use24Hour.ToString(), StringComparison.OrdinalIgnoreCase))
+                CompClockHourFormat.SelectedItem = item;
+        CompClockShowSec.IsChecked = Settings.ShowSeconds;
+        foreach (var item in CompClockDisplayMode.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.DisplayMode)
+                CompClockDisplayMode.SelectedItem = item;
+
+        // 文字外观(来自 AppSettings)
+        PopulateFloatFontCombo(CompClockFontCombo, Settings.FontFamily);
+        CompClockFontSize.Value = Settings.FontSize > 0 ? Settings.FontSize : 56;
+        CompClockColor.Text = Settings.FontColor;
+
+        // 背景(来自 AppSettings)
+        CompClockBgOpacity.Value = Settings.BackgroundOpacity * 100;
+        CompClockBgOpacityLabel.Text = $"{(int)(Settings.BackgroundOpacity * 100)}%";
+        foreach (var item in CompClockBgType.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.BackgroundType)
+                CompClockBgType.SelectedItem = item;
+        CompClockGradStart.Text = Settings.GradientStartColor;
+        CompClockGradEnd.Text = Settings.GradientEndColor;
+        CompClockGradAngle.Value = Settings.GradientAngle;
+        CompClockGradAngleLabel.Text = Settings.GradientAngle.ToString("F0");
+
+        // 边框(来自 AppSettings)
+        CompClockBorderColor.Text = Settings.BorderColor;
+        CompClockBorderThickness.Value = Settings.BorderThickness;
+        CompClockBorderThicknessLabel.Text = Settings.BorderThickness.ToString("F0");
+
+        // 主题预设(来自 AppSettings)
+        foreach (var item in CompClockThemePreset.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.ThemePreset)
+                CompClockThemePreset.SelectedItem = item;
+
+        // 阴影(来自 ComponentWindowConfig)
         CompClockShadow.IsChecked = clock.ShadowEnabled;
         CompClockShadowSize.Value = clock.ShadowSize;
+
+        // 日期显示(来自 AppSettings)
+        CompClockShowDate.IsChecked = Settings.ShowDate;
+        PopulateFloatFontCombo(CompClockDateFontCombo, Settings.DateFontFamily);
+        CompClockDateFontSize.Value = Settings.DateFontSize > 0 ? Settings.DateFontSize : 16;
+        CompClockDateFontSizeLabel.Text = Settings.DateFontSize.ToString("F0");
+        CompClockDateColor.Text = Settings.DateColor;
+
+        // 世界时钟与整点报时(来自 AppSettings)
+        CompClockWorldClock.IsChecked = Settings.WorldClockEnabled;
+        CompClockTimeZoneRow.Visibility = Settings.WorldClockEnabled ? Visibility.Visible : Visibility.Collapsed;
+        CompClockTimeZoneCombo.Items.Clear();
+        foreach (var tz in TimeZoneInfo.GetSystemTimeZones())
+        {
+            var item = new ComboBoxItem { Content = tz.DisplayName, Tag = tz.Id };
+            CompClockTimeZoneCombo.Items.Add(item);
+            if (string.Equals(tz.Id, Settings.WorldClockTimeZone, StringComparison.OrdinalIgnoreCase))
+                CompClockTimeZoneCombo.SelectedItem = item;
+        }
+        CompClockWorldClock.Checked += (_, _) => CompClockTimeZoneRow.Visibility = Visibility.Visible;
+        CompClockWorldClock.Unchecked += (_, _) => CompClockTimeZoneRow.Visibility = Visibility.Collapsed;
+        CompClockChime.IsChecked = Settings.ChimeEnabled;
+
+        // 背景图片(来自 AppSettings)
+        CompClockSkinBgEnable.IsChecked = Settings.SkinBackgroundEnabled;
+        CompClockSkinBgPanel.Visibility = Settings.SkinBackgroundEnabled ? Visibility.Visible : Visibility.Collapsed;
+        CompClockSkinBgPath.Text = Settings.SkinBackgroundPath;
+        CompClockSkinBgOpacity.Value = Settings.SkinBackgroundOpacity * 100;
+        CompClockSkinBgOpacityLabel.Text = $"{(int)(Settings.SkinBackgroundOpacity * 100)}%";
+        CompClockSkinBgBlur.Value = Settings.SkinBackgroundBlur;
+        CompClockSkinBgBlurLabel.Text = Settings.SkinBackgroundBlur.ToString("F0");
+        foreach (var item in CompClockSkinBgStretch.Items)
+            if (item is ComboBoxItem ci && ci.Tag?.ToString() == Settings.SkinBackgroundStretch)
+                CompClockSkinBgStretch.SelectedItem = item;
+        CompClockSkinBgEnable.Checked += (_, _) => CompClockSkinBgPanel.Visibility = Visibility.Visible;
+        CompClockSkinBgEnable.Unchecked += (_, _) => CompClockSkinBgPanel.Visibility = Visibility.Collapsed;
 
         // 日历
         var cal = mgr.EnsureConfig("calendar");
@@ -2436,14 +827,8 @@ public partial class SettingsWindow : Window
 
         // 倒计时
         var cd = mgr.EnsureConfig("countdown");
-        CompCountdownEnabled.IsChecked = cd.Enabled;
         CompCountdownTopmost.IsChecked = cd.Topmost;
         CompCountdownLocked.IsChecked = cd.LockPosition;
-        CompCountdownRotation.Text = cd.GetInt("rotationSeconds", 10).ToString();
-        PopulateFontCombo(CompCountdownFontCombo, cd.FontFamily);
-        CompCountdownFontSize.Value = cd.FontSize > 0 ? cd.FontSize : 20;
-        CompCountdownColor.Text = cd.FontColor;
-        CompCountdownShadow.IsChecked = cd.ShadowEnabled;
 
         // 间隔提醒
         var rem = mgr.EnsureConfig("interval_reminder");
@@ -2492,6 +877,17 @@ public partial class SettingsWindow : Window
         CompHabitColor.Text = habit.FontColor;
     }
 
+    private void CompClockSkinBgBrowse_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "图片文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif|所有文件|*.*",
+            Title = "选择背景图片"
+        };
+        if (dialog.ShowDialog() == true)
+            CompClockSkinBgPath.Text = dialog.FileName;
+    }
+
     /// <summary>保存 UI 配置到 ComponentManager 并即时下发</summary>
     private void SaveFloatWindowSettings()
     {
@@ -2508,13 +904,52 @@ public partial class SettingsWindow : Window
             c.Enabled = CompClockEnabled.IsChecked == true;
             c.Topmost = CompClockTopmost.IsChecked == true;
             c.LockPosition = CompClockLocked.IsChecked == true;
-            c.FontFamily = (CompClockFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Consolas";
-            c.FontSize = CompClockFontSize.Value;
-            c.FontColor = CompClockColor.Text;
+
+            // 显示模式 → AppSettings(统一来源:CompClockDisplayMode)
+            var mode = (CompClockDisplayMode.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            Services.Logger.Information($"[SettingsWindow] Save clock: CompClockDisplayMode.SelectedItem.Tag={mode}");
+            Settings.DisplayMode = mode ?? "digital";
+
+            // 时间格式与文字外观 → AppSettings
+            Settings.Use24Hour = (CompClockHourFormat.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "true";
+            Settings.ShowSeconds = CompClockShowSec.IsChecked == true;
+            Settings.FontFamily = (CompClockFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
+            Settings.FontSize = CompClockFontSize.Value;
+            Settings.FontColor = CompClockColor.Text;
+
+            // 背景 → AppSettings
+            Settings.BackgroundOpacity = CompClockBgOpacity.Value / 100.0;
+            Settings.BackgroundType = (CompClockBgType.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "solid";
+            Settings.GradientStartColor = CompClockGradStart.Text;
+            Settings.GradientEndColor = CompClockGradEnd.Text;
+            Settings.GradientAngle = CompClockGradAngle.Value;
+
+            // 边框与主题 → AppSettings
+            Settings.BorderColor = CompClockBorderColor.Text;
+            Settings.BorderThickness = CompClockBorderThickness.Value;
+            Settings.ThemePreset = (CompClockThemePreset.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "default";
+
+            // 日期显示 → AppSettings
+            Settings.ShowDate = CompClockShowDate.IsChecked == true;
+            Settings.DateFontFamily = (CompClockDateFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
+            Settings.DateFontSize = CompClockDateFontSize.Value;
+            Settings.DateColor = CompClockDateColor.Text;
+
+            // 世界时钟与整点报时 → AppSettings
+            Settings.WorldClockEnabled = CompClockWorldClock.IsChecked == true;
+            Settings.WorldClockTimeZone = (CompClockTimeZoneCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "China Standard Time";
+            Settings.ChimeEnabled = CompClockChime.IsChecked == true;
+
+            // 背景图片 → AppSettings
+            Settings.SkinBackgroundEnabled = CompClockSkinBgEnable.IsChecked == true;
+            Settings.SkinBackgroundPath = CompClockSkinBgPath.Text;
+            Settings.SkinBackgroundOpacity = CompClockSkinBgOpacity.Value / 100.0;
+            Settings.SkinBackgroundBlur = CompClockSkinBgBlur.Value;
+            Settings.SkinBackgroundStretch = (CompClockSkinBgStretch.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "UniformToFill";
+
+            // 阴影保留在组件配置
             c.ShadowEnabled = CompClockShadow.IsChecked == true;
             c.ShadowSize = CompClockShadowSize.Value;
-            c.Settings["use24hour"] = CompClock24Hour.IsChecked == true;
-            c.Settings["showSeconds"] = CompClockShowSec.IsChecked == true;
         });
 
         Save("calendar", c =>
@@ -2522,7 +957,7 @@ public partial class SettingsWindow : Window
             c.Enabled = CompCalendarEnabled.IsChecked == true;
             c.Topmost = CompCalendarTopmost.IsChecked == true;
             c.LockPosition = CompCalendarLocked.IsChecked == true;
-            c.FontFamily = (CompCalendarFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontFamily = (CompCalendarFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
             c.FontSize = CompCalendarFontSize.Value;
             c.FontColor = CompCalendarColor.Text;
             c.Settings["showLunar"] = CompCalendarLunar.IsChecked == true;
@@ -2533,7 +968,7 @@ public partial class SettingsWindow : Window
             c.Enabled = CompWeatherEnabled.IsChecked == true;
             c.Topmost = CompWeatherTopmost.IsChecked == true;
             c.LockPosition = CompWeatherLocked.IsChecked == true;
-            c.FontFamily = (CompWeatherFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontFamily = (CompWeatherFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
             c.FontSize = CompWeatherFontSize.Value;
             c.FontColor = CompWeatherColor.Text;
             if (double.TryParse(CompWeatherLat.Text, out var lat)) c.Settings["latitude"] = lat;
@@ -2542,14 +977,10 @@ public partial class SettingsWindow : Window
 
         Save("countdown", c =>
         {
-            c.Enabled = CompCountdownEnabled.IsChecked == true;
+            // CountdownEnabledCheck 同时作为业务开关和组件窗口开关
+            c.Enabled = CountdownEnabledCheck.IsChecked == true;
             c.Topmost = CompCountdownTopmost.IsChecked == true;
             c.LockPosition = CompCountdownLocked.IsChecked == true;
-            c.FontFamily = (CompCountdownFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Consolas";
-            c.FontSize = CompCountdownFontSize.Value;
-            c.FontColor = CompCountdownColor.Text;
-            c.ShadowEnabled = CompCountdownShadow.IsChecked == true;
-            if (int.TryParse(CompCountdownRotation.Text, out var rs)) c.Settings["rotationSeconds"] = rs;
         });
 
         Save("interval_reminder", c =>
@@ -2557,7 +988,7 @@ public partial class SettingsWindow : Window
             c.Enabled = CompReminderEnabled.IsChecked == true;
             c.Topmost = CompReminderTopmost.IsChecked == true;
             c.LockPosition = CompReminderLocked.IsChecked == true;
-            c.FontFamily = (CompReminderFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontFamily = (CompReminderFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
             c.FontSize = CompReminderFontSize.Value;
             c.FontColor = CompReminderColor.Text;
             if (int.TryParse(CompReminderWorkStart.Text, out var ws)) c.Settings["workStartHour"] = ws;
@@ -2584,7 +1015,7 @@ public partial class SettingsWindow : Window
             c.Enabled = CompDailyEnabled.IsChecked == true;
             c.Topmost = CompDailyTopmost.IsChecked == true;
             c.LockPosition = CompDailyLocked.IsChecked == true;
-            c.FontFamily = (CompDailyFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei";
+            c.FontFamily = (CompDailyFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
             c.FontSize = CompDailyFontSize.Value;
             c.FontColor = CompDailyColor.Text;
             c.Settings["apiEnabled"] = CompDailyApi.IsChecked == true;
@@ -2597,7 +1028,7 @@ public partial class SettingsWindow : Window
             c.Enabled = CompHabitEnabled.IsChecked == true;
             c.Topmost = CompHabitTopmost.IsChecked == true;
             c.LockPosition = CompHabitLocked.IsChecked == true;
-            c.FontFamily = (CompHabitFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontFamily = (CompHabitFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "DS-Digital";
             c.FontSize = CompHabitFontSize.Value;
             c.FontColor = CompHabitColor.Text;
         });
@@ -2628,7 +1059,6 @@ public partial class SettingsWindow : Window
         CompClockEnabled.IsChecked = true;
         CompCalendarEnabled.IsChecked = true;
         CompWeatherEnabled.IsChecked = true;
-        CompCountdownEnabled.IsChecked = true;
         CompReminderEnabled.IsChecked = true;
         CompPomodoroEnabled.IsChecked = true;
         CompDailyEnabled.IsChecked = true;
@@ -2642,7 +1072,6 @@ public partial class SettingsWindow : Window
         CompClockEnabled.IsChecked = false;
         CompCalendarEnabled.IsChecked = false;
         CompWeatherEnabled.IsChecked = false;
-        CompCountdownEnabled.IsChecked = false;
         CompReminderEnabled.IsChecked = false;
         CompPomodoroEnabled.IsChecked = false;
         CompDailyEnabled.IsChecked = false;

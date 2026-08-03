@@ -26,7 +26,7 @@ public partial class HabitCheckWindow : BaseFloatWindow
     private Dictionary<string, List<string>> _records = new();
     private double _fontSize = 12;
     private string _fontColor = "#FFD1D1D6";
-    private string _fontFamily = "Microsoft YaHei UI";
+    private string _fontFamily = "DS-Digital";
     private readonly TextBlock _progressText;
 
     public HabitCheckWindow()
@@ -37,7 +37,7 @@ public partial class HabitCheckWindow : BaseFloatWindow
         // 今日进度(底部)
         _progressText = new TextBlock
         {
-            FontFamily = new FontFamily("Microsoft YaHei UI"),
+            FontFamily = new FontFamily("DS-Digital"),
             FontSize = 11,
             Foreground = Brushes.Gray,
             HorizontalAlignment = HorizontalAlignment.Center,

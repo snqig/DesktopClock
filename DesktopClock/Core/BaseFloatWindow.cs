@@ -26,8 +26,17 @@ public abstract class BaseFloatWindow : Window
     /// <summary>是否置顶</summary>
     public bool IsTopmost { get; set; } = true;
 
-    /// <summary>窗口透明度 0~1</summary>
-    public double WindowOpacity { get; set; } = 1.0;
+    private double _windowOpacity = 1.0;
+    /// <summary>窗口透明度 0~1(实时同步到 WPF Opacity)</summary>
+    public double WindowOpacity
+    {
+        get => _windowOpacity;
+        set
+        {
+            _windowOpacity = Math.Clamp(value, 0.0, 1.0);
+            Opacity = _windowOpacity;
+        }
+    }
 
     /// <summary>WPF XAML 需要无参构造函数</summary>
     protected BaseFloatWindow()
@@ -56,20 +65,25 @@ public abstract class BaseFloatWindow : Window
 
         // WS_EX_NOACTIVATE: 点击不抢占焦点
         // WS_EX_TOOLWINDOW: 不在 Alt+Tab 中显示
+        // 注意: AllowsTransparency=true 时 WPF 已自动添加 WS_EX_LAYERED 并通过
+        // UpdateLayeredWindow 实现逐像素 alpha。此处绝不能再调用 SetLayeredWindowAttributes,
+        // 否则会切换为常量 alpha 模式,导致透明背景被预乘为黑色,窗口变成黑框。
         int ex = NativeMethods.GetWindowLong(_handle, NativeMethods.GWL_EXSTYLE);
-        ex |= NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW | NativeMethods.WS_EX_LAYERED;
+        ex |= NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW;
         NativeMethods.SetWindowLong(_handle, NativeMethods.GWL_EXSTYLE, ex);
 
-        // 应用透明度与置顶
-        NativeMethods.SetLayeredAlpha(_handle, (byte)Math.Clamp((int)(WindowOpacity * 255), 0, 255));
+        // 置顶
         NativeMethods.SetTopmost(_handle, IsTopmost);
 
-        // 加载持久化位置
+        // 加载持久化位置与样式
         if (!_positionLoaded)
         {
             LoadFromConfig();
             _positionLoaded = true;
         }
+
+        // 窗口整体透明度走 WPF Opacity(由 compositor 处理,兼容 AllowsTransparency)
+        Opacity = Math.Clamp(WindowOpacity, 0.0, 1.0);
     }
 
     /// <summary>拖拽移动(未锁定时)</summary>

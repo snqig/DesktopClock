@@ -3,15 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:core="clr-namespace:DesktopClock.Core"
         Title="ClockWindow" Height="120" Width="320">
-    <Grid Margin="10">
-        <TextBlock x:Name="TimeText"
-                   FontFamily="Consolas" FontSize="56" Foreground="#FF00FF66"
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                   Text="00:00:00">
-            <TextBlock.Effect>
-                <DropShadowEffect x:Name="TextShadow" ShadowDepth="0" BlurRadius="0"
-                                  Color="Black" Opacity="0" />
-            </TextBlock.Effect>
-        </TextBlock>
-    </Grid>
+    <Border x:Name="MainBorder" CornerRadius="10" Background="#00000000"
+            BorderBrush="Transparent" BorderThickness="0" Padding="6">
+        <Grid x:Name="ContentHost" Margin="4" />
+    </Border>
 </core:BaseFloatWindow>

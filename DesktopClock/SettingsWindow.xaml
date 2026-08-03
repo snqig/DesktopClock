@@ -69,1668 +69,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Segmented control: 显示 / 外观 / 日期 / 功能 / 系统 / 倒计时 -->
-        <Border Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,20"
-                Background="#E5E5EA" CornerRadius="8" Padding="3">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="60" />
-                    <ColumnDefinition Width="60" />
-                </Grid.ColumnDefinitions>
-                <Border x:Name="DisplaySegment" Grid.Column="0" CornerRadius="6"
-                        Background="#FFF" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="DisplaySegment_Click">
-                    <TextBlock Text="显示" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#1D1D1F" />
-                </Border>
-                <Border x:Name="AppearanceSegment" Grid.Column="1" CornerRadius="6"
-                        Background="Transparent" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="AppearanceSegment_Click">
-                    <TextBlock Text="外观" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
-                </Border>
-                <Border x:Name="DateSegment2" Grid.Column="2" CornerRadius="6"
-                        Background="Transparent" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="DateSegment2_Click">
-                    <TextBlock Text="日期" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
-                </Border>
-                <Border x:Name="FeaturesSegment" Grid.Column="3" CornerRadius="6"
-                        Background="Transparent" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="FeaturesSegment_Click">
-                    <TextBlock Text="功能" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
-                </Border>
-                <Border x:Name="SystemSegment" Grid.Column="4" CornerRadius="6"
-                        Background="Transparent" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="SystemSegment_Click">
-                    <TextBlock Text="系统" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
-                </Border>
-                <Border x:Name="CountdownSegment" Grid.Column="5" CornerRadius="6"
-                        Background="Transparent" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="CountdownSegment_Click">
-                    <TextBlock Text="倒计时" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
-                </Border>
-                <Border x:Name="ComponentsSegment" Grid.Column="6" CornerRadius="6"
-                        Background="Transparent" Padding="8,6" Cursor="Hand"
-                        MouseLeftButtonDown="ComponentsSegment_Click">
-                    <TextBlock Text="组件" HorizontalAlignment="Center"
-                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
-                </Border>
-            </Grid>
-        </Border>
-
-        <!-- 显示 (Display) Panel -->
-        <ScrollViewer x:Name="DisplayPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
-                <StackPanel>
-                    <TextBlock Text="显示" Style="{StaticResource SectionTitle}" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="时间格式" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="HourFormatCombo" Grid.Column="1">
-                            <ComboBoxItem Content="24小时制" Tag="true" />
-                            <ComboBoxItem Content="12小时制" Tag="false" />
-                        </ComboBox>
-                    </Grid>
-
-                    <CheckBox x:Name="ShowSecondsCheck" Content="显示秒" Margin="0,0,0,14" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="显示模式" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="DisplayModeCombo" Grid.Column="1"
-                                  SelectionChanged="DisplayModeCombo_SelectionChanged">
-                            <ComboBoxItem Content="数字" Tag="digital" />
-                            <ComboBoxItem Content="翻转" Tag="flip" />
-                            <ComboBoxItem Content="二进制" Tag="binary" />
-                            <ComboBoxItem Content="模拟时钟" Tag="progress" />
-                            <ComboBoxItem Content="超精美模拟时钟" Tag="analog_premium" />
-                            <ComboBoxItem Content="机械时钟" Tag="mechanical" />
-                            <ComboBoxItem Content="指针表盘(自定义)" Tag="analog_skin" />
-                            <ComboBoxItem Content="缎带流光" Tag="ribbon" />
-                            <ComboBoxItem Content="双时区指针" Tag="dual_analog" />
-                            <ComboBoxItem Content="赛博朋克霓虹发光指针" Tag="cyberpunk" />
-                            <ComboBoxItem Content="极简" Tag="minimal" />
-                            <ComboBoxItem Content="指针样式编辑器(自定义指针)" Tag="pointer_editor" />
-                        </ComboBox>
-                    </Grid>
-
-                    <CheckBox x:Name="WorldClockCheck" Content="世界时钟" Margin="0,0,0,8"
-                              Checked="WorldClockCheck_Changed" Unchecked="WorldClockCheck_Changed" />
-
-                    <Grid x:Name="TimeZoneRow" Margin="20,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="时区" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="TimeZoneCombo" Grid.Column="1" />
-                    </Grid>
-
-                    <!-- 双时区表盘配置 -->
-                    <Grid x:Name="DualAnalogRow" Margin="0,0,0,14" Visibility="Collapsed">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="第二时区" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="DualAnalogTimeZoneCombo" Grid.Column="1" />
-                    </Grid>
-                    <Grid x:Name="DualAnalogLabelRow" Margin="0,0,0,14" Visibility="Collapsed">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="标签" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="DualAnalogLabelBox" Grid.Column="1" Text="纽约" />
-                    </Grid>
-
-                    <CheckBox x:Name="ChimeCheck" Content="整点报时" />
-
-                    <!-- 指针表盘自定义颜色 -->
-                    <TextBlock Text="指针表盘颜色" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <Border x:Name="AnalogSkinColorPanel" Visibility="Collapsed">
-                        <StackPanel>
-                            <!-- 时针颜色 -->
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="时针颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="AnalogHourColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#3a2a1a" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                        MouseLeftButtonDown="AnalogHourColorPreview_MouseDown" />
-                                <TextBox x:Name="AnalogHourColorBox" Grid.Column="2" Text="#3a2a1a" Width="120" Margin="10,0,0,0"
-                                         TextChanged="AnalogHourColorBox_TextChanged" />
-                            </Grid>
-                            <!-- 分针颜色 -->
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="分针颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="AnalogMinuteColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#2a2a2a" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                        MouseLeftButtonDown="AnalogMinuteColorPreview_MouseDown" />
-                                <TextBox x:Name="AnalogMinuteColorBox" Grid.Column="2" Text="#2a2a2a" Width="120" Margin="10,0,0,0"
-                                         TextChanged="AnalogMinuteColorBox_TextChanged" />
-                            </Grid>
-                            <!-- 秒针颜色 -->
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="秒针颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="AnalogSecondColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#cc3333" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                        MouseLeftButtonDown="AnalogSecondColorPreview_MouseDown" />
-                                <TextBox x:Name="AnalogSecondColorBox" Grid.Column="2" Text="#cc3333" Width="120" Margin="10,0,0,0"
-                                         TextChanged="AnalogSecondColorBox_TextChanged" />
-                            </Grid>
-                            <!-- 刻度颜色 -->
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="刻度颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="AnalogTickColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#808080" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                        MouseLeftButtonDown="AnalogTickColorPreview_MouseDown" />
-                                <TextBox x:Name="AnalogTickColorBox" Grid.Column="2" Text="#808080" Width="120" Margin="10,0,0,0"
-                                         TextChanged="AnalogTickColorBox_TextChanged" />
-                            </Grid>
-                            <!-- 指针粗细 -->
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="指针粗细" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="AnalogHandThicknessSlider" Grid.Column="1"
-                                        Minimum="0.3" Maximum="3.0" Value="1.0"
-                                        TickFrequency="0.1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="AnalogHandThicknessSlider_ValueChanged" />
-                                <TextBlock x:Name="AnalogHandThicknessLabel" Grid.Column="2" Text="1.0"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <!-- 开关项 -->
-                            <CheckBox x:Name="AnalogShowSecondHandCheck" Content="显示秒针" Margin="0,0,0,6" />
-                            <CheckBox x:Name="AnalogShowTicksCheck" Content="显示刻度" Margin="0,0,0,6" />
-                            <CheckBox x:Name="AnalogShowCenterDotCheck" Content="显示中心圆点" Margin="0,0,0,6" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-
-        <!-- 外观 (Appearance) Panel -->
-        <ScrollViewer x:Name="AppearancePanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
-                <StackPanel>
-                    <TextBlock Text="外观" Style="{StaticResource SectionTitle}" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="FontFamilyCombo" Grid.Column="1"
-                                  SelectionChanged="FontFamilyCombo_SelectionChanged" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="FontSizeSlider" Grid.Column="1"
-                                Minimum="20" Maximum="300" TickFrequency="2" IsSnapToTickEnabled="True"
-                                ValueChanged="FontSizeSlider_ValueChanged"
-                                Foreground="#007AFF" />
-                        <TextBlock x:Name="FontSizeLabel" Grid.Column="2" Text="64"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="OpacitySlider" Grid.Column="1" Value="85"
-                                TickFrequency="5" IsSnapToTickEnabled="True"
-                                ValueChanged="OpacitySlider_ValueChanged"
-                                Foreground="#007AFF" />
-                        <TextBlock x:Name="OpacityLabel" Grid.Column="2" Text="85%"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                        <Border x:Name="ColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                Background="#00d4ff" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                MouseLeftButtonDown="ColorPreview_MouseDown" />
-                        <TextBox x:Name="ColorBox" Grid.Column="2" Text="#00d4ff" Width="120" Margin="10,0,0,0"
-                                 TextChanged="ColorBox_TextChanged" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="背景类型" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="BackgroundTypeCombo" Grid.Column="1"
-                                  SelectionChanged="BackgroundTypeCombo_SelectionChanged">
-                            <ComboBoxItem Content="纯色" Tag="solid" />
-                            <ComboBoxItem Content="渐变" Tag="gradient" />
-                        </ComboBox>
-                    </Grid>
-
-                    <Border x:Name="GradientSettingsPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="起始色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="GradientStartPreview" Grid.Column="1" Width="22" Height="22" CornerRadius="4"
-                                        Background="#1a1a2e" BorderBrush="#D2D2D7" BorderThickness="1" />
-                                <TextBox x:Name="GradientStartBox" Grid.Column="2" Text="#1a1a2e" Width="120" Margin="8,0,0,0"
-                                         TextChanged="GradientStartBox_TextChanged" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="结束色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="GradientEndPreview" Grid.Column="1" Width="22" Height="22" CornerRadius="4"
-                                        Background="#16213e" BorderBrush="#D2D2D7" BorderThickness="1" />
-                                <TextBox x:Name="GradientEndBox" Grid.Column="2" Text="#16213e" Width="120" Margin="8,0,0,0"
-                                         TextChanged="GradientEndBox_TextChanged" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="40" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="角度" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="GradientAngleSlider" Grid.Column="1" Minimum="0" Maximum="360"
-                                        Value="45" TickFrequency="5" IsSnapToTickEnabled="True"
-                                        ValueChanged="GradientAngleSlider_ValueChanged" Foreground="#007AFF" />
-                                <TextBlock x:Name="GradientAngleLabel" Grid.Column="2" Text="45"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="边框颜色" Style="{StaticResource FieldLabel}" />
-                        <Border x:Name="BorderColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                Background="#00d4ff" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                MouseLeftButtonDown="BorderColorPreview_MouseDown" />
-                        <TextBox x:Name="BorderColorBox" Grid.Column="2" Text="#00d4ff" Width="120" Margin="10,0,0,0"
-                                 TextChanged="BorderColorBox_TextChanged" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="40" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="边框粗细" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="BorderThicknessSlider" Grid.Column="1" Minimum="0" Maximum="10"
-                                Value="1" TickFrequency="1" IsSnapToTickEnabled="True"
-                                ValueChanged="BorderThicknessSlider_ValueChanged" Foreground="#007AFF" />
-                        <TextBlock x:Name="BorderThicknessLabel" Grid.Column="2" Text="1"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="主题预设" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="ThemePresetCombo" Grid.Column="1"
-                                  SelectionChanged="ThemePresetCombo_SelectionChanged">
-                            <ComboBoxItem Content="默认" Tag="default" />
-                            <ComboBoxItem Content="暗黑" Tag="dark" />
-                            <ComboBoxItem Content="明亮" Tag="light" />
-                            <ComboBoxItem Content="绿色" Tag="green" />
-                            <ComboBoxItem Content="蓝色" Tag="blue" />
-                        </ComboBox>
-                    </Grid>
-
-                    <!-- 相册背景(所有表盘通用) -->
-                    <TextBlock Text="相册背景" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="SkinBackgroundEnableCheck" Content="启用相册背景"
-                              Margin="0,0,0,10"
-                              Checked="SkinBackgroundEnable_Changed" Unchecked="SkinBackgroundEnable_Changed" />
-                    <Border x:Name="SkinBackgroundPanel" Margin="0,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="图片" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="SkinBackgroundPathBox" Grid.Column="1"
-                                         TextChanged="SkinBackgroundPath_TextChanged" />
-                                <Button Grid.Column="2" Content="浏览" Width="56" Margin="6,0,0,0"
-                                        Style="{StaticResource SecondaryButton}" Height="30"
-                                        Click="SkinBackgroundBrowse_Click" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="SkinBackgroundOpacitySlider" Grid.Column="1"
-                                        Minimum="0" Maximum="100" Value="100"
-                                        TickFrequency="5" IsSnapToTickEnabled="True"
-                                        ValueChanged="SkinBackgroundOpacity_ValueChanged" Foreground="#007AFF" />
-                                <TextBlock x:Name="SkinBackgroundOpacityLabel" Grid.Column="2" Text="100%"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="模糊" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="SkinBackgroundBlurSlider" Grid.Column="1"
-                                        Minimum="0" Maximum="50" Value="0"
-                                        TickFrequency="1" IsSnapToTickEnabled="True"
-                                        ValueChanged="SkinBackgroundBlur_ValueChanged" Foreground="#007AFF" />
-                                <TextBlock x:Name="SkinBackgroundBlurLabel" Grid.Column="2" Text="0"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="拉伸" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="SkinBackgroundStretchCombo" Grid.Column="1"
-                                          SelectionChanged="SkinBackgroundStretch_Changed">
-                                    <ComboBoxItem Content="填充(保持比例)" Tag="UniformToFill" />
-                                    <ComboBoxItem Content="适应(保持比例)" Tag="Uniform" />
-                                    <ComboBoxItem Content="拉伸(忽略比例)" Tag="Fill" />
-                                    <ComboBoxItem Content="原始大小" Tag="None" />
-                                </ComboBox>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 窗口背景效果 -->
-                    <TextBlock Text="窗口背景效果" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="磨砂效果" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="BackdropTypeCombo" Grid.Column="1"
-                                  SelectionChanged="BackdropTypeCombo_SelectionChanged">
-                            <ComboBoxItem Content="无" Tag="none" />
-                            <ComboBoxItem Content="Mica" Tag="mica" />
-                            <ComboBoxItem Content="Acrylic" Tag="acrylic" />
-                            <ComboBoxItem Content="Tabbed" Tag="tabbed" />
-                        </ComboBox>
-                    </Grid>
-
-                    <!-- 全局滤镜 -->
-                    <TextBlock Text="全局滤镜" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="GlobalFilterEnableCheck" Content="启用全局滤镜"
-                              Margin="0,0,0,10"
-                              Checked="GlobalFilterEnable_Changed" Unchecked="GlobalFilterEnable_Changed" />
-                    <Border x:Name="GlobalFilterPanel" Margin="0,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="暗角" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="VignetteSlider" Grid.Column="1"
-                                        Minimum="0" Maximum="100" Value="0"
-                                        TickFrequency="5" IsSnapToTickEnabled="True"
-                                        ValueChanged="VignetteSlider_ValueChanged" Foreground="#007AFF" />
-                                <TextBlock x:Name="VignetteLabel" Grid.Column="2" Text="0%"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="灰度" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="GrayscaleSlider" Grid.Column="1"
-                                        Minimum="0" Maximum="100" Value="0"
-                                        TickFrequency="5" IsSnapToTickEnabled="True"
-                                        ValueChanged="GrayscaleSlider_ValueChanged" Foreground="#007AFF" />
-                                <TextBlock x:Name="GrayscaleLabel" Grid.Column="2" Text="0%"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="色温" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="ColorTempSlider" Grid.Column="1"
-                                        Minimum="-100" Maximum="100" Value="0"
-                                        TickFrequency="5" IsSnapToTickEnabled="True"
-                                        ValueChanged="ColorTempSlider_ValueChanged" Foreground="#007AFF" />
-                                <TextBlock x:Name="ColorTempLabel" Grid.Column="2" Text="0"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-
-        <!-- 日期 (Date) Panel -->
-        <ScrollViewer x:Name="DatePanel2" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
-                <StackPanel>
-                    <TextBlock Text="日期" Style="{StaticResource SectionTitle}" />
-
-                    <CheckBox x:Name="ShowDateCheck" Content="显示日期"
-                              Checked="ShowDateCheck_Changed" Unchecked="ShowDateCheck_Changed" />
-
-                    <Grid Margin="0,14,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="DateFontFamilyCombo" Grid.Column="1"
-                                  SelectionChanged="DateFontFamilyCombo_SelectionChanged" />
-                    </Grid>
-
-                    <Grid Margin="0,14,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="DateFontSizeSlider" Grid.Column="1" Value="16"
-                                Minimum="10" Maximum="80" TickFrequency="2" IsSnapToTickEnabled="True"
-                                ValueChanged="DateFontSizeSlider_ValueChanged"
-                                Foreground="#007AFF" />
-                        <TextBlock x:Name="DateFontSizeLabel" Grid.Column="2" Text="16"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,14,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                        <Border x:Name="DateColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                Background="#00FF00" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                MouseLeftButtonDown="DateColorPreview_MouseDown" />
-                        <TextBox x:Name="DateColorBox" Grid.Column="2" Text="#00FF00" Width="120" Margin="10,0,0,0"
-                                 TextChanged="DateColorBox_TextChanged" />
-                    </Grid>
-
-                    <Grid Margin="0,14,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="位置" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="DatePositionCombo" Grid.Column="1" FontSize="13"
-                                  Background="#FFF" Foreground="#1D1D1F" BorderBrush="#D2D2D7">
-                            <ComboBoxItem Content="顶部" Tag="top" />
-                            <ComboBoxItem Content="底部" Tag="bottom" />
-                        </ComboBox>
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-
-        <!-- 功能 (Features) Panel -->
-        <ScrollViewer x:Name="FeaturesPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
-                <StackPanel>
-                    <TextBlock Text="功能" Style="{StaticResource SectionTitle}" />
-
-                    <CheckBox x:Name="ClickThroughCheck" Content="鼠标穿透模式" Margin="0,0,0,14" />
-
-                    <CheckBox x:Name="SnapToEdgeCheck" Content="窗口贴边" Margin="0,0,0,14" />
-
-                    <Grid Margin="20,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="吸附距离" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="SnapDistanceSlider" Grid.Column="1" Minimum="5" Maximum="100" Value="20"
-                                TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                ValueChanged="SnapDistanceSlider_ValueChanged" />
-                        <TextBlock x:Name="SnapDistanceLabel" Grid.Column="2" Text="20px"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <CheckBox x:Name="LockPositionCheck" Content="锁定位置" Margin="0,0,0,14" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="布局模式" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="LayoutModeCombo" Grid.Column="1">
-                            <ComboBoxItem Content="自动排列" Tag="stack" />
-                            <ComboBoxItem Content="自由拖拽" Tag="free" />
-                        </ComboBox>
-                    </Grid>
-
-                    <!-- Plugin Management -->
-                    <TextBlock Text="插件" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-
-                    <ListBox x:Name="PluginListBox" Height="120" Margin="0,0,0,8" SelectionMode="Single">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
-                                <TextBlock Text="{Binding Version}" FontSize="11" Foreground="#86868B" />
-                                <TextBlock Text="{Binding Description}" FontSize="10" Foreground="#AEAEB2" TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                            <CheckBox Grid.Column="1" IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" />
-                        </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <WrapPanel Margin="0,0,0,14">
-                        <Button x:Name="RefreshPluginsButton" Content="刷新插件列表" Style="{StaticResource SecondaryButton}"
-                                Click="RefreshPluginsButton_Click" />
-                        <Button x:Name="OpenPluginFolderButton" Content="打开插件目录" Style="{StaticResource SecondaryButton}"
-                                Click="OpenPluginFolderButton_Click" Margin="8,0,0,0" />
-                        <TextBlock x:Name="PluginStatusText" VerticalAlignment="Center" FontSize="11" Foreground="#86868B" Margin="10,0,0,0" />
-                    </WrapPanel>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="快捷键隐藏" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="HotkeyBox" Text="Ctrl+H" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="倒计时热键" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="HotkeyCountdownBox" Text="Ctrl+Shift+D"
-                                 ToolTip="格式: 修饰符+键,例如 Ctrl+Shift+D / Alt+C / Win+T" />
-                    </Grid>
-
-                    <!-- Lunar Calendar Section -->
-                    <TextBlock Text="农历" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-
-                    <CheckBox x:Name="LunarCheck" Content="显示农历信息" Margin="0,0,0,10"
-                              Checked="LunarCheck_Changed" Unchecked="LunarCheck_Changed" />
-
-                    <Border x:Name="LunarSettingsPanel" Margin="20,0,0,14">
-                        <StackPanel>
-                            <CheckBox x:Name="SolarTermCheck" Content="显示节气" Margin="0,0,0,8"
-                                      Checked="SolarTermCheck_Changed" Unchecked="SolarTermCheck_Changed" />
-                            <CheckBox x:Name="ZodiacCheck" Content="显示生肖" Margin="0,0,0,10"
-                                      Checked="ZodiacCheck_Changed" Unchecked="ZodiacCheck_Changed" />
-
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="LunarFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="40"
-                                        Value="14" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        ValueChanged="LunarFontSizeSlider_ValueChanged"
-                                        Foreground="#007AFF" />
-                                <TextBlock x:Name="LunarFontSizeLabel" Grid.Column="2" Text="14"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="LunarColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#aaaaaa" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                        MouseLeftButtonDown="LunarColorPreview_MouseDown" />
-                                <TextBox x:Name="LunarColorBox" Grid.Column="2" Text="#aaaaaa" Width="120" Margin="10,0,0,0"
-                                         TextChanged="LunarColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Reminder Section -->
-                    <TextBlock Text="提醒" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-
-                    <CheckBox x:Name="ReminderCheck" Content="启用定时提醒" Margin="0,0,0,10"
-                              Checked="ReminderCheck_Changed" Unchecked="ReminderCheck_Changed" />
-
-                    <Border x:Name="ReminderSettingsPanel" Margin="20,0,0,14">
-                        <StackPanel>
-                            <ListBox x:Name="ReminderListBox" Height="120" Margin="0,0,0,8"
-                                     DisplayMemberPath="Title" SelectionMode="Single" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="添加" Style="{StaticResource SecondaryButton}" Width="80"
-                                        Click="AddReminder_Click" Margin="0,0,6,0" />
-                                <Button Content="编辑" Style="{StaticResource SecondaryButton}" Width="80"
-                                        Click="EditReminder_Click" Margin="0,0,6,0" />
-                                <Button Content="删除" Style="{StaticResource SecondaryButton}" Width="80"
-                                        Click="DeleteReminder_Click" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- AOD Section -->
-                    <TextBlock Text="AOD 省电" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="AodCheck" Content="启用 AOD 省电模式" Margin="0,0,0,10" />
-                    <Grid Margin="20,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="闲置(分)" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="AodIdleSlider" Grid.Column="1" Minimum="1" Maximum="60" Value="5"
-                                TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                ValueChanged="AodIdleSlider_ValueChanged" />
-                        <TextBlock x:Name="AodIdleLabel" Grid.Column="2" Text="5"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <CheckBox x:Name="FollowSystemThemeCheck" Content="跟随系统深色/浅色模式"
-                              Margin="0,0,0,14" />
-
-                    <CheckBox x:Name="HoverOpacityCheck" Content="鼠标悬停增强透明度"
-                              Margin="0,0,0,10" />
-                    <Grid Margin="20,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="悬停不透明度" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="HoverOpacitySlider" Grid.Column="1" Minimum="10" Maximum="100" Value="100"
-                                TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                ValueChanged="HoverOpacitySlider_ValueChanged" />
-                        <TextBlock x:Name="HoverOpacityLabel" Grid.Column="2" Text="100%"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <!-- 夜间自动降低透明度 -->
-                    <TextBlock Text="夜间降透明度" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="NightDimEnabledCheck" Content="夜间自动降低透明度" Margin="0,0,0,10" />
-                    <Grid Margin="20,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="20" />
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="时段" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="NightDimStartHourBox" Grid.Column="1" Text="22" />
-                        <TextBlock Grid.Column="2" Text="~" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <TextBox x:Name="NightDimEndHourBox" Grid.Column="3" Text="6" />
-                        <TextBlock Grid.Column="4" Text="(0-23,跨午夜自动处理)" FontSize="11" Foreground="#86868B" VerticalAlignment="Center" Margin="10,0,0,0" />
-                    </Grid>
-                    <Grid Margin="20,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="夜间透明度" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="NightDimOpacitySlider" Grid.Column="1" Minimum="5" Maximum="100" Value="40"
-                                TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                ValueChanged="NightDimOpacitySlider_ValueChanged" />
-                        <TextBlock x:Name="NightDimOpacityLabel" Grid.Column="2" Text="40%"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <!-- 系统监控 -->
-                    <TextBlock Text="系统监控" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="SysMonCheck" Content="启用系统监控" Margin="0,0,0,10"
-                              Checked="SysMonCheck_Changed" Unchecked="SysMonCheck_Changed" />
-                    <Border x:Name="SysMonPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <CheckBox x:Name="SysMonCpuCheck" Content="显示 CPU" Margin="0,0,0,6" />
-                            <CheckBox x:Name="SysMonMemCheck" Content="显示内存" Margin="0,0,0,6" />
-                            <CheckBox x:Name="SysMonNetCheck" Content="显示网速" Margin="0,0,0,6" />
-                            <CheckBox x:Name="SysMonBatCheck" Content="显示电池" Margin="0,0,0,6" />
-                            <Grid Margin="0,8,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="SysMonFontCombo" Grid.Column="1" IsEditable="True" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="SysMonFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32"
-                                        Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="SysMonFontSize_ValueChanged" />
-                                <TextBlock x:Name="SysMonFontSizeLabel" Grid.Column="2" Text="12" Width="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="SysMonColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#FFD1D1D6" Cursor="Hand"
-                                        MouseLeftButtonDown="SysMonColorPreview_MouseDown" />
-                                <TextBox x:Name="SysMonColorBox" Grid.Column="2" Text="#FFD1D1D6" Margin="10,0,0,0"
-                                         TextChanged="SysMonColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 天气 -->
-                    <TextBlock Text="天气" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="WeatherCheck" Content="启用天气" Margin="0,0,0,10"
-                              Checked="WeatherCheck_Changed" Unchecked="WeatherCheck_Changed" />
-                    <Border x:Name="WeatherPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="城市" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="WeatherCityBox" Grid.Column="1" Text="Suzhou" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="纬度" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="WeatherLatBox" Grid.Column="1" Text="31.2989" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="经度" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="WeatherLonBox" Grid.Column="1" Text="120.5853" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="40" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="主文字大小" Style="{StaticResource FieldLabel}" Grid.Column="0" />
-                                <Slider x:Name="WeatherFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="72" Value="13"
-                                        VerticalAlignment="Center"
-                                        ValueChanged="WeatherFontSizeSlider_ValueChanged" />
-                                <TextBlock x:Name="WeatherFontSizeText" Grid.Column="2" Text="13"
-                                           VerticalAlignment="Center" HorizontalAlignment="Right" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="40" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="详情文字大小" Style="{StaticResource FieldLabel}" Grid.Column="0" />
-                                <Slider x:Name="WeatherDetailFontSizeSlider" Grid.Column="1" Minimum="6" Maximum="60" Value="11"
-                                        VerticalAlignment="Center"
-                                        ValueChanged="WeatherDetailFontSizeSlider_ValueChanged" />
-                                <TextBlock x:Name="WeatherDetailFontSizeText" Grid.Column="2" Text="11"
-                                           VerticalAlignment="Center" HorizontalAlignment="Right" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="主文字颜色" Style="{StaticResource FieldLabel}" Grid.Column="0" />
-                                <Grid Grid.Column="1">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="40" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="WeatherMainColorBox" Grid.Column="0" Text="#FFD3D3D3"
-                                             TextChanged="WeatherMainColorBox_TextChanged" />
-                                    <ContentControl x:Name="WeatherMainColorPreview" Grid.Column="1"
-                                                    Width="30" Height="22" BorderBrush="#444" BorderThickness="1"
-                                                    Background="#FFD3D3D3" Margin="6,0,0,0"
-                                                    MouseDown="WeatherMainColorPreview_MouseDown"
-                                                    Cursor="Hand" ToolTip="点击选择颜色" />
-                                </Grid>
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="详情文字颜色" Style="{StaticResource FieldLabel}" Grid.Column="0" />
-                                <Grid Grid.Column="1">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="40" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="WeatherDetailColorBox" Grid.Column="0" Text="#FFAAAAAA"
-                                             TextChanged="WeatherDetailColorBox_TextChanged" />
-                                    <ContentControl x:Name="WeatherDetailColorPreview" Grid.Column="1"
-                                                    Width="30" Height="22" BorderBrush="#444" BorderThickness="1"
-                                                    Background="#FFAAAAAA" Margin="6,0,0,0"
-                                                    MouseDown="WeatherDetailColorPreview_MouseDown"
-                                                    Cursor="Hand" ToolTip="点击选择颜色" />
-                                </Grid>
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="水平对齐" Style="{StaticResource FieldLabel}" Grid.Column="0" />
-                                <ComboBox x:Name="WeatherAlignmentCombo" Grid.Column="1">
-                                    <ComboBoxItem Tag="left" Content="左对齐" />
-                                    <ComboBoxItem Tag="center" Content="居中(默认)" IsSelected="True" />
-                                    <ComboBoxItem Tag="right" Content="右对齐" />
-                                </ComboBox>
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="组件位置" Style="{StaticResource FieldLabel}" Grid.Column="0" />
-                                <ComboBox x:Name="WeatherPositionCombo" Grid.Column="1">
-                                    <ComboBoxItem Tag="top" Content="顶部(日期上方)" />
-                                    <ComboBoxItem Tag="bottom" Content="底部(默认)" IsSelected="True" />
-                                </ComboBox>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 倒计时:已迁移至独立"倒计时"Tab,此处不再保留旧版配置 -->
-
-                    <!-- 待办滚动 -->
-                    <TextBlock Text="待办滚动" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="TodoScrollCheck" Content="启用待办滚动" Margin="0,0,0,10"
-                              Checked="TodoScrollCheck_Changed" Unchecked="TodoScrollCheck_Changed" />
-                    <Border x:Name="TodoScrollPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="文字" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="TodoScrollTextBox" Grid.Column="1" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="速度" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="TodoScrollSpeedSlider" Grid.Column="1" Minimum="5" Maximum="200" Value="40"
-                                        TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF" />
-                                <TextBlock x:Name="TodoScrollSpeedLabel" Grid.Column="2" Text="40"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,8,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="TodoScrollFontCombo" Grid.Column="1" IsEditable="True" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="TodoScrollFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32"
-                                        Value="12" TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="TodoScrollFontSize_ValueChanged" />
-                                <TextBlock x:Name="TodoScrollFontSizeLabel" Grid.Column="2" Text="12" Width="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="TodoScrollColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#FFFFF8DC" Cursor="Hand"
-                                        MouseLeftButtonDown="TodoScrollColorPreview_MouseDown" />
-                                <TextBox x:Name="TodoScrollColorBox" Grid.Column="2" Text="#FFFFF8DC" Margin="10,0,0,0"
-                                         TextChanged="TodoScrollColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 音乐播放 -->
-                    <TextBlock Text="音乐播放" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="MediaInfoCheck" Content="启用音乐播放信息" Margin="0,0,0,10"
-                              Checked="MediaInfoCheck_Changed" Unchecked="MediaInfoCheck_Changed" />
-                    <Border x:Name="MediaInfoPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <CheckBox x:Name="MediaInfoShowArtistCheck" Content="显示歌手" Margin="0,0,0,6" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 健康提醒 P1 -->
-                    <TextBlock Text="健康提醒" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="HealthReminderCheck" Content="启用健康提醒(喝水/站立/眼保健操)" Margin="0,0,0,10"
-                              Checked="HealthReminderCheck_Changed" Unchecked="HealthReminderCheck_Changed" />
-                    <Border x:Name="HealthReminderPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="工作时段" Style="{StaticResource FieldLabel}" />
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBox x:Name="HealthWorkStartBox" Width="42" Text="9" />
-                                    <TextBlock Text="~" Margin="4,0,4,0" VerticalAlignment="Center" Foreground="#86868B" />
-                                    <TextBox x:Name="HealthWorkEndBox" Width="42" Text="18" />
-                                    <TextBlock Text="(0-23,留空=不限制)" FontSize="11" Foreground="#86868B" VerticalAlignment="Center" Margin="8,0,0,0" />
-                                </StackPanel>
-                            </Grid>
-                            <!-- 提醒条目列表 -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="30" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="启用" Style="{StaticResource FieldLabel}" />
-                                <TextBlock Grid.Column="1" Text="名称" Style="{StaticResource FieldLabel}" />
-                                <TextBlock Grid.Column="2" Text="间隔(分)" Style="{StaticResource FieldLabel}" Margin="10,0,10,0" />
-                                <TextBlock Grid.Column="3" Text="删除" Style="{StaticResource FieldLabel}" />
-                            </Grid>
-                            <ItemsControl x:Name="HealthReminderListBox" Height="180" />
-                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button x:Name="HealthAddButton" Content="新增提醒" Style="{StaticResource SecondaryButton}"
-                                        Click="HealthAddButton_Click" Margin="0,0,10,0" />
-                                <Button x:Name="HealthPresetWater" Content="预设:喝水" Style="{StaticResource SecondaryButton}"
-                                        Click="HealthPresetWater_Click" Margin="0,0,8,0" />
-                                <Button x:Name="HealthPresetStand" Content="预设:站立" Style="{StaticResource SecondaryButton}"
-                                        Click="HealthPresetStand_Click" Margin="0,0,8,0" />
-                                <Button x:Name="HealthPresetEyes" Content="预设:眼操" Style="{StaticResource SecondaryButton}"
-                                        Click="HealthPresetEyes_Click" />
-                            </StackPanel>
-                            <Grid Margin="0,10,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="HealthReminderFontCombo" Grid.Column="1" IsEditable="True" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="HealthReminderFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32" Value="13"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="HealthReminderFontSize_ValueChanged" />
-                                <TextBlock x:Name="HealthReminderFontSizeLabel" Grid.Column="2" Text="13" Width="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="HealthReminderColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#FFD1D1D6" Cursor="Hand"
-                                        MouseLeftButtonDown="HealthReminderColorPreview_MouseDown" />
-                                <TextBox x:Name="HealthReminderColorBox" Grid.Column="2" Text="#FFD1D1D6" Margin="10,0,0,0"
-                                         TextChanged="HealthReminderColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 番茄钟 P2 -->
-                    <TextBlock Text="番茄钟" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="PomodoroCheck" Content="启用番茄钟" Margin="0,0,0,10"
-                              Checked="PomodoroCheck_Changed" Unchecked="PomodoroCheck_Changed" />
-                    <Border x:Name="PomodoroPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="专注时长" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="PomodoroFocusSlider" Grid.Column="1" Minimum="5" Maximum="60" Value="25"
-                                        TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="PomodoroFocusSlider_ValueChanged" />
-                                <TextBlock x:Name="PomodoroFocusLabel" Grid.Column="2" Text="25"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="短休息" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="PomodoroShortSlider" Grid.Column="1" Minimum="1" Maximum="30" Value="5"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="PomodoroShortSlider_ValueChanged" />
-                                <TextBlock x:Name="PomodoroShortLabel" Grid.Column="2" Text="5"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="长休息" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="PomodoroLongSlider" Grid.Column="1" Minimum="5" Maximum="60" Value="15"
-                                        TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="PomodoroLongSlider_ValueChanged" />
-                                <TextBlock x:Name="PomodoroLongLabel" Grid.Column="2" Text="15"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="长休息间隔" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="PomodoroIntervalSlider" Grid.Column="1" Minimum="1" Maximum="10" Value="4"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="PomodoroIntervalSlider_ValueChanged" />
-                                <TextBlock x:Name="PomodoroIntervalLabel" Grid.Column="2" Text="4"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <CheckBox x:Name="PomodoroAutoStartCheck" Content="阶段切换后自动开始" Margin="0,0,0,10" />
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="PomodoroFontCombo" Grid.Column="1" IsEditable="True" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="PomodoroFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="48" Value="16"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="PomodoroFontSize_ValueChanged" />
-                                <TextBlock x:Name="PomodoroFontSizeLabel" Grid.Column="2" Text="16" Width="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="PomodoroColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#FF66BB6A" Cursor="Hand"
-                                        MouseLeftButtonDown="PomodoroColorPreview_MouseDown" />
-                                <TextBox x:Name="PomodoroColorBox" Grid.Column="2" Text="#FF66BB6A" Margin="10,0,0,0"
-                                         TextChanged="PomodoroColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 每日一言 P3 -->
-                    <TextBlock Text="每日一言" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="DailyQuoteCheck" Content="启用每日一言" Margin="0,0,0,10"
-                              Checked="DailyQuoteCheck_Changed" Unchecked="DailyQuoteCheck_Changed" />
-                    <Border x:Name="DailyQuotePanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <CheckBox x:Name="DailyQuoteApiCheck" Content="使用一言API(在线获取)" Margin="0,0,0,10" />
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="API 地址" Style="{StaticResource FieldLabel}" />
-                                <TextBox x:Name="DailyQuoteApiBox" Grid.Column="1" Text="https://v1.hitokoto.cn/?c=d&amp;c=i&amp;c=k" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="滚动速度" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="DailyQuoteSpeedSlider" Grid.Column="1" Minimum="5" Maximum="200" Value="30"
-                                        TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="DailyQuoteSpeedSlider_ValueChanged" />
-                                <TextBlock x:Name="DailyQuoteSpeedLabel" Grid.Column="2" Text="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="DailyQuoteFontCombo" Grid.Column="1" IsEditable="True" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="DailyQuoteFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32" Value="12"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="DailyQuoteFontSize_ValueChanged" />
-                                <TextBlock x:Name="DailyQuoteFontSizeLabel" Grid.Column="2" Text="12" Width="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="DailyQuoteColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#FF87CEFA" Cursor="Hand"
-                                        MouseLeftButtonDown="DailyQuoteColorPreview_MouseDown" />
-                                <TextBox x:Name="DailyQuoteColorBox" Grid.Column="2" Text="#FF87CEFA" Margin="10,0,0,0"
-                                         TextChanged="DailyQuoteColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 习惯打卡 P4 -->
-                    <TextBlock Text="习惯打卡" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="HabitTrackerCheck" Content="启用习惯打卡" Margin="0,0,0,10"
-                              Checked="HabitTrackerCheck_Changed" Unchecked="HabitTrackerCheck_Changed" />
-                    <Border x:Name="HabitTrackerPanel" Margin="20,0,0,14" Visibility="Collapsed">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="30" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="启用" Style="{StaticResource FieldLabel}" />
-                                <TextBlock Grid.Column="1" Text="习惯名称" Style="{StaticResource FieldLabel}" />
-                                <TextBlock Grid.Column="2" Text="删除" Style="{StaticResource FieldLabel}" />
-                            </Grid>
-                            <ItemsControl x:Name="HabitListBox" Height="160" />
-                            <Button x:Name="HabitAddButton" Content="新增习惯" Style="{StaticResource SecondaryButton}"
-                                    Click="HabitAddButton_Click" HorizontalAlignment="Left" Margin="0,6,0,10" />
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                <ComboBox x:Name="HabitTrackerFontCombo" Grid.Column="1" IsEditable="True" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                <Slider x:Name="HabitTrackerFontSizeSlider" Grid.Column="1" Minimum="8" Maximum="32" Value="12"
-                                        TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF"
-                                        ValueChanged="HabitTrackerFontSize_ValueChanged" />
-                                <TextBlock x:Name="HabitTrackerFontSizeLabel" Grid.Column="2" Text="12" Width="30"
-                                           Style="{StaticResource ValueLabel}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                <Border x:Name="HabitTrackerColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                        Background="#FFD1D1D6" Cursor="Hand"
-                                        MouseLeftButtonDown="HabitTrackerColorPreview_MouseDown" />
-                                <TextBox x:Name="HabitTrackerColorBox" Grid.Column="2" Text="#FFD1D1D6" Margin="10,0,0,0"
-                                         TextChanged="HabitTrackerColorBox_TextChanged" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- 定时自动切换表盘 -->
-                    <TextBlock Text="自动切换表盘" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="AutoSwitchCheck" Content="启用定时自动切换" Margin="0,0,0,10" />
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="白天表盘" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="AutoSwitchDayCombo" Grid.Column="1">
-                            <ComboBoxItem Content="数字" Tag="digital" />
-                            <ComboBoxItem Content="翻转" Tag="flip" />
-                            <ComboBoxItem Content="二进制" Tag="binary" />
-                            <ComboBoxItem Content="模拟时钟" Tag="progress" />
-                            <ComboBoxItem Content="超精美模拟" Tag="analog_premium" />
-                            <ComboBoxItem Content="机械时钟" Tag="mechanical" />
-                            <ComboBoxItem Content="指针表盘" Tag="analog_skin" />
-                            <ComboBoxItem Content="双时区指针" Tag="dual_analog" />
-                            <ComboBoxItem Content="缎带流光" Tag="ribbon" />
-                            <ComboBoxItem Content="赛博朋克霓虹发光指针" Tag="cyberpunk" />
-                            <ComboBoxItem Content="极简" Tag="minimal" />
-                            <ComboBoxItem Content="指针样式编辑器(自定义指针)" Tag="pointer_editor" />
-                        </ComboBox>
-                    </Grid>
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="夜间表盘" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="AutoSwitchNightCombo" Grid.Column="1">
-                            <ComboBoxItem Content="数字" Tag="digital" />
-                            <ComboBoxItem Content="翻转" Tag="flip" />
-                            <ComboBoxItem Content="二进制" Tag="binary" />
-                            <ComboBoxItem Content="模拟时钟" Tag="progress" />
-                            <ComboBoxItem Content="超精美模拟" Tag="analog_premium" />
-                            <ComboBoxItem Content="机械时钟" Tag="mechanical" />
-                            <ComboBoxItem Content="指针表盘" Tag="analog_skin" />
-                            <ComboBoxItem Content="双时区指针" Tag="dual_analog" />
-                            <ComboBoxItem Content="缎带流光" Tag="ribbon" />
-                            <ComboBoxItem Content="极简" Tag="minimal" />
-                            <ComboBoxItem Content="指针样式编辑器(自定义指针)" Tag="pointer_editor" />
-                        </ComboBox>
-                    </Grid>
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="60" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="白天开始" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="AutoSwitchDayHourBox" Grid.Column="1" Text="7" />
-                        <TextBlock Text="夜间开始" Grid.Column="2" Style="{StaticResource FieldLabel}" Margin="10,0,0,0" />
-                        <TextBox x:Name="AutoSwitchNightHourBox" Grid.Column="3" Text="19" />
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-
-        <!-- 系统 (System) Panel -->
-        <ScrollViewer x:Name="SystemPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
-                <StackPanel>
-                    <TextBlock Text="系统" Style="{StaticResource SectionTitle}" />
-
-                    <CheckBox x:Name="AutoStartCheck" Content="开机自启" Margin="0,0,0,14" />
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="语言" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="LanguageCombo" Grid.Column="1">
-                            <ComboBoxItem Content="中文" Tag="zh" />
-                            <ComboBoxItem Content="English" Tag="en" />
-                        </ComboBox>
-                    </Grid>
-
-                    <TextBlock Text="日志" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <Button x:Name="OpenLogFolderButton" Content="打开日志文件夹"
-                            Style="{StaticResource SecondaryButton}"
-                            Click="OpenLogFolderButton_Click"
-                            HorizontalAlignment="Left" Margin="0,0,0,14" />
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-
-        <!-- 倒计时 (Countdown) Panel -->
-        <ScrollViewer x:Name="CountdownPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
-            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
-                <StackPanel>
-                    <TextBlock Text="倒计时挂件" Style="{StaticResource SectionTitle}" />
-
-                    <CheckBox x:Name="CountdownEnabledCheck" Content="启用倒计时挂件" Margin="0,0,0,14"
-                              Checked="CountdownEnabledCheck_Changed" Unchecked="CountdownEnabledCheck_Changed" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="目标时间" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
-                        <Grid Grid.Column="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <DatePicker x:Name="CountdownDatePicker" Grid.Column="0"
-                                        SelectedDateFormat="Short"
-                                        SelectedDateChanged="CountdownDatePicker_SelectedDateChanged"
-                                        VerticalAlignment="Center" />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                <TextBox x:Name="CountdownHourBox" Width="42" Text="23" HorizontalContentAlignment="Center"
-                                         TextChanged="CountdownTimeBox_TextChanged" />
-                                <TextBlock Text=":" VerticalAlignment="Center" Margin="2,0,2,0" Foreground="#86868B" />
-                                <TextBox x:Name="CountdownMinuteBox" Width="42" Text="59" HorizontalContentAlignment="Center"
-                                         TextChanged="CountdownTimeBox_TextChanged" />
-                                <TextBlock Text=":" VerticalAlignment="Center" Margin="2,0,2,0" Foreground="#86868B" />
-                                <TextBox x:Name="CountdownSecondBox" Width="42" Text="59" HorizontalContentAlignment="Center"
-                                         TextChanged="CountdownTimeBox_TextChanged" />
-                            </StackPanel>
-                        </Grid>
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="标题" Style="{StaticResource FieldLabel}" />
-                        <TextBox x:Name="CountdownLabelBox" Grid.Column="1" Text="倒计时"
-                                 TextChanged="CountdownLabelBox_TextChanged" />
-                    </Grid>
-
-                    <CheckBox x:Name="CountdownShowTitleCheck" Content="显示标题" Margin="0,0,0,14" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="显示模式" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="CountdownDisplayModeCombo" Grid.Column="1">
-                            <ComboBoxItem Content="D 天 H:M:S" Tag="days" />
-                            <ComboBoxItem Content="仅 H:M:S" Tag="time" />
-                        </ComboBox>
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="结束动作" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="CountdownEndActionCombo" Grid.Column="1">
-                            <ComboBoxItem Content="无动作" Tag="none" />
-                            <ComboBoxItem Content="文字闪烁" Tag="blink" />
-                            <ComboBoxItem Content="弹窗通知" Tag="alert" />
-                            <ComboBoxItem Content="提示音" Tag="sound" />
-                        </ComboBox>
-                    </Grid>
-
-                    <CheckBox x:Name="CountdownStopAtZeroCheck" Content="归零显示 00:00:00" Margin="0,0,0,14" />
-
-                    <TextBlock Text="文字样式" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                        <ComboBox x:Name="CountdownFontFamilyCombo" Grid.Column="1" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="CountdownFontSizeSlider" Grid.Column="1"
-                                Minimum="12" Maximum="120" Value="48"
-                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                ValueChanged="CountdownFontSizeSlider_ValueChanged" />
-                        <TextBlock x:Name="CountdownFontSizeLabel" Grid.Column="2" Text="48"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="文字颜色" Style="{StaticResource FieldLabel}" />
-                        <Border x:Name="CountdownFontColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                Background="#FFFFFFFF" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                MouseLeftButtonDown="CountdownFontColorPreview_MouseDown" />
-                        <TextBox x:Name="CountdownFontColorBox" Grid.Column="2" Text="#FFFFFFFF" Margin="10,0,0,0"
-                                 TextChanged="CountdownFontColorBox_TextChanged" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="CountdownOpacitySlider" Grid.Column="1"
-                                Minimum="10" Maximum="100" Value="100"
-                                TickFrequency="5" IsSnapToTickEnabled="True"
-                                ValueChanged="CountdownOpacitySlider_ValueChanged" />
-                        <TextBlock x:Name="CountdownOpacityLabel" Grid.Column="2" Text="100%"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <TextBlock Text="描边" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="CountdownStrokeEnabledCheck" Content="启用描边" Margin="0,0,0,14" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="描边粗细" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="CountdownStrokeThicknessSlider" Grid.Column="1"
-                                Minimum="0.5" Maximum="6" Value="1.0"
-                                TickFrequency="0.5" IsSnapToTickEnabled="True"
-                                ValueChanged="CountdownStrokeThicknessSlider_ValueChanged" />
-                        <TextBlock x:Name="CountdownStrokeThicknessLabel" Grid.Column="2" Text="1.0"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="描边颜色" Style="{StaticResource FieldLabel}" />
-                        <Border x:Name="CountdownStrokeColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                Background="#FF000000" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                MouseLeftButtonDown="CountdownStrokeColorPreview_MouseDown" />
-                        <TextBox x:Name="CountdownStrokeColorBox" Grid.Column="2" Text="#FF000000" Margin="10,0,0,0"
-                                 TextChanged="CountdownStrokeColorBox_TextChanged" />
-                    </Grid>
-
-                    <TextBlock Text="阴影" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <CheckBox x:Name="CountdownShadowEnabledCheck" Content="启用阴影" Margin="0,0,0,14" />
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="44" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="阴影大小" Style="{StaticResource FieldLabel}" />
-                        <Slider x:Name="CountdownShadowSizeSlider" Grid.Column="1"
-                                Minimum="0" Maximum="20" Value="4"
-                                TickFrequency="1" IsSnapToTickEnabled="True"
-                                ValueChanged="CountdownShadowSizeSlider_ValueChanged" />
-                        <TextBlock x:Name="CountdownShadowSizeLabel" Grid.Column="2" Text="4"
-                                   Style="{StaticResource ValueLabel}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="阴影颜色" Style="{StaticResource FieldLabel}" />
-                        <Border x:Name="CountdownShadowColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
-                                Background="#FF000000" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
-                                MouseLeftButtonDown="CountdownShadowColorPreview_MouseDown" />
-                        <TextBox x:Name="CountdownShadowColorBox" Grid.Column="2" Text="#FF000000" Margin="10,0,0,0"
-                                 TextChanged="CountdownShadowColorBox_TextChanged" />
-                    </Grid>
-
-                    <!-- 多任务倒计时(P0):任务列表管理 -->
-                    <TextBlock Text="多任务倒计时列表" Style="{StaticResource SectionTitle}" Margin="0,20,0,14" />
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="40" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="120" />
-                            <ColumnDefinition Width="90" />
-                            <ColumnDefinition Width="60" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="启用" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Grid.Column="1" Text="标题" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Grid.Column="2" Text="目标日期" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
-                        <TextBlock Grid.Column="3" Text="显示模式" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
-                        <TextBlock Grid.Column="4" Text="标题" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Grid.Column="5" Text="删除" Style="{StaticResource FieldLabel}" />
-                    </Grid>
-                    <ItemsControl x:Name="CountdownTasksListBox" Height="240" />
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <Button x:Name="CountdownTaskAddButton" Content="新增任务" Style="{StaticResource SecondaryButton}"
-                                Click="CountdownTaskAddButton_Click" Margin="0,0,10,0" />
-                        <Grid Width="140" Margin="0,0,10,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="轮播间隔(秒)" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
-                            <TextBox x:Name="CountdownRotationSecBox" Grid.Column="1" Text="10" Width="50" />
-                        </Grid>
-                        <CheckBox x:Name="CountdownTasksEnabledCheck" Content="启用多任务轮播(覆盖单任务)" Margin="0,5,0,0" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </ScrollViewer>
-
         <!-- 组件 (Components) Panel -->
-        <ScrollViewer x:Name="ComponentsPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <ScrollViewer x:Name="ComponentsPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
                 <StackPanel>
                     <TextBlock Text="独立悬浮组件" Style="{StaticResource SectionTitle}" />
@@ -1743,16 +83,110 @@
                                 Click="HideAllComponentsBtn_Click" />
                     </StackPanel>
 
+                    <!-- 全局设置(原"系统"Tab 下沉) -->
+                    <Border Background="#F5F5F7" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="全局设置" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                            <CheckBox x:Name="AutoStartCheck" Content="开机自启动" Margin="0,0,0,8" />
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="语言" Style="{StaticResource FieldLabel}" />
+                                <ComboBox x:Name="LanguageCombo" Grid.Column="1">
+                                    <ComboBoxItem Content="简体中文" Tag="zh" />
+                                    <ComboBoxItem Content="English" Tag="en" />
+                                    <ComboBoxItem Content="日本語" Tag="ja" />
+                                </ComboBox>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="快捷键" Style="{StaticResource FieldLabel}" />
+                                <TextBox x:Name="HotkeyBox" Grid.Column="1" Text="Ctrl+H" />
+                            </Grid>
+                            <TextBlock Text="插件" Style="{StaticResource SectionTitle}" Margin="0,8,0,6" />
+                            <ListBox x:Name="PluginListBox" Height="100" Margin="0,0,0,6" SelectionMode="Single" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <Button x:Name="RefreshPluginsButton" Content="刷新插件列表" Style="{StaticResource SecondaryButton}"
+                                        Click="RefreshPluginsButton_Click" Margin="0,0,8,0" />
+                                <Button x:Name="OpenPluginFolderButton" Content="打开插件目录" Style="{StaticResource SecondaryButton}"
+                                        Click="OpenPluginFolderButton_Click" />
+                                <TextBlock x:Name="PluginStatusText" VerticalAlignment="Center" FontSize="11" Foreground="#86868B" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
                     <TabControl Background="Transparent" BorderThickness="0" Padding="0">
 
                         <!-- Tab1: 时钟 -->
                         <TabItem Header="时钟">
                             <StackPanel Margin="8">
+                                <!-- 窗口行为 -->
+                                <TextBlock Text="窗口行为" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
                                 <CheckBox x:Name="CompClockEnabled" Content="启用时钟窗口" Margin="0,0,0,8" />
                                 <CheckBox x:Name="CompClockTopmost" Content="窗口置顶" Margin="0,0,0,8" />
-                                <CheckBox x:Name="CompClockLocked" Content="锁定位置" Margin="0,0,0,8" />
-                                <CheckBox x:Name="CompClock24Hour" Content="24小时制" IsChecked="True" Margin="0,0,0,8" />
-                                <CheckBox x:Name="CompClockShowSec" Content="显示秒" IsChecked="True" Margin="0,0,0,12" />
+                                <CheckBox x:Name="CompClockLocked" Content="锁定位置" Margin="0,0,0,12" />
+
+                                <!-- 时间格式与显示模式 -->
+                                <TextBlock Text="时间格式" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="时间格式" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockHourFormat" Grid.Column="1">
+                                        <ComboBoxItem Content="24小时制" Tag="true" />
+                                        <ComboBoxItem Content="12小时制" Tag="false" />
+                                    </ComboBox>
+                                </Grid>
+                                <CheckBox x:Name="CompClockShowSec" Content="显示秒" IsChecked="True" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="显示模式" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockDisplayMode" Grid.Column="1">
+                                        <ComboBoxItem Content="数字" Tag="digital" />
+                                        <ComboBoxItem Content="翻转" Tag="flip" />
+                                        <ComboBoxItem Content="二进制" Tag="binary" />
+                                        <ComboBoxItem Content="模拟时钟" Tag="progress" />
+                                        <ComboBoxItem Content="超精美模拟时钟" Tag="analog_premium" />
+                                        <ComboBoxItem Content="机械时钟" Tag="mechanical" />
+                                        <ComboBoxItem Content="指针表盘(自定义)" Tag="analog_skin" />
+                                        <ComboBoxItem Content="缎带流光" Tag="ribbon" />
+                                        <ComboBoxItem Content="双时区指针" Tag="dual_analog" />
+                                        <ComboBoxItem Content="赛博朋克霓虹发光指针" Tag="cyberpunk" />
+                                        <ComboBoxItem Content="极简" Tag="minimal" />
+                                    </ComboBox>
+                                </Grid>
+
+                                <!-- 日期显示 -->
+                                <TextBlock Text="日期显示" Style="{StaticResource SectionTitle}" Margin="0,8,0,8" />
+                                <CheckBox x:Name="CompClockShowDate" Content="在时钟下方显示日期" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="日期字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockDateFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="日期字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompClockDateFontSize" Grid.Column="1" Minimum="8" Maximum="80" Value="16"
+                                            TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF" />
+                                    <TextBlock x:Name="CompClockDateFontSizeLabel" Grid.Column="2" Text="16" Style="{StaticResource ValueLabel}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="日期颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompClockDateColor" Grid.Column="1" Text="#FF00FF66" />
+                                </Grid>
+
+                                <!-- 世界时钟与报时 -->
+                                <TextBlock Text="扩展功能" Style="{StaticResource SectionTitle}" Margin="0,8,0,8" />
+                                <CheckBox x:Name="CompClockWorldClock" Content="启用世界时钟(显示第二时区)" Margin="0,0,0,8" />
+                                <Grid x:Name="CompClockTimeZoneRow" Margin="20,0,0,8" Visibility="Collapsed">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="60" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="时区" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockTimeZoneCombo" Grid.Column="1" />
+                                </Grid>
+                                <CheckBox x:Name="CompClockChime" Content="整点报时" Margin="0,0,0,12" />
+
+                                <!-- 文字外观 -->
+                                <TextBlock Text="文字外观" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
                                 <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
@@ -1761,15 +195,120 @@
                                 <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                    <Slider x:Name="CompClockFontSize" Grid.Column="1" Minimum="10" Maximum="80" Value="56" />
+                                    <Slider x:Name="CompClockFontSize" Grid.Column="1" Minimum="10" Maximum="600" Value="56" />
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="文字颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompClockColor" Grid.Column="1" Text="#FF00FF66" />
+                                </Grid>
+
+                                <!-- 背景 -->
+                                <TextBlock Text="背景" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompClockBgOpacity" Grid.Column="1" Minimum="0" Maximum="100" Value="85"
+                                            TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF" />
+                                    <TextBlock x:Name="CompClockBgOpacityLabel" Grid.Column="2" Text="85%" Style="{StaticResource ValueLabel}" />
                                 </Grid>
                                 <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                    <TextBox x:Name="CompClockColor" Grid.Column="1" Text="#FF00FF66" />
+                                    <TextBlock Text="背景类型" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockBgType" Grid.Column="1">
+                                        <ComboBoxItem Content="纯色" Tag="solid" />
+                                        <ComboBoxItem Content="渐变" Tag="gradient" />
+                                    </ComboBox>
                                 </Grid>
-                                <CheckBox x:Name="CompClockShadow" Content="启用阴影" Margin="0,8,0,0" />
-                                <Grid Margin="0,8,0,0">
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="起始色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompClockGradStart" Grid.Column="1" Text="#1a1a2e" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="结束色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompClockGradEnd" Grid.Column="1" Text="#16213e" />
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="渐变角度" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompClockGradAngle" Grid.Column="1" Minimum="0" Maximum="360" Value="45"
+                                            TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF" />
+                                    <TextBlock x:Name="CompClockGradAngleLabel" Grid.Column="2" Text="45" Style="{StaticResource ValueLabel}" />
+                                </Grid>
+
+                                <!-- 背景图片 -->
+                                <TextBlock Text="背景图片" Style="{StaticResource SectionTitle}" Margin="0,8,0,8" />
+                                <CheckBox x:Name="CompClockSkinBgEnable" Content="启用相册背景图片" Margin="0,0,0,8" />
+                                <Border x:Name="CompClockSkinBgPanel" Margin="0,0,0,8" Visibility="Collapsed">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="图片路径" Style="{StaticResource FieldLabel}" />
+                                            <TextBox x:Name="CompClockSkinBgPath" Grid.Column="1" />
+                                            <Button x:Name="CompClockSkinBgBrowse" Grid.Column="2" Content="..." Style="{StaticResource SecondaryButton}"
+                                                    Click="CompClockSkinBgBrowse_Click" Margin="8,0,0,0" Padding="8,0" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
+                                            <Slider x:Name="CompClockSkinBgOpacity" Grid.Column="1" Minimum="0" Maximum="100" Value="100"
+                                                    TickFrequency="5" IsSnapToTickEnabled="True" Foreground="#007AFF" />
+                                            <TextBlock x:Name="CompClockSkinBgOpacityLabel" Grid.Column="2" Text="100%" Style="{StaticResource ValueLabel}" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="模糊" Style="{StaticResource FieldLabel}" />
+                                            <Slider x:Name="CompClockSkinBgBlur" Grid.Column="1" Minimum="0" Maximum="40" Value="0"
+                                                    TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF" />
+                                            <TextBlock x:Name="CompClockSkinBgBlurLabel" Grid.Column="2" Text="0" Style="{StaticResource ValueLabel}" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="拉伸模式" Style="{StaticResource FieldLabel}" />
+                                            <ComboBox x:Name="CompClockSkinBgStretch" Grid.Column="1">
+                                                <ComboBoxItem Content="填充" Tag="UniformToFill" />
+                                                <ComboBoxItem Content="等比" Tag="Uniform" />
+                                                <ComboBoxItem Content="拉伸" Tag="Fill" />
+                                            </ComboBox>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- 边框 -->
+                                <TextBlock Text="边框" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="边框颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompClockBorderColor" Grid.Column="1" Text="#00d4ff" />
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="边框粗细" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompClockBorderThickness" Grid.Column="1" Minimum="0" Maximum="10" Value="1"
+                                            TickFrequency="1" IsSnapToTickEnabled="True" Foreground="#007AFF" />
+                                    <TextBlock x:Name="CompClockBorderThicknessLabel" Grid.Column="2" Text="1" Style="{StaticResource ValueLabel}" />
+                                </Grid>
+
+                                <!-- 主题预设 -->
+                                <TextBlock Text="主题预设" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="预设" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockThemePreset" Grid.Column="1">
+                                        <ComboBoxItem Content="默认" Tag="default" />
+                                        <ComboBoxItem Content="暗黑" Tag="dark" />
+                                        <ComboBoxItem Content="明亮" Tag="light" />
+                                        <ComboBoxItem Content="绿色" Tag="green" />
+                                        <ComboBoxItem Content="蓝色" Tag="blue" />
+                                    </ComboBox>
+                                </Grid>
+
+                                <!-- 阴影 -->
+                                <TextBlock Text="阴影" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompClockShadow" Content="启用阴影" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Text="阴影大小" Style="{StaticResource FieldLabel}" />
                                     <Slider x:Name="CompClockShadowSize" Grid.Column="1" Minimum="0" Maximum="20" Value="4" />
@@ -1839,30 +378,144 @@
                         <!-- Tab4: 多事件倒计时 -->
                         <TabItem Header="倒计时">
                             <StackPanel Margin="8">
-                                <CheckBox x:Name="CompCountdownEnabled" Content="启用倒计时窗口" Margin="0,0,0,8" />
+                                <!-- 窗口行为 -->
+                                <TextBlock Text="窗口行为" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
                                 <CheckBox x:Name="CompCountdownTopmost" Content="窗口置顶" Margin="0,0,0,8" />
                                 <CheckBox x:Name="CompCountdownLocked" Content="锁定位置" Margin="0,0,0,12" />
-                                <Grid Margin="0,0,0,8">
+                                <CheckBox x:Name="CountdownEnabledCheck" Content="启用倒计时" Margin="0,0,0,14"
+                                          Checked="CountdownEnabledCheck_Changed" Unchecked="CountdownEnabledCheck_Changed" />
+
+                                <!-- 目标时间 -->
+                                <Grid Margin="0,0,0,14">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Text="轮播秒数" Style="{StaticResource FieldLabel}" />
-                                    <TextBox x:Name="CompCountdownRotation" Grid.Column="1" Text="10" Width="50" HorizontalAlignment="Left" />
+                                    <TextBlock Text="目标时间" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                                    <Grid Grid.Column="1">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <DatePicker x:Name="CountdownDatePicker" Grid.Column="0" SelectedDateFormat="Short"
+                                                    SelectedDateChanged="CountdownDatePicker_SelectedDateChanged" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <TextBox x:Name="CountdownHourBox" Width="42" Text="23" HorizontalContentAlignment="Center"
+                                                     TextChanged="CountdownTimeBox_TextChanged" />
+                                            <TextBlock Text=":" VerticalAlignment="Center" Margin="2,0,2,0" Foreground="#86868B" />
+                                            <TextBox x:Name="CountdownMinuteBox" Width="42" Text="59" HorizontalContentAlignment="Center"
+                                                     TextChanged="CountdownTimeBox_TextChanged" />
+                                            <TextBlock Text=":" VerticalAlignment="Center" Margin="2,0,2,0" Foreground="#86868B" />
+                                            <TextBox x:Name="CountdownSecondBox" Width="42" Text="59" HorizontalContentAlignment="Center"
+                                                     TextChanged="CountdownTimeBox_TextChanged" />
+                                        </StackPanel>
+                                    </Grid>
                                 </Grid>
-                                <Grid Margin="0,0,0,8">
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="标题" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CountdownLabelBox" Grid.Column="1" Text="倒计时"
+                                             TextChanged="CountdownLabelBox_TextChanged" />
+                                </Grid>
+                                <CheckBox x:Name="CountdownShowTitleCheck" Content="显示标题" Margin="0,0,0,14" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="显示模式" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CountdownDisplayModeCombo" Grid.Column="1">
+                                        <ComboBoxItem Content="D 天 H:M:S" Tag="days" />
+                                        <ComboBoxItem Content="仅 H:M:S" Tag="time" />
+                                    </ComboBox>
+                                </Grid>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="结束动作" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CountdownEndActionCombo" Grid.Column="1">
+                                        <ComboBoxItem Content="无动作" Tag="none" />
+                                        <ComboBoxItem Content="文字闪烁" Tag="blink" />
+                                        <ComboBoxItem Content="弹窗通知" Tag="alert" />
+                                        <ComboBoxItem Content="提示音" Tag="sound" />
+                                    </ComboBox>
+                                </Grid>
+                                <CheckBox x:Name="CountdownStopAtZeroCheck" Content="归零显示 00:00:00" Margin="0,0,0,14" />
+
+                                <!-- 文字样式 -->
+                                <TextBlock Text="文字样式" Style="{StaticResource SectionTitle}" Margin="0,8,0,14" />
+                                <Grid Margin="0,0,0,14">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                     <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
-                                    <ComboBox x:Name="CompCountdownFontCombo" Grid.Column="1" />
+                                    <ComboBox x:Name="CountdownFontFamilyCombo" Grid.Column="1" />
                                 </Grid>
-                                <Grid Margin="0,0,0,8">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
                                     <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
-                                    <Slider x:Name="CompCountdownFontSize" Grid.Column="1" Minimum="8" Maximum="40" Value="20" />
+                                    <Slider x:Name="CountdownFontSizeSlider" Grid.Column="1" Minimum="12" Maximum="120" Value="48"
+                                            TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="CountdownFontSizeSlider_ValueChanged" />
+                                    <TextBlock x:Name="CountdownFontSizeLabel" Grid.Column="2" Text="48" Style="{StaticResource ValueLabel}" />
                                 </Grid>
-                                <Grid Margin="0,0,0,8">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
-                                    <TextBox x:Name="CompCountdownColor" Grid.Column="1" Text="#FFFF6600" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="文字颜色" Style="{StaticResource FieldLabel}" />
+                                    <Border x:Name="CountdownFontColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                            Background="#FFFFFFFF" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                            MouseLeftButtonDown="CountdownFontColorPreview_MouseDown" />
+                                    <TextBox x:Name="CountdownFontColorBox" Grid.Column="2" Text="#FFFFFFFF" Margin="10,0,0,0"
+                                             TextChanged="CountdownFontColorBox_TextChanged" />
                                 </Grid>
-                                <CheckBox x:Name="CompCountdownShadow" Content="启用阴影" Margin="0,8,0,0" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="透明度" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CountdownOpacitySlider" Grid.Column="1" Minimum="10" Maximum="100" Value="100"
+                                            TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="CountdownOpacitySlider_ValueChanged" />
+                                    <TextBlock x:Name="CountdownOpacityLabel" Grid.Column="2" Text="100%" Style="{StaticResource ValueLabel}" />
+                                </Grid>
+
+                                <!-- 描边 -->
+                                <TextBlock Text="描边" Style="{StaticResource SectionTitle}" Margin="0,8,0,14" />
+                                <CheckBox x:Name="CountdownStrokeEnabledCheck" Content="启用描边" Margin="0,0,0,14" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="描边粗细" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CountdownStrokeThicknessSlider" Grid.Column="1" Minimum="0.5" Maximum="6" Value="1.0"
+                                            TickFrequency="0.5" IsSnapToTickEnabled="True" ValueChanged="CountdownStrokeThicknessSlider_ValueChanged" />
+                                    <TextBlock x:Name="CountdownStrokeThicknessLabel" Grid.Column="2" Text="1.0" Style="{StaticResource ValueLabel}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="描边颜色" Style="{StaticResource FieldLabel}" />
+                                    <Border x:Name="CountdownStrokeColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                            Background="#FF000000" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                            MouseLeftButtonDown="CountdownStrokeColorPreview_MouseDown" />
+                                    <TextBox x:Name="CountdownStrokeColorBox" Grid.Column="2" Text="#FF000000" Margin="10,0,0,0"
+                                             TextChanged="CountdownStrokeColorBox_TextChanged" />
+                                </Grid>
+
+                                <!-- 阴影 -->
+                                <TextBlock Text="阴影" Style="{StaticResource SectionTitle}" Margin="0,8,0,14" />
+                                <CheckBox x:Name="CountdownShadowEnabledCheck" Content="启用阴影" Margin="0,0,0,14" />
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="阴影大小" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CountdownShadowSizeSlider" Grid.Column="1" Minimum="0" Maximum="20" Value="4"
+                                            TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="CountdownShadowSizeSlider_ValueChanged" />
+                                    <TextBlock x:Name="CountdownShadowSizeLabel" Grid.Column="2" Text="4" Style="{StaticResource ValueLabel}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="阴影颜色" Style="{StaticResource FieldLabel}" />
+                                    <Border x:Name="CountdownShadowColorPreview" Grid.Column="1" Width="26" Height="26" CornerRadius="6"
+                                            Background="#FF000000" BorderBrush="#D2D2D7" BorderThickness="1" Cursor="Hand"
+                                            MouseLeftButtonDown="CountdownShadowColorPreview_MouseDown" />
+                                    <TextBox x:Name="CountdownShadowColorBox" Grid.Column="2" Text="#FF000000" Margin="10,0,0,0"
+                                             TextChanged="CountdownShadowColorBox_TextChanged" />
+                                </Grid>
+
+                                <!-- 多任务倒计时列表 -->
+                                <TextBlock Text="多任务倒计时列表" Style="{StaticResource SectionTitle}" Margin="0,8,0,14" />
+                                <ItemsControl x:Name="CountdownTasksListBox" Height="240" />
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <Button x:Name="CountdownTaskAddButton" Content="新增任务" Style="{StaticResource SecondaryButton}"
+                                            Click="CountdownTaskAddButton_Click" Margin="0,0,10,0" />
+                                    <Grid Width="140" Margin="0,0,10,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <TextBlock Text="轮播间隔(秒)" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                                        <TextBox x:Name="CountdownRotationSecBox" Grid.Column="1" Text="10" Width="50" />
+                                    </Grid>
+                                    <CheckBox x:Name="CountdownTasksEnabledCheck" Content="启用多任务轮播(覆盖单任务)" Margin="0,5,0,0" />
+                                </StackPanel>
                             </StackPanel>
                         </TabItem>
 

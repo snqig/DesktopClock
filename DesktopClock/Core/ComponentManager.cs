@@ -44,6 +44,26 @@ public sealed class ComponentManager
         LoadConfig();
         EnsureTrayIcon();
 
+        // 初始化 SettingsProvider 单例,使 Components 内的 IClockComponent 能读取到统一设置
+        try
+        {
+            var s = DesktopClock.AppSettings.Load();
+            Services.SettingsProvider.Instance.UpdateSettings(s);
+        }
+        catch (Exception ex)
+        {
+            Services.Logger.Error("[ComponentManager] SettingsProvider init failed", ex);
+        }
+
+        // 首次运行(配置为空):默认启用数字时钟,避免启动后看不到任何窗口
+        if (_config.Components.Count == 0 && _factories.ContainsKey("clock"))
+        {
+            var clockCfg = EnsureConfig("clock");
+            clockCfg.Enabled = true;
+            SaveConfig();
+            Services.Logger.Information("[ComponentManager] First run: enabled clock by default");
+        }
+
         foreach (var (id, cfg) in _config.Components)
         {
             if (cfg.Enabled && _factories.TryGetValue(id, out var factory))
@@ -165,8 +185,9 @@ public sealed class ComponentManager
         var win = new SettingsWindow(settings);
         if (win.ShowDialog() == true)
         {
-            settings.Save();
-            Services.SettingsProvider.Instance.UpdateSettings(settings);
+            // win.Settings 是用户修改后的配置,OkButton_Click 已调用 Save() 写入 settings.json。
+            // 不能再用入参 settings(旧对象)保存,否则会把用户修改覆盖回旧值(如 DisplayMode 被回滚为 digital)。
+            Services.SettingsProvider.Instance.UpdateSettings(win.Settings);
             NotifyConfigChange();
         }
     }
@@ -304,7 +325,7 @@ public class ComponentWindowConfig
     // ==================== 通用样式 ====================
 
     /// <summary>字体</summary>
-    public string FontFamily { get; set; } = "Microsoft YaHei UI";
+    public string FontFamily { get; set; } = "DS-Digital";
 
     /// <summary>字号</summary>
     public double FontSize { get; set; } = 14;

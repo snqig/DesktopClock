@@ -1,10 +1,11 @@
-# DesktopClock 桌面时钟 v2.0.0
+# DesktopClock 桌面时钟 v2.1.0
 
 [![GitHub](https://img.shields.io/badge/GitHub-snqig%2FDesktopClock-blue?logo=github)](https://github.com/snqig/DesktopClock)
+[![Release](https://img.shields.io/badge/Release-v2.1.0-brightgreen)](https://github.com/snqig/DesktopClock/releases)
 
-一个基于 **WPF (.NET 9)** 的桌面时钟应用，提供 **10+ 种精美显示模式**、可插拔皮肤系统、自由布局、插件体系、系统监控与提醒功能。
+一个基于 **WPF (.NET 9)** 的桌面时钟应用，提供 **10+ 种精美显示模式**、可插拔皮肤系统、PNG 指针方案管理器、插件体系，以及倒计时、番茄钟、习惯打卡等生产力组件。
 
-> **v2.0.0 重大架构重构**：每个功能模块 = 独立悬浮窗口，可自由摆放桌面、独立配置、独立开关。无统一容器，点击不抢占焦点。
+> **v2.1.0 更新**：设置 UI 重构（删除 6 个老 Tab，全局设置下沉组件 Tab），修复表盘切换 bug，移植指针样式管理器到 ClockWindow。
 
 > **最新 Release**：前往 [Releases](https://github.com/snqig/DesktopClock/releases) 页面下载已打包好的 `.exe` 单文件版本，无需安装 .NET 运行时即可运行（自包含发布）。
 
@@ -34,9 +35,19 @@
 | 超精美模拟时钟 | 玻璃圆盘 + 旋转光晕 + 轨道点 |
 | 机械时钟 | 金属齿轮表盘 + 铆钉 + 机械指针 |
 | 极简时钟 | 极简数字显示 |
-| 指针表盘(自定义) | 自定义底图 + 矢量指针，颜色/粗细/刻度可配置 |
+| 指针表盘(自定义) | 自定义底图 + PNG 指针方案，支持指针样式编辑器 |
 | 缎带表盘 | 流光缎带动效 |
 | 双时区表盘 | 本地 + 第二时区并排显示 |
+| 赛博朋克表盘 | 霓虹发光指针 + 暗色表盘 |
+
+### 指针方案管理器
+
+- 5 套内置预置方案（赛博朋克/科技夜光/复古/极简/幽灵蓝）
+- 支持 PNG 指针素材导入
+- 三根指针独立配置：旋转锚点、缩放、染色、阴影、发光、透明度
+- 混搭创建：A 方案时针 + B 方案分针 + C 方案秒针
+- 50ms 高频平滑走针
+- PNG 加载失败自动回退矢量线条
 
 ### 皮肤系统 (IClockSkin)
 
@@ -44,65 +55,46 @@
 - 内置底图：`Clock\1.PNG` 作为嵌入资源，运行时释放到 `%TEMP%\DesktopClock\default_dial.png`
 - 矢量绘制指针（时/分/秒），通过 `RotateTransform` 绑定角度动态更新
 - `Viewbox` 缩放确保窗口缩放时矢量元素不失真
-- 配置导入导出：序列化为 `.dskin` JSON 文件，支持分享与备份
 - **相册背景通用能力**：`BackgroundWrapper` 可包裹任意表盘，叠加自定义图片背景（路径/透明度/模糊/拉伸模式）
-  - 仅指针表盘（自定义 / 缎带 / 双时区）启用相册背景
-  - 切换到其他表盘时自动关闭，避免背景层残留
 
-### 布局与交互
+### 独立悬浮窗口架构
 
-- **Stack 布局（默认）**：组件垂直排列，简洁紧凑，无标题栏标签
-- **Free 布局**：自由拖拽定位，支持锁定 / 删除 / 重置大小
-- **可视化布局编辑器**：右键菜单"编辑布局模式"启用拖拽，退出自动保存
-- **日期位置**：top / bottom 任选，自动调整组件顺序
-- **窗口置顶 / 透明背景 / 鼠标穿透**：可选点击穿透，按住 Ctrl 可拖动穿透窗口
-- **多实例支持**：`--instance=N` 启动多个独立时钟窗口，各自独立配置与托盘图标
-
-### 可扩展组件
+每个功能模块 = 独立悬浮窗口，可自由摆放桌面、独立配置、独立开关：
 
 | 组件 | 说明 |
 |------|------|
-| 日期 / 农历 | 公历日期、农历、节气、生肖 |
-| 世界时钟 | 自定义时区 |
-| 系统监控 | CPU / 内存 / 网速 / 电池，跑马灯滚动显示，支持字体/颜色自定义 |
+| 时钟 | 10+ 种显示模式，右键切换指针样式编辑器 |
+| 日历 | 公历日期、农历、节气、生肖 |
 | 天气 | 对接 Open-Meteo API，温度 / 图标 / 日出日落 |
-| 倒计时 | 自定义目标时间与标签，支持日期控件选择，归零显示 `00:00:00` |
-| 多事件倒计时 | 多任务列表 + 自动轮播切换，每条任务独立启用/显示模式 |
-| 间隔提醒 | 喝水/站立/眼操等周期性健康提醒，支持工作时段限制与桌面通知 |
-| 番茄钟 | 25分钟专注+5分钟休息循环，长休息间隔，阶段自动切换，今日统计 |
-| 每日一言 | 每日轮换名言/诗词，跑马灯滚动，支持本地语录库与在线一言API |
+| 倒计时 | 多任务列表 + 自动轮播，目标时间/显示模式/结束动作 |
+| 间隔提醒 | 喝水/站立/眼操等周期性健康提醒，工作时段限制 |
+| 番茄钟 | 25分钟专注+5分钟休息循环，长休息间隔，今日统计 |
+| 每日一言 | 每日轮换名言/诗词，跑马灯滚动，本地语录库+在线API |
 | 习惯打卡 | 自定义习惯列表+点击打卡，7天热力图+今日进度条 |
-| 滚动待办 | 跑马灯平滑滚动，宽度与时钟对齐，支持字体/颜色自定义 |
-| 音乐播放信息 | Windows.Media.Control 获取当前播放歌曲 |
-
-### 自定义外观
-
-- 字体（支持系统字体下拉选择）、字号、颜色全可配置
-- 纯色 / 渐变背景
-- 12/24 小时制，显隐秒数
-- 指针表盘：时针 / 分针 / 秒针颜色、粗细倍率（0.3x-3.0x）、刻度颜色与显隐、中心点显隐
-- 全局滤镜：暗角 / 灰度 / 色温调节
-- Windows 11 Mica / Acrylic / Tabbed 背景效果（通过 DWM API）
 
 ### 系统集成
 
-- **AOD 省电模式**：`GetLastInputInfo` 检测系统闲置，闲置 N 分钟后隐藏秒针并降低亮度
-- **跟随系统主题**：监听 `UserPreferenceChanged`，自动切换深色 / 浅色配色
-- **定时自动切换表盘**：按设定时段切换白天 / 夜间表盘
-- **托盘图标**：快速访问设置、切换表盘、退出
+- **托盘图标**：快速访问设置、切换组件、退出
 - **全局热键**：`Ctrl+H` 隐藏 / 显示，可自定义
-
-### 提醒系统
-
-- 自定义提醒时间与内容
-- 通知弹窗提醒
-- 重复提醒去重
+- **多实例支持**：`--instance=N` 启动多个独立时钟窗口
+- **AOD 省电模式**：闲置 N 分钟后隐藏秒针并降低亮度
+- **跟随系统主题**：自动切换深色 / 浅色配色
 
 ### 插件系统
 
 - 通过 `IPlugin` / `IPluginComponent` 接口扩展组件
-- 运行时加载插件程序集
+- 运行时加载插件 DLL
 - 参考示例：[Plugins/HelloWorldPlugin](Plugins/HelloWorldPlugin)
+
+---
+
+## 文档
+
+| 文档 | 说明 |
+|------|------|
+| [技术白皮书](docs/WHITEPAPER.md) | 架构设计、核心机制、性能优化 |
+| [插件接口文档](docs/PLUGIN_API.md) | IPlugin 接口、PluginHost API、插件开发指南 |
+| [皮肤制作指南](docs/SKIN_GUIDE.md) | IClockSkin 接口、PNG 指针制作、指针方案配置 |
 
 ---
 
@@ -111,42 +103,40 @@
 ```
 DesktopClock/
 ├── Components/          # 时钟组件（数字/翻转/二进制/模拟/机械等）
-│   ├── IClockComponent.cs       # 组件接口
-│   ├── ClockComponentBase.cs    # 组件基类
-│   ├── ComponentRegistry.cs     # 组件注册中心
-│   └── *Component.xaml(.cs)     # 各显示模式组件
-├── Contracts/           # 插件接口
-│   ├── IPlugin.cs
-│   └── IPluginComponent.cs
+├── Contracts/           # 插件接口（IPlugin / IPluginComponent）
+├── Core/                # 核心架构
+│   ├── BaseFloatWindow.cs       # 悬浮窗口基类
+│   └── ComponentManager.cs      # 组件管理器单例
+├── FloatWindows/        # 独立悬浮窗口
+│   ├── ClockWindow.xaml(.cs)    # 时钟窗口（含指针样式管理器）
+│   ├── CountdownWindow.xaml(.cs)
+│   └── ...
 ├── Models/              # 数据模型
 │   ├── AppSettings.cs           # 应用设置（含持久化与迁移）
-│   ├── GlobalConfig.cs          # 全局配置
-│   ├── LayoutConfig.cs          # 布局配置
-│   ├── ComponentConfig.cs       # 组件配置
-│   └── ComponentPosition.cs     # 自由布局位置
+│   ├── PointerSet.cs            # 指针方案
+│   └── SinglePointerStyle.cs    # 单根指针样式
 ├── Services/            # 核心服务
-│   ├── LayoutEngine.cs          # 布局引擎（stack/free 双模式）
-│   ├── SettingsProvider.cs      # 设置单例（实时通知）
-│   ├── PluginHost.cs            # 插件宿主
+│   ├── PointerStyleManager.cs   # 指针方案管理器
+│   ├── PointerRenderer.cs       # 指针渲染器（PNG/矢量）
 │   ├── PluginManager.cs         # 插件加载管理
-│   └── WindowBackdrop.cs        # Mica/Acrylic 背景效果
+│   └── LayoutEngine.cs          # 布局引擎
 ├── Skins/               # 皮肤系统
 │   ├── IClockSkin.cs            # 皮肤接口
-│   ├── SkinHost.cs              # 皮肤宿主（管理激活皮肤）
-│   ├── BackgroundWrapper.cs     # 相册背景通用包装器
-│   ├── SkinBackgroundConfig.cs  # 背景配置
-│   ├── AnalogClockSkin.xaml(.cs)        # 指针表盘（自定义）
+│   ├── SkinHost.cs              # 皮肤宿主
+│   ├── AnalogClockSkin.xaml(.cs)        # 指针表盘
 │   ├── DualAnalogClockSkin.xaml(.cs)    # 双时区表盘
 │   └── RibbonClockSkin.xaml(.cs)        # 缎带表盘
+├── Assets/PointerSets/  # 内置指针素材
+│   ├── Cyberpunk/               # 赛博朋克（hour/minute/second.png）
+│   ├── Vintage/                 # 复古
+│   └── ...
 ├── Plugins/             # 示例插件
 │   └── HelloWorldPlugin/
-├── Clock/               # 内置表盘底图资源
-│   └── 1.png
-├── MainWindow.xaml(.cs)         # 主窗口
-├── SettingsWindow.xaml(.cs)     # 设置窗口
-├── ReminderDialog.xaml(.cs)     # 提醒对话框
-├── LunarCalendar.cs             # 农历计算
-└── App.xaml(.cs)                # 应用入口
+├── docs/                # 文档
+│   ├── WHITEPAPER.md            # 技术白皮书
+│   ├── PLUGIN_API.md            # 插件接口文档
+│   └── SKIN_GUIDE.md            # 皮肤制作指南
+└── SettingsWindow.xaml(.cs)     # 设置窗口（组件 Tab 架构）
 ```
 
 ---
@@ -155,8 +145,6 @@ DesktopClock/
 
 - **.NET 9** + **WPF**
 - **C# 13**（Nullable 引用类型启用）
-- **FontAwesome.WPF** 图标库
-- **System.Windows.Extensions**（WinForms 互操作用于托盘与系统 API）
 - 无第三方 UI 框架，纯原生 WPF 实现
 
 ---
@@ -209,54 +197,41 @@ DesktopClock.exe --instance=2
 设置文件位于 `%LOCALAPPDATA%\DesktopClock\settings.json`，包含：
 
 - 显示模式与组件启用状态
-- 字体、颜色、背景、全局滤镜
+- 字体、颜色、背景、相册背景图片
 - 布局模式与自由布局位置
-- 提醒列表
 - 插件启用状态
-- 皮肤配置（存储在 `Components["analog_clock_skin"]` 等字典中）
-- 多实例、AOD、自动切换表盘等高级选项
+- 指针方案 ID 与皮肤配置
+- 多实例、AOD 等高级选项
 
-窗口位置保存于 `%LOCALAPPDATA%\DesktopClock\pos.txt`。
+指针方案文件：`%LOCALAPPDATA%\DesktopClock\pointer_sets.json`
 
-> 说明：序列化使用 `System.Text.Json` 并启用 `AllowNamedFloatingPointLiterals`，以兼容 `Infinity` / `NaN` 等特殊浮点值。
+窗口位置文件：`%LOCALAPPDATA%\DesktopClock\pos.txt`
 
 ---
 
-## 开发指南
+## 使用指南
 
-### 新增显示模式
+### 切换表盘模式
 
-1. 在 `Components/` 下创建 `XxxClockComponent.xaml(.cs)`
-2. 实现 `IClockComponent` 接口（或继承 `ClockComponentBase`）
-3. 在 [MainWindow.xaml.cs](MainWindow.xaml.cs) 的 `RegisterComponents` 中注册
-4. 在 [MainWindow.xaml.cs](MainWindow.xaml.cs) 的 `RebuildLayout` 的 `DisplayMode` switch 中添加映射
-5. 在 [SettingsWindow.xaml](SettingsWindow.xaml) 的显示模式 ComboBox 中添加选项
+设置 → 组件 → 时钟 → 显示模式 → 选择模式 → 确定
 
-### 新增皮肤 (Skin)
+### 自定义指针
 
-1. 在 `Skins/` 下创建 `XxxClockSkin.xaml(.cs)`，实现 `IClockSkin`
-2. 在 [MainWindow.xaml.cs](MainWindow.xaml.cs) 的 `RebuildLayout` 中加入 `clockId` 分支与 `SkinHost` 包装逻辑
-3. 皮肤配置存储在 `ComponentConfig.Settings` 字典，导出 `.dskin` 时序列化为 JSON
+1. 切换到"指针表盘(自定义)"模式
+2. 右键时钟窗口 → "指针样式编辑器"
+3. 选择方案或导入 PNG → 应用
+
+### 添加倒计时任务
+
+设置 → 组件 → 倒计时 → 设置目标时间和标题 → 确定
 
 ### 开发插件
 
-1. 创建类库项目，引用 `Contracts/IPlugin.cs` 与 `IPluginComponent.cs`
-2. 实现 `IPlugin` 接口
-3. 编写 `manifest.json`
-4. 将编译产物放入插件目录
+参考 [插件接口文档](docs/PLUGIN_API.md) 和 [HelloWorldPlugin](Plugins/HelloWorldPlugin/) 示例。
 
-参考 [Plugins/HelloWorldPlugin](Plugins/HelloWorldPlugin/README.md)。
+### 制作皮肤
 
----
-
-## 工程约定
-
-- 所有模式默认使用 Stack 布局，组件上方不显示任何名称标签
-- 重建布局时需先断开视图元素与旧父容器的逻辑关系（`DetachFromParent`）
-- `ThemePreset` 应用预设颜色后应重置为 `'default'` 以允许用户手动修改
-- 皮肤配置存储在 `ComponentConfig.Settings` 字典，导出 `.dskin` 时序列化为 JSON
-- 所有图片资源路径使用相对路径，兼容配置导出
-- 默认优先矢量渲染，图片仅作为表盘底图，动态旋转元素尽量不用图片
+参考 [皮肤制作指南](docs/SKIN_GUIDE.md)。
 
 ---
 
