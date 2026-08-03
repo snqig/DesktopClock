@@ -74,12 +74,13 @@
                 Background="#E5E5EA" CornerRadius="8" Padding="3">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="70" />
-                    <ColumnDefinition Width="70" />
-                    <ColumnDefinition Width="70" />
-                    <ColumnDefinition Width="70" />
-                    <ColumnDefinition Width="70" />
-                    <ColumnDefinition Width="70" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="60" />
                 </Grid.ColumnDefinitions>
                 <Border x:Name="DisplaySegment" Grid.Column="0" CornerRadius="6"
                         Background="#FFF" Padding="8,6" Cursor="Hand"
@@ -115,6 +116,12 @@
                         Background="Transparent" Padding="8,6" Cursor="Hand"
                         MouseLeftButtonDown="CountdownSegment_Click">
                     <TextBlock Text="倒计时" HorizontalAlignment="Center"
+                               FontSize="13" FontWeight="Medium" Foreground="#86868B" />
+                </Border>
+                <Border x:Name="ComponentsSegment" Grid.Column="6" CornerRadius="6"
+                        Background="Transparent" Padding="8,6" Cursor="Hand"
+                        MouseLeftButtonDown="ComponentsSegment_Click">
+                    <TextBlock Text="组件" HorizontalAlignment="Center"
                                FontSize="13" FontWeight="Medium" Foreground="#86868B" />
                 </Border>
             </Grid>
@@ -1718,6 +1725,286 @@
                         </Grid>
                         <CheckBox x:Name="CountdownTasksEnabledCheck" Content="启用多任务轮播(覆盖单任务)" Margin="0,5,0,0" />
                     </StackPanel>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+
+        <!-- 组件 (Components) Panel -->
+        <ScrollViewer x:Name="ComponentsPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+            <Border Background="#FFF" CornerRadius="12" Padding="20" BorderBrush="#0000" BorderThickness="0">
+                <StackPanel>
+                    <TextBlock Text="独立悬浮组件" Style="{StaticResource SectionTitle}" />
+
+                    <!-- 全局操作 -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                        <Button x:Name="ShowAllComponentsBtn" Content="全部显示" Style="{StaticResource SecondaryButton}"
+                                Click="ShowAllComponentsBtn_Click" Margin="0,0,10,0" />
+                        <Button x:Name="HideAllComponentsBtn" Content="全部隐藏" Style="{StaticResource SecondaryButton}"
+                                Click="HideAllComponentsBtn_Click" />
+                    </StackPanel>
+
+                    <TabControl Background="Transparent" BorderThickness="0" Padding="0">
+
+                        <!-- Tab1: 时钟 -->
+                        <TabItem Header="时钟">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompClockEnabled" Content="启用时钟窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompClockTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompClockLocked" Content="锁定位置" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompClock24Hour" Content="24小时制" IsChecked="True" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompClockShowSec" Content="显示秒" IsChecked="True" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompClockFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompClockFontSize" Grid.Column="1" Minimum="10" Maximum="80" Value="56" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompClockColor" Grid.Column="1" Text="#FF00FF66" />
+                                </Grid>
+                                <CheckBox x:Name="CompClockShadow" Content="启用阴影" Margin="0,8,0,0" />
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="阴影大小" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompClockShadowSize" Grid.Column="1" Minimum="0" Maximum="20" Value="4" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab2: 日历 -->
+                        <TabItem Header="日历">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompCalendarEnabled" Content="启用日历窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompCalendarTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompCalendarLocked" Content="锁定位置" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompCalendarLunar" Content="显示农历" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompCalendarFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompCalendarFontSize" Grid.Column="1" Minimum="8" Maximum="40" Value="16" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompCalendarColor" Grid.Column="1" Text="#FF00FF66" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab3: 天气 -->
+                        <TabItem Header="天气">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompWeatherEnabled" Content="启用天气窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompWeatherTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompWeatherLocked" Content="锁定位置" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="纬度" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompWeatherLat" Grid.Column="1" Text="39.9" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="经度" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompWeatherLon" Grid.Column="1" Text="116.4" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompWeatherFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompWeatherFontSize" Grid.Column="1" Minimum="8" Maximum="30" Value="13" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompWeatherColor" Grid.Column="1" Text="#FFD3D3D3" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab4: 多事件倒计时 -->
+                        <TabItem Header="倒计时">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompCountdownEnabled" Content="启用倒计时窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompCountdownTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompCountdownLocked" Content="锁定位置" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="轮播秒数" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompCountdownRotation" Grid.Column="1" Text="10" Width="50" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompCountdownFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompCountdownFontSize" Grid.Column="1" Minimum="8" Maximum="40" Value="20" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompCountdownColor" Grid.Column="1" Text="#FFFF6600" />
+                                </Grid>
+                                <CheckBox x:Name="CompCountdownShadow" Content="启用阴影" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab5: 间隔提醒 -->
+                        <TabItem Header="提醒">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompReminderEnabled" Content="启用提醒窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompReminderTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompReminderLocked" Content="锁定位置" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="工作开始" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompReminderWorkStart" Grid.Column="1" Text="9" Width="40" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="工作结束" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompReminderWorkEnd" Grid.Column="1" Text="18" Width="40" HorizontalAlignment="Left" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompReminderFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompReminderFontSize" Grid.Column="1" Minimum="8" Maximum="30" Value="14" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompReminderColor" Grid.Column="1" Text="#FFD1D1D6" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab6: 番茄钟 -->
+                        <TabItem Header="番茄钟">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompPomodoroEnabled" Content="启用番茄钟窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompPomodoroTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompPomodoroLocked" Content="锁定位置" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="专注(分)" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompPomodoroFocus" Grid.Column="1" Minimum="10" Maximum="60" Value="25" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="短休(分)" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompPomodoroShort" Grid.Column="1" Minimum="1" Maximum="15" Value="5" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="长休(分)" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompPomodoroLong" Grid.Column="1" Minimum="5" Maximum="30" Value="15" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="长休间隔" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompPomodoroInterval" Grid.Column="1" Minimum="2" Maximum="8" Value="4" />
+                                </Grid>
+                                <CheckBox x:Name="CompPomodoroAutoStart" Content="自动开始下一阶段" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompPomodoroFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompPomodoroFontSize" Grid.Column="1" Minimum="8" Maximum="40" Value="20" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompPomodoroColor" Grid.Column="1" Text="#FF66BB6A" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab7: 每日一言 -->
+                        <TabItem Header="一言">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompDailyEnabled" Content="启用每日一言窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompDailyTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompDailyLocked" Content="锁定位置" Margin="0,0,0,12" />
+                                <CheckBox x:Name="CompDailyApi" Content="启用在线API" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="API地址" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompDailyApiUrl" Grid.Column="1" Text="https://v1.hitokoto.cn/?c=d&amp;c=i&amp;c=k" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="滚动速度" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompDailySpeed" Grid.Column="1" Minimum="10" Maximum="100" Value="30" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompDailyFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompDailyFontSize" Grid.Column="1" Minimum="8" Maximum="30" Value="12" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompDailyColor" Grid.Column="1" Text="#FF87CEFA" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                        <!-- Tab8: 习惯打卡 -->
+                        <TabItem Header="打卡">
+                            <StackPanel Margin="8">
+                                <CheckBox x:Name="CompHabitEnabled" Content="启用习惯打卡窗口" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompHabitTopmost" Content="窗口置顶" Margin="0,0,0,8" />
+                                <CheckBox x:Name="CompHabitLocked" Content="锁定位置" Margin="0,0,0,12" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字体" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox x:Name="CompHabitFontCombo" Grid.Column="1" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="字号" Style="{StaticResource FieldLabel}" />
+                                    <Slider x:Name="CompHabitFontSize" Grid.Column="1" Minimum="8" Maximum="30" Value="11" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="80" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="颜色" Style="{StaticResource FieldLabel}" />
+                                    <TextBox x:Name="CompHabitColor" Grid.Column="1" Text="#FFAAAAAA" />
+                                </Grid>
+                            </StackPanel>
+                        </TabItem>
+
+                    </TabControl>
                 </StackPanel>
             </Border>
         </ScrollViewer>

@@ -1,0 +1,13 @@
+<core:BaseFloatWindow x:Class="DesktopClock.FloatWindows.DailySentenceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="clr-namespace:DesktopClock.Core"
+        Title="DailySentenceWindow" Height="40" Width="360">
+    <Grid Margin="6">
+        <Canvas x:Name="ScrollCanvas" ClipToBounds="True">
+            <TextBlock x:Name="QuoteText"
+                       FontFamily="Microsoft YaHei" FontSize="12" Foreground="#FF87CEFA"
+                       VerticalAlignment="Center" Text="" />
+        </Canvas>
+    </Grid>
+</core:BaseFloatWindow>

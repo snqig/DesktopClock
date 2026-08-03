@@ -1,8 +1,10 @@
-# DesktopClock 桌面时钟 v1.0.6
+# DesktopClock 桌面时钟 v2.0.0
 
 [![GitHub](https://img.shields.io/badge/GitHub-snqig%2FDesktopClock-blue?logo=github)](https://github.com/snqig/DesktopClock)
 
 一个基于 **WPF (.NET 9)** 的桌面时钟应用，提供 **10+ 种精美显示模式**、可插拔皮肤系统、自由布局、插件体系、系统监控与提醒功能。
+
+> **v2.0.0 重大架构重构**：每个功能模块 = 独立悬浮窗口，可自由摆放桌面、独立配置、独立开关。无统一容器，点击不抢占焦点。
 
 > **最新 Release**：前往 [Releases](https://github.com/snqig/DesktopClock/releases) 页面下载已打包好的 `.exe` 单文件版本，无需安装 .NET 运行时即可运行（自包含发布）。
 

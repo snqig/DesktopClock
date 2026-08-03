@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using DesktopClock.Core;
+using DesktopClock.FloatWindows;
 using DesktopClock.Services;
 
 namespace DesktopClock;
@@ -61,7 +63,11 @@ public partial class App : Application
 
         Logger.Information("[App] before base.OnStartup");
         base.OnStartup(e);
-        Logger.Information("[App] after base.OnStartup, MainWindow created");
+
+        // 初始化独立悬浮窗口架构
+        RegisterFloatComponents();
+        ComponentManager.Instance.Initialize();
+        Logger.Information("[App] ComponentManager initialized with float windows");
     }
 
     private void RegisterGlobalExceptionHandlers()
@@ -166,6 +172,22 @@ public partial class App : Application
     {
         var settings = AppSettings.Load();
         SetAutoStart(settings.AutoStart);
+    }
+
+    /// <summary>
+    /// 注册全部悬浮组件工厂到 ComponentManager。
+    /// </summary>
+    private void RegisterFloatComponents()
+    {
+        var mgr = ComponentManager.Instance;
+        mgr.RegisterFactory("clock", () => new ClockWindow());
+        mgr.RegisterFactory("calendar", () => new CalendarWindow());
+        mgr.RegisterFactory("weather", () => new WeatherWindow());
+        mgr.RegisterFactory("countdown", () => new CountdownWindow());
+        mgr.RegisterFactory("interval_reminder", () => new IntervalReminderWindow());
+        mgr.RegisterFactory("pomodoro", () => new PomodoroWindow());
+        mgr.RegisterFactory("daily_sentence", () => new DailySentenceWindow());
+        mgr.RegisterFactory("habit_check", () => new HabitCheckWindow());
     }
 
     /// <summary>

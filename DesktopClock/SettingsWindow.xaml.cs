@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using DesktopClock.Core;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -298,6 +299,7 @@ public partial class SettingsWindow : Window
         LoadPomodoroSettings();
         LoadDailyQuoteSettings();
         LoadHabitTrackerSettings();
+        LoadFloatWindowSettings();
 
         _loaded = true;
     }
@@ -495,10 +497,15 @@ public partial class SettingsWindow : Window
         ActivateSegment(CountdownSegment, CountdownPanel);
     }
 
+    private void ComponentsSegment_Click(object sender, MouseButtonEventArgs e)
+    {
+        ActivateSegment(ComponentsSegment, ComponentsPanel);
+    }
+
     private void ActivateSegment(Border active, ScrollViewer panel)
     {
-        var segments = new[] { DisplaySegment, AppearanceSegment, DateSegment2, FeaturesSegment, SystemSegment, CountdownSegment };
-        var panels = new ScrollViewer[] { DisplayPanel, AppearancePanel, DatePanel2, FeaturesPanel, SystemPanel, CountdownPanel };
+        var segments = new[] { DisplaySegment, AppearanceSegment, DateSegment2, FeaturesSegment, SystemSegment, CountdownSegment, ComponentsSegment };
+        var panels = new ScrollViewer[] { DisplayPanel, AppearancePanel, DatePanel2, FeaturesPanel, SystemPanel, CountdownPanel, ComponentsPanel };
 
         for (int i = 0; i < segments.Length; i++)
         {
@@ -1241,6 +1248,9 @@ public partial class SettingsWindow : Window
 
         // 保存倒计时挂件配置
         SaveCountdownSettings();
+
+        // 保存独立悬浮窗口配置
+        SaveFloatWindowSettings();
 
         Settings.Save();
         DialogResult = true;
@@ -2361,6 +2371,282 @@ public partial class SettingsWindow : Window
     {
         if (!_loaded) return;
         try { HabitTrackerColorPreview.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(HabitTrackerColorBox.Text)); } catch { }
+    }
+
+    #endregion
+
+    #region 独立悬浮窗口设置
+
+    /// <summary>系统字体列表(延迟初始化)</summary>
+    private static List<string>? _systemFonts;
+    private static List<string> GetSystemFonts()
+        => _systemFonts ??= System.Windows.Media.Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(s => s).ToList();
+
+    /// <summary>填充字体下拉框(悬浮窗口专用)</summary>
+    private static void PopulateFloatFontCombo(ComboBox combo, string selected)
+    {
+        combo.Items.Clear();
+        foreach (var font in GetSystemFonts())
+        {
+            var item = new ComboBoxItem { Content = font, Tag = font };
+            combo.Items.Add(item);
+            if (string.Equals(font, selected, StringComparison.OrdinalIgnoreCase))
+                combo.SelectedItem = item;
+        }
+    }
+
+    /// <summary>加载悬浮窗口配置到 UI</summary>
+    private void LoadFloatWindowSettings()
+    {
+        var mgr = ComponentManager.Instance;
+
+        // 时钟
+        var clock = mgr.EnsureConfig("clock");
+        CompClockEnabled.IsChecked = clock.Enabled;
+        CompClockTopmost.IsChecked = clock.Topmost;
+        CompClockLocked.IsChecked = clock.LockPosition;
+        CompClock24Hour.IsChecked = clock.GetBool("use24hour", true);
+        CompClockShowSec.IsChecked = clock.GetBool("showSeconds", true);
+        PopulateFloatFontCombo(CompClockFontCombo, clock.FontFamily);
+        CompClockFontSize.Value = clock.FontSize > 0 ? clock.FontSize : 56;
+        CompClockColor.Text = clock.FontColor;
+        CompClockShadow.IsChecked = clock.ShadowEnabled;
+        CompClockShadowSize.Value = clock.ShadowSize;
+
+        // 日历
+        var cal = mgr.EnsureConfig("calendar");
+        CompCalendarEnabled.IsChecked = cal.Enabled;
+        CompCalendarTopmost.IsChecked = cal.Topmost;
+        CompCalendarLocked.IsChecked = cal.LockPosition;
+        CompCalendarLunar.IsChecked = cal.GetBool("showLunar", false);
+        PopulateFloatFontCombo(CompCalendarFontCombo, cal.FontFamily);
+        CompCalendarFontSize.Value = cal.FontSize > 0 ? cal.FontSize : 16;
+        CompCalendarColor.Text = cal.FontColor;
+
+        // 天气
+        var weather = mgr.EnsureConfig("weather");
+        CompWeatherEnabled.IsChecked = weather.Enabled;
+        CompWeatherTopmost.IsChecked = weather.Topmost;
+        CompWeatherLocked.IsChecked = weather.LockPosition;
+        CompWeatherLat.Text = weather.GetDouble("latitude", 39.9).ToString();
+        CompWeatherLon.Text = weather.GetDouble("longitude", 116.4).ToString();
+        PopulateFloatFontCombo(CompWeatherFontCombo, weather.FontFamily);
+        CompWeatherFontSize.Value = weather.FontSize > 0 ? weather.FontSize : 13;
+        CompWeatherColor.Text = weather.FontColor;
+
+        // 倒计时
+        var cd = mgr.EnsureConfig("countdown");
+        CompCountdownEnabled.IsChecked = cd.Enabled;
+        CompCountdownTopmost.IsChecked = cd.Topmost;
+        CompCountdownLocked.IsChecked = cd.LockPosition;
+        CompCountdownRotation.Text = cd.GetInt("rotationSeconds", 10).ToString();
+        PopulateFontCombo(CompCountdownFontCombo, cd.FontFamily);
+        CompCountdownFontSize.Value = cd.FontSize > 0 ? cd.FontSize : 20;
+        CompCountdownColor.Text = cd.FontColor;
+        CompCountdownShadow.IsChecked = cd.ShadowEnabled;
+
+        // 间隔提醒
+        var rem = mgr.EnsureConfig("interval_reminder");
+        CompReminderEnabled.IsChecked = rem.Enabled;
+        CompReminderTopmost.IsChecked = rem.Topmost;
+        CompReminderLocked.IsChecked = rem.LockPosition;
+        CompReminderWorkStart.Text = rem.GetInt("workStartHour", 9).ToString();
+        CompReminderWorkEnd.Text = rem.GetInt("workEndHour", 18).ToString();
+        PopulateFloatFontCombo(CompReminderFontCombo, rem.FontFamily);
+        CompReminderFontSize.Value = rem.FontSize > 0 ? rem.FontSize : 14;
+        CompReminderColor.Text = rem.FontColor;
+
+        // 番茄钟
+        var pomo = mgr.EnsureConfig("pomodoro");
+        CompPomodoroEnabled.IsChecked = pomo.Enabled;
+        CompPomodoroTopmost.IsChecked = pomo.Topmost;
+        CompPomodoroLocked.IsChecked = pomo.LockPosition;
+        CompPomodoroFocus.Value = pomo.GetInt("focusMinutes", 25);
+        CompPomodoroShort.Value = pomo.GetInt("shortBreakMinutes", 5);
+        CompPomodoroLong.Value = pomo.GetInt("longBreakMinutes", 15);
+        CompPomodoroInterval.Value = pomo.GetInt("longBreakInterval", 4);
+        CompPomodoroAutoStart.IsChecked = pomo.GetBool("autoStart", false);
+        PopulateFloatFontCombo(CompPomodoroFontCombo, pomo.FontFamily);
+        CompPomodoroFontSize.Value = pomo.FontSize > 0 ? pomo.FontSize : 20;
+        CompPomodoroColor.Text = pomo.FontColor;
+
+        // 每日一言
+        var daily = mgr.EnsureConfig("daily_sentence");
+        CompDailyEnabled.IsChecked = daily.Enabled;
+        CompDailyTopmost.IsChecked = daily.Topmost;
+        CompDailyLocked.IsChecked = daily.LockPosition;
+        CompDailyApi.IsChecked = daily.GetBool("apiEnabled", false);
+        CompDailyApiUrl.Text = daily.GetString("apiUrl", "");
+        CompDailySpeed.Value = daily.GetDouble("speed", 30.0);
+        PopulateFloatFontCombo(CompDailyFontCombo, daily.FontFamily);
+        CompDailyFontSize.Value = daily.FontSize > 0 ? daily.FontSize : 12;
+        CompDailyColor.Text = daily.FontColor;
+
+        // 习惯打卡
+        var habit = mgr.EnsureConfig("habit_check");
+        CompHabitEnabled.IsChecked = habit.Enabled;
+        CompHabitTopmost.IsChecked = habit.Topmost;
+        CompHabitLocked.IsChecked = habit.LockPosition;
+        PopulateFloatFontCombo(CompHabitFontCombo, habit.FontFamily);
+        CompHabitFontSize.Value = habit.FontSize > 0 ? habit.FontSize : 11;
+        CompHabitColor.Text = habit.FontColor;
+    }
+
+    /// <summary>保存 UI 配置到 ComponentManager 并即时下发</summary>
+    private void SaveFloatWindowSettings()
+    {
+        var mgr = ComponentManager.Instance;
+
+        void Save(string id, Action<ComponentWindowConfig> apply)
+        {
+            var cfg = mgr.EnsureConfig(id);
+            apply(cfg);
+        }
+
+        Save("clock", c =>
+        {
+            c.Enabled = CompClockEnabled.IsChecked == true;
+            c.Topmost = CompClockTopmost.IsChecked == true;
+            c.LockPosition = CompClockLocked.IsChecked == true;
+            c.FontFamily = (CompClockFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Consolas";
+            c.FontSize = CompClockFontSize.Value;
+            c.FontColor = CompClockColor.Text;
+            c.ShadowEnabled = CompClockShadow.IsChecked == true;
+            c.ShadowSize = CompClockShadowSize.Value;
+            c.Settings["use24hour"] = CompClock24Hour.IsChecked == true;
+            c.Settings["showSeconds"] = CompClockShowSec.IsChecked == true;
+        });
+
+        Save("calendar", c =>
+        {
+            c.Enabled = CompCalendarEnabled.IsChecked == true;
+            c.Topmost = CompCalendarTopmost.IsChecked == true;
+            c.LockPosition = CompCalendarLocked.IsChecked == true;
+            c.FontFamily = (CompCalendarFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontSize = CompCalendarFontSize.Value;
+            c.FontColor = CompCalendarColor.Text;
+            c.Settings["showLunar"] = CompCalendarLunar.IsChecked == true;
+        });
+
+        Save("weather", c =>
+        {
+            c.Enabled = CompWeatherEnabled.IsChecked == true;
+            c.Topmost = CompWeatherTopmost.IsChecked == true;
+            c.LockPosition = CompWeatherLocked.IsChecked == true;
+            c.FontFamily = (CompWeatherFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontSize = CompWeatherFontSize.Value;
+            c.FontColor = CompWeatherColor.Text;
+            if (double.TryParse(CompWeatherLat.Text, out var lat)) c.Settings["latitude"] = lat;
+            if (double.TryParse(CompWeatherLon.Text, out var lon)) c.Settings["longitude"] = lon;
+        });
+
+        Save("countdown", c =>
+        {
+            c.Enabled = CompCountdownEnabled.IsChecked == true;
+            c.Topmost = CompCountdownTopmost.IsChecked == true;
+            c.LockPosition = CompCountdownLocked.IsChecked == true;
+            c.FontFamily = (CompCountdownFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Consolas";
+            c.FontSize = CompCountdownFontSize.Value;
+            c.FontColor = CompCountdownColor.Text;
+            c.ShadowEnabled = CompCountdownShadow.IsChecked == true;
+            if (int.TryParse(CompCountdownRotation.Text, out var rs)) c.Settings["rotationSeconds"] = rs;
+        });
+
+        Save("interval_reminder", c =>
+        {
+            c.Enabled = CompReminderEnabled.IsChecked == true;
+            c.Topmost = CompReminderTopmost.IsChecked == true;
+            c.LockPosition = CompReminderLocked.IsChecked == true;
+            c.FontFamily = (CompReminderFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontSize = CompReminderFontSize.Value;
+            c.FontColor = CompReminderColor.Text;
+            if (int.TryParse(CompReminderWorkStart.Text, out var ws)) c.Settings["workStartHour"] = ws;
+            if (int.TryParse(CompReminderWorkEnd.Text, out var we)) c.Settings["workEndHour"] = we;
+        });
+
+        Save("pomodoro", c =>
+        {
+            c.Enabled = CompPomodoroEnabled.IsChecked == true;
+            c.Topmost = CompPomodoroTopmost.IsChecked == true;
+            c.LockPosition = CompPomodoroLocked.IsChecked == true;
+            c.FontFamily = (CompPomodoroFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Consolas";
+            c.FontSize = CompPomodoroFontSize.Value;
+            c.FontColor = CompPomodoroColor.Text;
+            c.Settings["focusMinutes"] = (int)CompPomodoroFocus.Value;
+            c.Settings["shortBreakMinutes"] = (int)CompPomodoroShort.Value;
+            c.Settings["longBreakMinutes"] = (int)CompPomodoroLong.Value;
+            c.Settings["longBreakInterval"] = (int)CompPomodoroInterval.Value;
+            c.Settings["autoStart"] = CompPomodoroAutoStart.IsChecked == true;
+        });
+
+        Save("daily_sentence", c =>
+        {
+            c.Enabled = CompDailyEnabled.IsChecked == true;
+            c.Topmost = CompDailyTopmost.IsChecked == true;
+            c.LockPosition = CompDailyLocked.IsChecked == true;
+            c.FontFamily = (CompDailyFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei";
+            c.FontSize = CompDailyFontSize.Value;
+            c.FontColor = CompDailyColor.Text;
+            c.Settings["apiEnabled"] = CompDailyApi.IsChecked == true;
+            c.Settings["apiUrl"] = CompDailyApiUrl.Text;
+            c.Settings["speed"] = CompDailySpeed.Value;
+        });
+
+        Save("habit_check", c =>
+        {
+            c.Enabled = CompHabitEnabled.IsChecked == true;
+            c.Topmost = CompHabitTopmost.IsChecked == true;
+            c.LockPosition = CompHabitLocked.IsChecked == true;
+            c.FontFamily = (CompHabitFontCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Microsoft YaHei UI";
+            c.FontSize = CompHabitFontSize.Value;
+            c.FontColor = CompHabitColor.Text;
+        });
+
+        // 持久化并即时下发到窗口
+        mgr.SaveConfig();
+
+        // 根据启用状态显示/隐藏窗口
+        var ids = new[] { "clock", "calendar", "weather", "countdown", "interval_reminder", "pomodoro", "daily_sentence", "habit_check" };
+        foreach (var id in ids)
+        {
+            var cfg = mgr.GetConfig(id);
+            if (cfg == null) continue;
+            if (cfg.Enabled)
+                mgr.Show(id);
+            else
+                mgr.Hide(id);
+        }
+
+        // 通知所有窗口刷新配置
+        mgr.NotifyConfigChange();
+    }
+
+    private void ShowAllComponentsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ComponentManager.Instance.ShowAll();
+        // 勾选所有启用复选框
+        CompClockEnabled.IsChecked = true;
+        CompCalendarEnabled.IsChecked = true;
+        CompWeatherEnabled.IsChecked = true;
+        CompCountdownEnabled.IsChecked = true;
+        CompReminderEnabled.IsChecked = true;
+        CompPomodoroEnabled.IsChecked = true;
+        CompDailyEnabled.IsChecked = true;
+        CompHabitEnabled.IsChecked = true;
+    }
+
+    private void HideAllComponentsBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ComponentManager.Instance.HideAll();
+        // 取消勾选所有启用复选框
+        CompClockEnabled.IsChecked = false;
+        CompCalendarEnabled.IsChecked = false;
+        CompWeatherEnabled.IsChecked = false;
+        CompCountdownEnabled.IsChecked = false;
+        CompReminderEnabled.IsChecked = false;
+        CompPomodoroEnabled.IsChecked = false;
+        CompDailyEnabled.IsChecked = false;
+        CompHabitEnabled.IsChecked = false;
     }
 
     #endregion
