@@ -62,9 +62,6 @@ public static class PointerRenderer
 
         img.Source = source;
         img.Opacity = Math.Clamp(style.Opacity, 0, 1);
-        img.RenderTransformOrigin = new Point(
-            Math.Clamp(style.RotationCenterX, 0, 1),
-            Math.Clamp(style.RotationCenterY, 0, 1));
 
         // 计算显示尺寸:按基准尺寸缩放
         double imgW = source.PixelWidth > 0 ? source.PixelWidth : baseSize;
@@ -77,15 +74,21 @@ public static class PointerRenderer
         img.Width = dispW;
         img.Height = dispH;
 
-        // 定位:使锚点对准表盘中心
-        // Canvas.Left = cx - 锚点相对图片的偏移
+        // 锚点在图片内的像素坐标(旋转中心)
         double anchorX = style.RotationCenterX * dispW;
         double anchorY = style.RotationCenterY * dispH;
+
+        // 定位:使锚点对准表盘中心
         Canvas.SetLeft(img, cx - anchorX);
         Canvas.SetTop(img, cy - anchorY);
 
-        // RenderTransform:旋转(RenderTransformOrigin 已设锚点)
-        var rotate = new RotateTransform { Angle = angle };
+        // 旋转:绕锚点(图片内坐标)旋转,与定位一致
+        var rotate = new RotateTransform
+        {
+            Angle = angle,
+            CenterX = anchorX,
+            CenterY = anchorY
+        };
         img.RenderTransform = rotate;
 
         // 染色 + 阴影/发光(合并为一个 Effect)

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace DesktopClock.Core;
 
@@ -25,6 +26,12 @@ internal static class NativeMethods
     public const uint SWP_HIDEWINDOW = 0x0080;
     public const int HWND_TOPMOST = -1;
     public const int HWND_NOTOPMOST = -2;
+    public const int HWND_BOTTOM = 1;
+
+    // === 前台窗口事件监听 ===
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
 
     // === Layered 窗口 ===
     public const int ULW_ALPHA = 0x00000002;
@@ -50,6 +57,24 @@ internal static class NativeMethods
     [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
     public static extern bool IsIconic(IntPtr hWnd);
 
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    public static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax,
+        IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc,
+        uint idProcess, uint idThread, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    public static extern bool UnhookWinEvent(IntPtr hWinEventHook);
+
+    /// <summary>前台窗口变化回调签名。</summary>
+    public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType,
+        IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
+
     /// <summary>设置窗口鼠标穿透(WS_EX_TRANSPARENT),实时开关。</summary>
     public static void SetClickThrough(IntPtr hWnd, bool transparent)
     {
@@ -64,6 +89,30 @@ internal static class NativeMethods
     {
         SetWindowPos(hWnd, topmost ? HWND_TOPMOST : HWND_NOTOPMOST,
             0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+
+    /// <summary>将窗口下沉到非置顶栈底(被其他普通窗口覆盖,但仍在桌面壁纸之上)。</summary>
+    public static void SendToBottom(IntPtr hWnd)
+    {
+        // 先取消置顶,再压到栈底,确保位于其他普通程序窗口之下。
+        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+
+    /// <summary>判断指定窗口是否为桌面(Progman / WorkerW)。</summary>
+    public static bool IsDesktopWindow(IntPtr hWnd)
+    {
+        if (hWnd == IntPtr.Zero) return true;
+        var sb = new StringBuilder(256);
+        GetClassName(hWnd, sb, 256);
+        var cls = sb.ToString();
+        return cls is "Progman" or "WorkerW";
+    }
+
+    /// <summary>当前前台窗口是否为桌面。</summary>
+    public static bool IsDesktopForeground()
+    {
+        return IsDesktopWindow(GetForegroundWindow());
     }
 
     /// <summary>设置分层窗口透明度(0~255)。</summary>

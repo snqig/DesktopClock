@@ -60,8 +60,8 @@ public partial class HabitCheckWindow : BaseFloatWindow
         Height = cfg.Height > 0 ? cfg.Height : 200;
         ClampToScreen();
 
-        // 状态
         IsTopmost = cfg.Topmost;
+        DesktopWidgetMode = cfg.DesktopWidgetMode;
         IsLocked = cfg.LockPosition;
         WindowOpacity = cfg.Opacity;
 
@@ -199,6 +199,7 @@ public partial class HabitCheckWindow : BaseFloatWindow
         cfg.Width = ActualWidth > 0 ? ActualWidth : Width;
         cfg.Height = ActualHeight > 0 ? ActualHeight : Height;
         cfg.Topmost = IsTopmost;
+        cfg.DesktopWidgetMode = DesktopWidgetMode;
         cfg.LockPosition = IsLocked;
         cfg.Opacity = WindowOpacity;
         ComponentManager.Instance.SaveConfig();
@@ -208,4 +209,12 @@ public partial class HabitCheckWindow : BaseFloatWindow
     {
         LoadFromConfig();
     }
+}
+
+/// <summary>习惯条目</summary>
+public class HabitItem
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = "习惯";
+    public bool Enabled { get; set; } = true;
 }

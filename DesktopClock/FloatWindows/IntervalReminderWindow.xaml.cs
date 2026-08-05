@@ -116,6 +116,7 @@ public partial class IntervalReminderWindow : BaseFloatWindow
         ClampToScreen();
 
         IsTopmost = cfg.Topmost;
+        DesktopWidgetMode = cfg.DesktopWidgetMode;
         IsLocked = cfg.LockPosition;
         WindowOpacity = cfg.Opacity;
 
@@ -133,6 +134,7 @@ public partial class IntervalReminderWindow : BaseFloatWindow
         cfg.Width = ActualWidth > 0 ? ActualWidth : Width;
         cfg.Height = ActualHeight > 0 ? ActualHeight : Height;
         cfg.Topmost = IsTopmost;
+        cfg.DesktopWidgetMode = DesktopWidgetMode;
         cfg.LockPosition = IsLocked;
         cfg.Opacity = WindowOpacity;
         ComponentManager.Instance.SaveConfig();

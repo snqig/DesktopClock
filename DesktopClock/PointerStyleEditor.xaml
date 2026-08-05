@@ -176,13 +176,15 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="22,0" />
+            <Setter Property="MinWidth" Value="72" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
                                 CornerRadius="7" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -206,13 +208,15 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="18,0" />
+            <Setter Property="MinWidth" Value="72" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
                                 CornerRadius="7" SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -551,10 +555,10 @@
 
                     <Border DockPanel.Dock="Top" BorderBrush="#e3e3e8" BorderThickness="1" CornerRadius="10"
                             Background="#fafafa" Padding="10" HorizontalAlignment="Center" Margin="0,0,0,14">
-                        <Grid Width="200" Height="200">
+                        <Grid Width="240" Height="240">
                             <Ellipse Stroke="#d2d2d7" StrokeThickness="1" Fill="#ffffff" />
                             <Path Stroke="#c7c7cc" StrokeThickness="1" Data="M120,6 L120,14 M120,226 L120,234 M6,120 L14,120 M226,120 L234,120" />
-                            <Canvas x:Name="PreviewCanvas" Width="240" Height="240" Background="Transparent" />
+                            <Canvas x:Name="PreviewCanvas" Width="240" Height="240" Background="Transparent" ClipToBounds="True" />
                             <Ellipse Width="6" Height="6" Fill="#86868b" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
                         </Grid>
                     </Border>

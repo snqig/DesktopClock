@@ -22,6 +22,11 @@ public sealed class ComponentManager
     private System.Windows.Forms.NotifyIcon? _trayIcon;
     private bool _isShuttingDown;
 
+    // === 桌面挂件模式:前台窗口监听 ===
+    private NativeMethods.WinEventDelegate? _foregroundHookProc;
+    private IntPtr _foregroundHook;
+    private bool _desktopForeground = true;
+
     // 配置文件路径
     private static string ConfigDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopClock");
@@ -80,6 +85,9 @@ public sealed class ComponentManager
                 }
             }
         }
+
+        // 启动前台窗口监听:用于桌面挂件模式自动调节 z-order
+        StartForegroundMonitor();
     }
 
     /// <summary>显示指定组件</summary>
@@ -88,6 +96,9 @@ public sealed class ComponentManager
         if (_windows.TryGetValue(componentId, out var win))
         {
             win.Show();
+            // 重新显示时按当前前台状态对齐层级(OnSourceInitialized 不会再次触发)
+            if (win.DesktopWidgetMode)
+                win.ApplyDesktopLayer(NativeMethods.IsDesktopForeground());
             return;
         }
 
@@ -229,6 +240,7 @@ public sealed class ComponentManager
     {
         _isShuttingDown = true;
         NotificationService.NotificationRequested -= OnNotificationRequested;
+        StopForegroundMonitor();
         foreach (var win in _windows.Values)
         {
             try
@@ -241,6 +253,63 @@ public sealed class ComponentManager
         _windows.Clear();
         SaveConfig();
         _trayIcon?.Dispose();
+    }
+
+    // ==================== 桌面挂件模式:前台窗口监听 ====================
+
+    /// <summary>启动前台窗口变化监听,用于桌面挂件模式自动调节层级。</summary>
+    private void StartForegroundMonitor()
+    {
+        if (_foregroundHook != IntPtr.Zero) return;
+        _foregroundHookProc = OnForegroundChanged;
+        _foregroundHook = NativeMethods.SetWinEventHook(
+            NativeMethods.EVENT_SYSTEM_FOREGROUND,
+            NativeMethods.EVENT_SYSTEM_FOREGROUND,
+            IntPtr.Zero, _foregroundHookProc, 0, 0,
+            NativeMethods.WINEVENT_OUTOFCONTEXT);
+        // 初始化当前前台状态并应用一次
+        _desktopForeground = NativeMethods.IsDesktopForeground();
+        ApplyDesktopLayerToAll(_desktopForeground);
+    }
+
+    /// <summary>停止前台窗口监听。</summary>
+    private void StopForegroundMonitor()
+    {
+        if (_foregroundHook != IntPtr.Zero)
+        {
+            NativeMethods.UnhookWinEvent(_foregroundHook);
+            _foregroundHook = IntPtr.Zero;
+        }
+        _foregroundHookProc = null;
+    }
+
+    private void OnForegroundChanged(IntPtr hWinEventHook, uint eventType, IntPtr hwnd,
+        int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
+    {
+        if (idChild != 0) return; // 只处理窗口本身的事件
+        var isDesktop = NativeMethods.IsDesktopWindow(hwnd);
+        if (isDesktop == _desktopForeground) return; // 状态未变,忽略
+
+        _desktopForeground = isDesktop;
+        // 回调可能在非 UI 线程,统一分发到 UI 线程执行
+        Application.Current?.Dispatcher.BeginInvoke(new Action(() => ApplyDesktopLayerToAll(_desktopForeground)));
+    }
+
+    /// <summary>对所有开启了桌面挂件模式的窗口应用当前层级。</summary>
+    private void ApplyDesktopLayerToAll(bool desktopOnTop)
+    {
+        foreach (var win in _windows.Values)
+        {
+            if (win.DesktopWidgetMode)
+                win.ApplyDesktopLayer(desktopOnTop);
+        }
+    }
+
+    /// <summary>窗口切换桌面挂件模式后调用,重新评估并同步所有窗口层级。</summary>
+    public void NotifyDesktopLayerChanged()
+    {
+        _desktopForeground = NativeMethods.IsDesktopForeground();
+        ApplyDesktopLayerToAll(_desktopForeground);
     }
 
     // ==================== 托盘图标 ====================
@@ -315,6 +384,12 @@ public class ComponentWindowConfig
 
     /// <summary>是否置顶</summary>
     public bool Topmost { get; set; } = true;
+
+    /// <summary>
+    /// 桌面挂件模式:开启后仅当桌面处于前台时显示在最上层,
+    /// 有其它程序窗口打开时自动下沉到其下层。
+    /// </summary>
+    public bool DesktopWidgetMode { get; set; } = false;
 
     /// <summary>是否锁定位置</summary>
     public bool LockPosition { get; set; } = false;

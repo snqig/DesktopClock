@@ -23,8 +23,14 @@ public abstract class BaseFloatWindow : Window
     /// <summary>是否锁定位置(锁定后不可拖拽)</summary>
     public bool IsLocked { get; set; }
 
-    /// <summary>是否置顶</summary>
+    /// <summary>是否置顶(仅在非桌面挂件模式下生效)</summary>
     public bool IsTopmost { get; set; } = true;
+
+    /// <summary>
+    /// 桌面挂件模式:开启后由 ComponentManager 根据前台窗口自动调节 z-order,
+    /// 桌面在前台时显示到最上层,其它程序在前台时下沉到其下层。
+    /// </summary>
+    public bool DesktopWidgetMode { get; set; }
 
     private double _windowOpacity = 1.0;
     /// <summary>窗口透明度 0~1(实时同步到 WPF Opacity)</summary>
@@ -72,18 +78,35 @@ public abstract class BaseFloatWindow : Window
         ex |= NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW;
         NativeMethods.SetWindowLong(_handle, NativeMethods.GWL_EXSTYLE, ex);
 
-        // 置顶
-        NativeMethods.SetTopmost(_handle, IsTopmost);
-
-        // 加载持久化位置与样式
+        // 先加载持久化位置与样式(会设置 IsTopmost / DesktopWidgetMode 等)
         if (!_positionLoaded)
         {
             LoadFromConfig();
             _positionLoaded = true;
         }
 
+        // 置顶:桌面挂件模式由 ApplyDesktopLayer 统一控制,否则按 IsTopmost 处理
+        if (DesktopWidgetMode)
+            ApplyDesktopLayer(NativeMethods.IsDesktopForeground());
+        else
+            NativeMethods.SetTopmost(_handle, IsTopmost);
+
         // 窗口整体透明度走 WPF Opacity(由 compositor 处理,兼容 AllowsTransparency)
         Opacity = Math.Clamp(WindowOpacity, 0.0, 1.0);
+    }
+
+    /// <summary>
+    /// 桌面挂件模式下的 z-order 调节:
+    /// desktopOnTop=true(桌面在前台)→ 置顶,显示在桌面之上;
+    /// desktopOnTop=false(其它程序在前台)→ 取消置顶并压到栈底,被其它程序覆盖。
+    /// </summary>
+    public void ApplyDesktopLayer(bool desktopOnTop)
+    {
+        if (_handle == IntPtr.Zero) return;
+        if (desktopOnTop)
+            NativeMethods.SetTopmost(_handle, true);
+        else
+            NativeMethods.SendToBottom(_handle);
     }
 
     /// <summary>拖拽移动(未锁定时)</summary>
@@ -108,10 +131,25 @@ public abstract class BaseFloatWindow : Window
         miTopmost.Click += (_, _) =>
         {
             IsTopmost = !IsTopmost;
-            NativeMethods.SetTopmost(_handle, IsTopmost);
+            if (!DesktopWidgetMode)
+                NativeMethods.SetTopmost(_handle, IsTopmost);
             SavePosition();
         };
         menu.Items.Add(miTopmost);
+
+        var miDesktopMode = new MenuItem { Header = "桌面挂件模式", IsCheckable = true, IsChecked = DesktopWidgetMode };
+        miDesktopMode.Click += (_, _) =>
+        {
+            DesktopWidgetMode = !DesktopWidgetMode;
+            // 开启桌面模式时立即按当前前台状态调整;关闭时恢复到 IsTopmost 静态状态
+            if (DesktopWidgetMode)
+                ApplyDesktopLayer(NativeMethods.IsDesktopForeground());
+            else
+                NativeMethods.SetTopmost(_handle, IsTopmost);
+            ComponentManager.Instance.NotifyDesktopLayerChanged();
+            SavePosition();
+        };
+        menu.Items.Add(miDesktopMode);
 
         var miSettings = new MenuItem { Header = "组件设置" };
         miSettings.Click += (_, _) => OpenComponentSettings();

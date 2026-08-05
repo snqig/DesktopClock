@@ -180,8 +180,8 @@ public partial class DailySentenceWindow : BaseFloatWindow
         Height = cfg.Height > 0 ? cfg.Height : 40;
         ClampToScreen();
 
-        // 状态
         IsTopmost = cfg.Topmost;
+        DesktopWidgetMode = cfg.DesktopWidgetMode;
         IsLocked = cfg.LockPosition;
         WindowOpacity = cfg.Opacity;
 
@@ -228,6 +228,7 @@ public partial class DailySentenceWindow : BaseFloatWindow
         cfg.Width = ActualWidth > 0 ? ActualWidth : Width;
         cfg.Height = ActualHeight > 0 ? ActualHeight : Height;
         cfg.Topmost = IsTopmost;
+        cfg.DesktopWidgetMode = DesktopWidgetMode;
         cfg.LockPosition = IsLocked;
         cfg.Opacity = WindowOpacity;
         ComponentManager.Instance.SaveConfig();
